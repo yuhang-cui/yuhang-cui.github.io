@@ -1,0 +1,51 @@
+---
+import type { CollectionEntry } from "astro:content";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import { getPostUrl } from "@/utils/getPostPaths";
+import { toTransitionName } from "@/utils/toTransitionName";
+import { tagColorClass } from "@/utils/tagColor";
+import config from "@/config";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+type Props = {
+  variant?: "h2" | "h3";
+} & CollectionEntry<"posts">;
+
+const { variant: Heading = "h2", id, data, filePath } = Astro.props;
+
+const { title, description, tags, pubDatetime, timezone: postTimezone } = data;
+
+// 第一个标签当作文章分类，显示在标题上方
+const category = tags[0];
+const date = dayjs(pubDatetime)
+  .tz(postTimezone ?? config.site.timezone)
+  .format("YYYY-MM-DD");
+---
+
+<li class="my-4">
+  <a
+    href={getPostUrl(id, filePath, Astro.currentLocale)}
+    class="post-card group block rounded-xl border px-5 py-4 sm:px-6 sm:py-5"
+  >
+    {category && <span class:list={["tag-pill", tagColorClass(category)]}>{category}</span>}
+    <Heading
+      transition:name={toTransitionName(id)}
+      class="text-foreground group-hover:text-accent mt-2.5 text-xl leading-snug font-bold sm:text-[22px]"
+    >
+      {title}
+    </Heading>
+    <p class="post-card-summary mt-1.5 line-clamp-2 text-[15px] leading-relaxed">
+      {description}
+    </p>
+    <time
+      class="post-card-date font-label mt-3 block text-[11px] tracking-[0.12em]"
+      datetime={dayjs(pubDatetime).toISOString()}
+    >
+      {date}
+    </time>
+  </a>
+</li>

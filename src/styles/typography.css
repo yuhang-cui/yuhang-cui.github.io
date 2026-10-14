@@ -1,0 +1,207 @@
+@plugin "@tailwindcss/typography";
+
+@layer base {
+  /* ===== Override default Tailwind Typography styles ===== */
+  .app-prose {
+    @apply prose;
+    font-weight: 500;
+    line-height: 1.88;
+    letter-spacing: 0.007em;
+
+    h1,
+    h2,
+    h3,
+    h4,
+    th {
+      @apply text-foreground mb-3;
+    }
+
+    h2 {
+      font-size: 1.375rem;
+    }
+
+    h3 {
+      font-size: 1.125rem;
+    }
+
+    p,
+    ol,
+    ul,
+    figcaption,
+    table,
+    code {
+      color: var(--prose);
+    }
+
+    strong {
+      @apply text-foreground font-semibold;
+    }
+
+    p,
+    li {
+      line-height: 1.88;
+    }
+
+    /* 多头 / 空头上色：<span class="bull">多头</span>  <span class="bear">空头</span> */
+    .bull {
+      color: var(--bull);
+    }
+    .bear {
+      color: var(--bear);
+    }
+
+    a {
+      @apply text-foreground hover:text-accent wrap-break-word decoration-dashed underline-offset-4 focus-visible:no-underline;
+    }
+
+    ul {
+      @apply overflow-x-clip;
+    }
+
+    li {
+      @apply marker:text-accent;
+    }
+
+    hr {
+      @apply border-border;
+    }
+
+    /* 图片卡片：白底、圆角、细阴影，像一张拍立得 */
+    img {
+      @apply mx-auto;
+      background: #ffffff;
+      padding: 8px;
+      border-radius: 16px;
+      box-shadow:
+        0 0 0 0.5px rgb(0 0 0 / 0.06),
+        0 1px 1px rgb(0 0 0 / 0.03),
+        0 4px 10px -2px rgb(0 0 0 / 0.05);
+    }
+
+    img[role="button"] {
+      @apply cursor-zoom-in;
+
+      &:focus-visible {
+        @apply outline-2 outline-offset-2 outline-dashed;
+      }
+    }
+
+    figcaption {
+      @apply opacity-75;
+    }
+
+    table {
+      th,
+      td {
+        @apply border-border border p-2;
+      }
+
+      th {
+        @apply py-1.5;
+      }
+
+      th[align="center"],
+      td[align="center"] {
+        text-align: center;
+      }
+
+      th[align="right"],
+      td[align="right"] {
+        text-align: right;
+      }
+
+      th[align="left"],
+      td[align="left"] {
+        text-align: left;
+      }
+    }
+
+    code {
+      @apply bg-muted/75 text-foreground rounded p-1 wrap-break-word before:content-none after:content-none;
+    }
+
+    .astro-code code {
+      @apply flex-[1_0_100%] bg-inherit p-0;
+    }
+
+    blockquote {
+      @apply border-s-accent/80 wrap-break-word opacity-80;
+      font-style: normal;
+    }
+
+    blockquote p::before,
+    blockquote p::after {
+      content: none;
+    }
+
+    ol > li::marker {
+      @apply font-semibold;
+    }
+
+    /* Notion 风格的高亮和下划线。文章里这样写：
+       <mark>黄色</mark>  <mark class="red">红色</mark>  <mark class="blue">蓝色</mark>  <mark class="gray">灰色</mark>  <u>下划线</u> */
+    mark {
+      @apply text-foreground rounded-sm px-0.5;
+      background: rgb(250 204 21 / 0.25);
+    }
+    mark.red {
+      background: rgb(239 68 68 / 0.12);
+      color: rgb(212 76 71);
+    }
+    mark.pink {
+      background: rgb(244 114 182 / 0.16);
+    }
+    mark.blue {
+      background: rgb(59 130 246 / 0.12);
+    }
+    mark.gray {
+      background: rgb(120 120 120 / 0.12);
+    }
+    u {
+      @apply decoration-accent underline-offset-4;
+      text-decoration-thickness: 2px;
+    }
+
+    details:not(.callout) {
+      @apply text-foreground inline-block cursor-pointer select-none [&_p]:hidden [&_ul]:my-0!;
+    }
+
+    summary {
+      @apply focus-visible:outline-accent focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-dashed;
+    }
+
+    pre {
+      @apply focus-visible:outline-accent focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-dashed;
+    }
+  }
+
+  html[data-theme="dark"] .app-prose mark.red {
+    color: rgb(255 115 105);
+  }
+
+  /* ===== Code Blocks & Syntax Highlighting ===== */
+  .astro-code {
+    @apply outline-border flex border bg-(--shiki-light-bg) text-(--shiki-light) [&_span]:text-(--shiki-light);
+  }
+
+  html[data-theme="dark"] .astro-code {
+    @apply bg-(--shiki-dark-bg) text-(--shiki-dark) [&_span]:text-(--shiki-dark);
+  }
+
+  /* Styles for Shiki transformers */
+  /* https://shiki.style/packages/transformers */
+  .astro-code {
+    .line.diff.add {
+      @apply relative inline-block w-full bg-green-400/20 before:absolute before:-left-3 before:text-green-500 before:content-['+'];
+    }
+    .line.diff.remove {
+      @apply relative inline-block w-full bg-red-500/20 before:absolute before:-left-3 before:text-red-500 before:content-['-'];
+    }
+    .line.highlighted {
+      @apply inline-block w-full bg-slate-400/20;
+    }
+    .highlighted-word {
+      @apply border-border rounded-sm border px-0.5 py-px;
+    }
+  }
+}
