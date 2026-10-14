@@ -1,6 +1,8 @@
 ---
 title: "16 年交易日的统计：昨日高低点到底有多重要"
 description: "用 ES 16 年、3894 个完整交易日回测：今天会不会突破昨天 RTH 的最高点或最低点？89.8% 的日子至少突破一侧，几乎完美对应 Al Brooks 说的“90% 法则”。"
+stat: "89.8%"
+statLabel: "至少突破昨日一侧"
 pubDatetime: 2026-06-13T20:00:00+08:00
 tags: [research, ES, prior-day-levels]
 ---

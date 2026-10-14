@@ -28,32 +28,20 @@ const homePath = getRelativeLocaleUrl(locale, "");
     data-home-path={homePath}
     class="app-layout my-1"
   >
-    <section id="hero" class="border-border border-b pt-8 pb-6">
-      <h1 class="my-4 inline-block text-4xl font-semibold sm:my-8 sm:text-5xl">
-        PA Research
+    <section id="hero" class="pt-10 pb-4 sm:pt-14">
+      <p class="post-meta">PA Research · ES 1-min · 2010–2026</p>
+      <h1 class="text-foreground mt-3 text-3xl leading-tight font-semibold sm:text-[40px]">
+        用数据检验 Price Action 的常见说法
       </h1>
-
-      <p>
-        这里是兰森的交易研究笔记（示例文字）。我做 ES 期货日内交易，用 16 年的 1 分钟数据检验 Price Action 里的常见说法：哪些成立，哪些只是传说。
+      <p class="mt-5 text-[16.5px] leading-[1.85]" style="color: var(--summary)">
+        这里是兰森的交易研究笔记（示例文字）。我做 ES 期货日内交易，用 16 年的 1 分钟数据检验 Price Action 里的常见说法：哪些成立，哪些只是传说。每篇研究都写清楚数据、规则和局限，方便你自己复现。
       </p>
-      <p class="mt-2">
-        每篇研究都写清楚数据、规则和局限，方便你自己复现。
-      </p>
-      <AboutCard variant="inline" />
     </section>
 
     {
       featuredPosts.length > 0 && (
-        <section
-          id="featured"
-          class:list={[
-            "pt-12 pb-6",
-            { "border-border border-b": recentPosts.length > 0 },
-          ]}
-        >
-          <h2 class="text-foreground text-2xl font-bold sm:text-[28px]">
-            {t.home.featured}
-          </h2>
+        <section id="featured" class="pt-12">
+          <h2 class="section-label">{t.home.featured}</h2>
           <ul>
             {featuredPosts.map(data => (
               <Card variant="h3" {...data} />
@@ -65,10 +53,8 @@ const homePath = getRelativeLocaleUrl(locale, "");
 
     {
       recentPosts.length > 0 && (
-        <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-foreground text-2xl font-bold sm:text-[28px]">
-            {t.home.recentPosts}
-          </h2>
+        <section id="recent-posts" class="pt-12 pb-10">
+          <h2 class="section-label">{t.home.recentPosts}</h2>
           <ul>
             {recentPosts.map(data => (
               <Card variant="h3" {...data} />
@@ -78,6 +64,8 @@ const homePath = getRelativeLocaleUrl(locale, "");
       )
     }
 
+    <!-- 窄屏时个人介绍放在文章列表之后，不再把文章挤到第二屏 -->
+    <AboutCard variant="inline" />
   </main>
   <Footer />
 </Layout>

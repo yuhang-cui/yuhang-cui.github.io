@@ -4,7 +4,7 @@
   /* ===== Override default Tailwind Typography styles ===== */
   .app-prose {
     @apply prose;
-    font-weight: 500;
+    font-weight: 400;
     line-height: 1.88;
     letter-spacing: 0.007em;
 

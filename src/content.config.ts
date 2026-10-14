@@ -14,6 +14,9 @@ const posts = defineCollection({
       modDatetime: z.date().optional().nullable(),
       title: z.string(),
       featured: z.boolean().optional(),
+      // 文章的核心数字，显示在列表右侧，例如 stat: "89.8%"，statLabel: "至少突破一侧"
+      stat: z.string().optional(),
+      statLabel: z.string().optional(),
       draft: z.boolean().optional(),
       tags: z.array(z.string()).default(["others"]),
       ogImage: image().or(z.string()).optional(),

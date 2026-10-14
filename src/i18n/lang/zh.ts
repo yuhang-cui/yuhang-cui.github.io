@@ -29,8 +29,8 @@ export default {
   },
   home: {
     socialLinks: "联系方式",
-    featured: "Featured",
-    recentPosts: "Latest",
+    featured: "精选",
+    recentPosts: "最新",
     allPosts: "全部文章",
   },
   footer: {

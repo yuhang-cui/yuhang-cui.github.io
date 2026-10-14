@@ -5,7 +5,6 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { getPostUrl } from "@/utils/getPostPaths";
 import { toTransitionName } from "@/utils/toTransitionName";
-import { tagColorClass } from "@/utils/tagColor";
 import config from "@/config";
 
 dayjs.extend(utc);
@@ -17,7 +16,15 @@ type Props = {
 
 const { variant: Heading = "h2", id, data, filePath } = Astro.props;
 
-const { title, description, tags, pubDatetime, timezone: postTimezone } = data;
+const {
+  title,
+  description,
+  tags,
+  pubDatetime,
+  timezone: postTimezone,
+  stat,
+  statLabel,
+} = data;
 
 // 第一个标签当作文章分类，显示在标题上方
 const category = tags[0];
@@ -26,26 +33,34 @@ const date = dayjs(pubDatetime)
   .format("YYYY-MM-DD");
 ---
 
-<li class="my-4">
+<li class="post-item">
   <a
     href={getPostUrl(id, filePath, Astro.currentLocale)}
-    class="post-card group block rounded-xl border px-5 py-4 sm:px-6 sm:py-5"
+    class:list={["post-link group", { "post-link--stat": stat }]}
   >
-    {category && <span class:list={["tag-pill", tagColorClass(category)]}>{category}</span>}
-    <Heading
-      transition:name={toTransitionName(id)}
-      class="text-foreground group-hover:text-accent mt-2.5 text-xl leading-snug font-bold sm:text-[22px]"
-    >
-      {title}
-    </Heading>
-    <p class="post-card-summary mt-1.5 line-clamp-2 text-[15px] leading-relaxed">
-      {description}
-    </p>
-    <time
-      class="post-card-date font-label mt-3 block text-[11px] tracking-[0.12em]"
-      datetime={dayjs(pubDatetime).toISOString()}
-    >
-      {date}
-    </time>
+    <div>
+      <p class="post-meta">
+        {category && <span class="post-meta-cat">{category}</span>}
+        {category && <span aria-hidden="true"> · </span>}
+        <time datetime={dayjs(pubDatetime).toISOString()}>{date}</time>
+      </p>
+      <Heading
+        transition:name={toTransitionName(id)}
+        class="text-foreground group-hover:text-accent mt-2 text-lg leading-snug font-semibold transition-colors sm:text-xl"
+      >
+        {title}
+      </Heading>
+      <p class="post-card-summary mt-1.5 line-clamp-2 text-[15px] leading-relaxed">
+        {description}
+      </p>
+    </div>
+    {
+      stat && (
+        <div class="post-stat">
+          <span class="post-stat-num">{stat}</span>
+          {statLabel && <span class="post-stat-label">{statLabel}</span>}
+        </div>
+      )
+    }
   </a>
 </li>
