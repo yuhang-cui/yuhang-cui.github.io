@@ -30,7 +30,7 @@ export default {
   home: {
     socialLinks: "联系方式",
     featured: "Featured",
-    recentPosts: "Recent",
+    recentPosts: "Latest",
     allPosts: "全部文章",
   },
   footer: {

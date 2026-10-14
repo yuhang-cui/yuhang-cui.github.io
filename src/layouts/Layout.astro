@@ -5,6 +5,7 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 import { resolveDefaultOgImagePath } from "@/utils/resolveDefaultOgImagePath";
 import { getAssetPath } from "@/utils/withBase";
 import config from "@/config";
+import AboutCard from "@/components/AboutCard.astro";
 import "@/styles/global.css";
 
 type Props = {
@@ -103,11 +104,8 @@ const rssHref = getRelativeLocaleUrl(
     -->
     <script is:inline>
       (function () {
-        const stored = localStorage.getItem("theme");
-        const prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
-        const theme = stored ?? (prefersDark ? "dark" : "light");
+        // 网站固定使用浅色主题
+        const theme = "light";
         const root = document.firstElementChild;
         root?.setAttribute("data-theme", theme);
         root?.classList.toggle("dark", theme === "dark");
@@ -121,9 +119,7 @@ const rssHref = getRelativeLocaleUrl(
   <body
     class="bg-background font-app text-foreground selection:bg-accent/75 selection:text-accent-foreground flex min-h-svh flex-col"
   >
+    <AboutCard />
     <slot />
-    <script>
-      import "@/scripts/theme";
-    </script>
   </body>
 </html>

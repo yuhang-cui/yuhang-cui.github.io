@@ -43,7 +43,7 @@ const isActive = (path: string) => {
 </a>
 
 <header
-  class="app-layout flex flex-col items-center justify-between sm:flex-row"
+  class="app-layout bg-background sticky top-0 z-40 flex flex-col items-center justify-between sm:flex-row"
 >
   <div
     class="border-border bg-background relative flex w-full items-baseline justify-between border-b py-4 sm:items-center sm:py-6"
@@ -88,14 +88,6 @@ const isActive = (path: string) => {
             class:list={{ "active-nav": isActive("/tags") }}
           >
             {t.nav.tags}
-          </a>
-        </li>
-        <li class="col-span-2">
-          <a
-            href={getRelativeLocaleUrl(locale, "about")}
-            class:list={{ "active-nav": isActive("/about") }}
-          >
-            {t.nav.about}
           </a>
         </li>
         {
@@ -143,6 +135,13 @@ const isActive = (path: string) => {
             </li>
           )
         }
+        <li class="col-span-2 flex items-center justify-center">
+          <div class="lang-switch" aria-label="语言">
+            <span class="lang-active" aria-current="true">中文</span>
+            <span class="lang-sep" aria-hidden="true">/</span>
+            <button type="button" class="lang-off" title="英文版即将上线" aria-disabled="true">EN</button>
+          </div>
+        </li>
         {
           features.lightAndDarkMode && (
             <li class="col-span-1 flex items-center justify-center">

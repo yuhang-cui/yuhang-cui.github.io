@@ -95,3 +95,95 @@
   font-size: 13px;
   color: var(--faint);
 }
+
+/* ===== 左侧“关于我”卡片 ===== */
+.about-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / 0.03),
+    0 4px 10px -2px rgb(0 0 0 / 0.05);
+}
+.about-card-hi {
+  color: var(--faint);
+  font-size: 13px;
+}
+.about-card-name {
+  margin-top: 2px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+.about-card-text {
+  margin-top: 10px;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--summary);
+  font-weight: 400;
+}
+.about-card-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--faint);
+}
+.about-card-text + .about-card-text {
+  margin-top: 8px;
+}
+.about-card-links {
+  display: flex;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.about-card-links a {
+  display: block;
+  color: var(--summary);
+  transition: color 0.15s ease;
+}
+.about-card-links a:hover {
+  color: var(--accent);
+}
+/* 宽屏：固定在正文左侧（正文宽 768px，卡片宽 232px，间隔 40px） */
+.about-card--fixed {
+  display: none;
+  position: fixed;
+  top: 112px;
+  width: 232px;
+  left: calc(50% - 384px - 40px - 232px);
+  z-index: 10;
+}
+.about-card--inline {
+  margin-top: 1.5rem;
+}
+@media (min-width: 1360px) {
+  .about-card--fixed {
+    display: block;
+  }
+  .about-card--inline {
+    display: none;
+  }
+}
+
+/* ===== 右上角 中文 / EN 切换（EN 暂为占位） ===== */
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.lang-active {
+  color: var(--foreground);
+  font-weight: 600;
+  padding-bottom: 2px;
+  border-bottom: 2px solid var(--foreground);
+}
+.lang-sep {
+  color: var(--faint);
+}
+.lang-off {
+  color: var(--faint);
+  cursor: not-allowed;
+}

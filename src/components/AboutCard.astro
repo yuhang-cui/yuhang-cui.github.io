@@ -1,0 +1,46 @@
+---
+// 左侧个人介绍卡片。
+// fixed：宽屏时固定在页面左侧，跟着滚动不动；inline：窄屏时放在首页简介下方。
+import IconX from "@/assets/icons/socials/x.svg";
+import IconGithub from "@/assets/icons/socials/github.svg";
+import IconXiaohongshu from "@/assets/icons/socials/xiaohongshu.svg";
+
+type Props = { variant?: "fixed" | "inline" };
+const { variant = "fixed" } = Astro.props;
+
+// 联系方式：url 留 "#" 的是占位，之后换成真实链接
+const links = [
+  { name: "小红书", url: "#", Icon: IconXiaohongshu },
+  { name: "GitHub", url: "https://github.com/yuhang-cui", Icon: IconGithub },
+  { name: "X", url: "#", Icon: IconX },
+];
+---
+
+<aside class:list={["about-card", `about-card--${variant}`]} aria-label="关于我">
+  <p class="about-card-hi">Hi，</p>
+  <p class="about-card-name">我是兰森</p>
+  <p class="about-card-text">欢迎来到我的研究笔记。</p>
+  <p class="about-card-text">
+    我是一名学习 Al Brooks 价格行为的 Trader。Al 在书里给出了很多概率，我想用代码和历史数据，把它们一条条验证一遍。
+  </p>
+  <p class="about-card-text">
+    我也会把自己交易中的心得和感悟写在这里。我还在学习，写下的东西不一定都对，希望能帮助到你。
+  </p>
+  <p class="about-card-note">小红书同名：兰森</p>
+  <ul class="about-card-links">
+    {
+      links.map(({ name, url, Icon }) => (
+        <li>
+          <a
+            href={url}
+            title={url === "#" ? `${name}（链接待添加）` : name}
+            aria-label={name}
+            {...(url !== "#" && { target: "_blank", rel: "noopener noreferrer" })}
+          >
+            <Icon class="size-5" />
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</aside>

@@ -18,9 +18,9 @@ export default defineAstroPaperConfig({
     scheduledPostMargin: 15 * 60 * 1000,
   },
   features: {
-    lightAndDarkMode: true,
+    lightAndDarkMode: false,
     dynamicOgImage: false,
-    showArchives: true,
+    showArchives: false,
     showBackButton: true,
     editPost: { enabled: false },
     search: "pagefind",
