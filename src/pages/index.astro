@@ -28,19 +28,12 @@ const homePath = getRelativeLocaleUrl(locale, "");
     data-home-path={homePath}
     class="app-layout my-1"
   >
-    <section id="hero" class="pt-10 pb-4 sm:pt-14">
-      <p class="post-meta">PA Research · ES 1-min · 2010–2026</p>
-      <h1 class="text-foreground mt-3 text-3xl leading-tight font-semibold sm:text-[40px]">
-        用数据检验 Price Action 的常见说法
-      </h1>
-      <p class="mt-5 text-[16.5px] leading-[1.85]" style="color: var(--summary)">
-        这里是兰森的交易研究笔记（示例文字）。我做 ES 期货日内交易，用 16 年的 1 分钟数据检验 Price Action 里的常见说法：哪些成立，哪些只是传说。每篇研究都写清楚数据、规则和局限，方便你自己复现。
-      </p>
-    </section>
+    <!-- 页面不显示大标题，但保留一个隐藏的标题，供搜索引擎和读屏软件识别 -->
+    <h1 class="sr-only">{config.site.title}</h1>
 
     {
       featuredPosts.length > 0 && (
-        <section id="featured" class="pt-12">
+        <section id="featured" class="pt-10">
           <h2 class="section-label">{t.home.featured}</h2>
           <ul>
             {featuredPosts.map(data => (
