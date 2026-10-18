@@ -1,6 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import config from "@/config";
+import { useTranslations } from "@/i18n";
 
 type Props = {
   noMarginTop?: boolean;
@@ -9,6 +9,7 @@ type Props = {
 const { noMarginTop = false, class: className, ...attrs } = Astro.props;
 
 const currentYear = new Date().getFullYear();
+const t = useTranslations(Astro.currentLocale);
 ---
 
 <footer
@@ -19,6 +20,6 @@ const currentYear = new Date().getFullYear();
     class="border-border flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t py-6 text-[13px]"
     style="color: var(--faint)"
   >
-    <span>&#169; {currentYear} {config.site.author}</span>
+    <span>&#169; {currentYear} {t.site.author}</span>
   </div>
 </footer>

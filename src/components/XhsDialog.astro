@@ -1,13 +1,16 @@
 ---
 // 小红书二维码弹窗：点击个人卡片里的小红书图标时打开。
 // 手机没法扫自己屏幕上的二维码，所以下面另外放一个直接打开主页的链接。
+import { useTranslations } from "@/i18n";
+
 const XHS_PROFILE = "https://www.xiaohongshu.com/user/profile/60e019cb0000000001000ef1";
+const t = useTranslations(Astro.currentLocale);
 ---
 
-<dialog id="xhs-dialog" class="xhs-dialog" aria-label="小红书二维码">
-  <button type="button" class="xhs-dialog-close" aria-label="关闭" data-xhs-close>×</button>
-  <img src="/xiaohongshu-card.webp" alt="兰森的小红书二维码" width="900" height="1250" loading="lazy" />
-  <a class="xhs-dialog-link" href={XHS_PROFILE} target="_blank" rel="noopener noreferrer">在小红书打开 →</a>
+<dialog id="xhs-dialog" class="xhs-dialog" aria-label={t.xhs.dialogLabel}>
+  <button type="button" class="xhs-dialog-close" aria-label={t.xhs.close} data-xhs-close>×</button>
+  <img src="/xiaohongshu-card.webp" alt={t.xhs.qrAlt} width="900" height="1250" loading="lazy" />
+  <a class="xhs-dialog-link" href={XHS_PROFILE} target="_blank" rel="noopener noreferrer">{t.xhs.open}</a>
 </dialog>
 
 <script>

@@ -1,0 +1,7 @@
+I have a CSV of cleaned 1-minute ES futures bars (Databento's ES.c.0 continuous contract, with columns ts_event, high, low; timestamps in UTC). Please write Python code that measures whether today's RTH breaks today's overnight high or low. Rules:
+1. Convert timestamps to US Eastern time (US/Eastern), handling daylight saving time automatically. RTH = 09:30–16:15, meaning 1-minute bars from 09:30 to 16:14 (405 bars).
+2. Overnight session = previous trading day 16:15 to 09:29 today. In practice: bars after 16:15 belong to the next trading day that has an RTH session; bars before 09:30 belong to today (or, if today has no RTH session, to the next trading day). Overnight high / low = the highest high / lowest low in that window.
+3. Skip days with an incomplete overnight session: fewer than 800 one-minute bars.
+4. Upside breakout: today's RTH high is strictly greater than the overnight high (equal doesn't count, i.e. at least 1 tick of 0.25 above). Downside breakout: today's RTH low is strictly less than the overnight low.
+5. Put each day into one of four outcomes: up only, down only, both sides, neither. Print the sample size, the share of each outcome, the share of days that broke at least one side, and a table by year.
+Please add comments to every step explaining why it's done that way.

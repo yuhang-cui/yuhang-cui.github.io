@@ -313,7 +313,7 @@ a.tag-pill:hover {
   }
 }
 
-/* ===== 右上角 中文 / EN 切换（EN 暂为占位） ===== */
+/* ===== 右上角 中文 / EN 切换：当前语言加下划线，另一种语言是链接 ===== */
 .lang-switch {
   display: flex;
   align-items: center;
@@ -331,7 +331,10 @@ a.tag-pill:hover {
 }
 .lang-off {
   color: var(--faint);
-  cursor: not-allowed;
+  transition: color 0.15s ease;
+}
+.lang-off:hover {
+  color: var(--foreground);
 }
 
 /* ===== 小红书二维码弹窗 ===== */
@@ -727,4 +730,496 @@ a.tag-pill:hover {
   .toc-inline {
     display: none;
   }
+}
+
+/* ===== 文章图片下方的小字说明（Markdown 图片后紧跟 <p class="img-caption">） ===== */
+.app-prose .img-caption {
+  margin-top: -0.75rem;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--faint);
+}
+
+/* ===== 学习路线：两个来源对照学习（左右两张卡片，中间双向箭头） ===== */
+.app-prose .pair-study {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 12px;
+  margin: 1.5rem 0;
+}
+.app-prose .pair-study-card {
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid rgb(0 0 0 / 0.09);
+  border-radius: 14px;
+  background: #fbfbf9;
+}
+.app-prose .pair-study-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.app-prose .pair-study-name a {
+  color: var(--foreground);
+}
+.app-prose .pair-study-desc {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--summary);
+}
+.app-prose .pair-study-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--faint);
+}
+.app-prose .pair-study-link span {
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--accent);
+}
+@media (max-width: 560px) {
+  .app-prose .pair-study {
+    grid-template-columns: 1fr;
+  }
+  .app-prose .pair-study-link {
+    flex-direction: row;
+    gap: 8px;
+  }
+  .app-prose .pair-study-link br {
+    display: none;
+  }
+  .app-prose .pair-study-link span {
+    transform: rotate(90deg);
+  }
+}
+
+/* ===== 学习路线：分层的播放列表（上下有先后，同一层并列） ===== */
+.app-prose .path-tiers {
+  counter-reset: tier;
+  margin: 1.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+.app-prose .path-tiers > li {
+  counter-increment: tier;
+  position: relative;
+  margin: 0;
+  padding: 0 0 22px 40px;
+}
+.app-prose .path-tiers > li::marker {
+  content: none;
+}
+/* 左侧编号圆点 + 连接线 */
+.app-prose .path-tiers > li::before {
+  content: counter(tier);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+.app-prose .path-tiers > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 30px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--border);
+}
+.app-prose .path-tier-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 2px 0 10px;
+  line-height: 1.5;
+}
+.app-prose .path-tier-head b {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.app-prose .path-tier-head span {
+  font-size: 13px;
+  color: var(--faint);
+}
+.app-prose .path-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+.app-prose .path-chips span {
+  padding: 6px 12px;
+  border: 1px solid rgb(0 0 0 / 0.09);
+  border-radius: 10px;
+  background: #fbfbf9;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--prose);
+}
+
+/* ===== 突破统计的可交互卡片（BreakoutExplorer） ===== */
+.bx {
+  margin: 1.75rem 0;
+  padding: 20px 22px 22px;
+  border: 1px solid rgb(0 0 0 / 0.09);
+  border-radius: 16px;
+  background: #fbfbf9;
+  font-variant-numeric: tabular-nums;
+}
+.bx p {
+  margin: 0;
+}
+.bx .bx-up { background: color-mix(in srgb, var(--bull) 82%, white); }
+.bx .bx-down { background: color-mix(in srgb, var(--bear) 78%, white); }
+.bx .bx-both { background: #8a62b3; }
+.bx .bx-none { background: #cfcac2; }
+
+.bx-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 20px;
+}
+.bx-switch {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--muted);
+}
+.bx-switch button {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--summary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.bx-switch button[aria-pressed="true"] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.bx-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--faint);
+}
+.bx-range select,
+.bx-reset {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 14px;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.bx-reset:hover,
+.bx-range select:hover {
+  border-color: var(--muted-foreground);
+}
+
+.bx-hero-k {
+  font-size: 13px;
+  color: var(--summary);
+}
+.bx-hero-v {
+  margin-top: 2px !important;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+.bx-hero-n {
+  margin-top: 4px !important;
+  font-size: 13px;
+  color: var(--faint);
+}
+.bx-bar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  min-width: 0;
+}
+.bx-view > .bx-bar {
+  height: 22px;
+  margin-top: 14px;
+}
+.bx-seg {
+  min-width: 2px;
+}
+.bx-bar .bx-seg:first-child { border-radius: 4px 0 0 4px; }
+.bx-bar .bx-seg:last-child { border-radius: 0 4px 4px 0; }
+
+.bx-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.bx-tile {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+}
+.bx-tile-k {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--summary);
+}
+.bx-tile-k i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.bx-tile-v {
+  margin-top: 2px !important;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.bx-tile-n {
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.bx-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-top: 24px !important;
+  margin-bottom: 8px !important;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.bx-sub span {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--faint);
+}
+.bx-years,
+.bx-cmps {
+  display: grid;
+  gap: 2px;
+}
+.bx-year,
+.bx-cmp {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: 13px;
+  color: var(--prose);
+  text-align: left;
+}
+.bx-year {
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.bx-year:hover {
+  background: rgb(0 0 0 / 0.04);
+}
+.bx-year.is-off {
+  opacity: 0.35;
+}
+.bx-cmp {
+  grid-template-columns: 104px minmax(0, 1fr) 48px;  /* 英文“Overnight H/L”也放得下一行 */
+  padding: 5px 4px;
+}
+.bx-cmp .bx-bar {
+  height: 18px;
+}
+.bx-cmp.is-current .bx-cmp-name {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.bx-year-v {
+  text-align: right;
+  color: var(--summary);
+}
+
+@media (max-width: 560px) {
+  .bx {
+    padding: 16px 14px 18px;
+  }
+  .bx-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bx-hero-v {
+    font-size: 34px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bx-switch button,
+  .bx-year {
+    transition: none;
+  }
+}
+
+/* ===== 研究卡片：定义 / Prompt / Python 三个标签页（ResearchCard） ===== */
+.app-prose .rc {
+  margin: 1.75rem 0;
+  border: 1px solid rgb(0 0 0 / 0.09);
+  border-radius: 16px;
+  background: #fbfbf9;
+  overflow: hidden;
+}
+.app-prose .rc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 16px 22px 0;
+}
+.app-prose .rc-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+.app-prose .rc-tabs {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--muted);
+}
+.app-prose .rc-tabs button {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--summary);
+  cursor: pointer;
+}
+.app-prose .rc-tabs button[aria-selected="true"] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.app-prose .rc-panel {
+  position: relative;
+  margin-top: 14px;
+  padding: 16px 22px 20px;
+  border-top: 1px solid rgb(0 0 0 / 0.08);
+}
+.app-prose .rc-def {
+  font-size: 14.5px;
+  line-height: 1.8;
+}
+.app-prose .rc-def > :first-child {
+  margin-top: 0;
+}
+.app-prose .rc-def > :last-child {
+  margin-bottom: 0;
+}
+.app-prose .rc-def ul {
+  margin: 0.4em 0;
+}
+.app-prose .rc-def li {
+  margin: 0.2em 0;
+}
+.app-prose .rc-pre {
+  max-height: 420px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  background: none;
+  border: 0;
+  color: var(--prose);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.app-prose .rc-prose {
+  font-family: var(--font-app);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.app-prose .rc-code {
+  font-family: var(--font-label);
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre;
+  word-break: normal;
+}
+.app-prose .rc-copy {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 1;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 12.5px;
+  color: var(--summary);
+  cursor: pointer;
+}
+.app-prose .rc-copy:hover {
+  color: var(--foreground);
+  border-color: var(--muted-foreground);
+}
+.app-prose .rc-panel:has(.rc-copy) .rc-pre {
+  padding-top: 30px;
+}
+
+/* ===== 表格下方的小字备注 ===== */
+.app-prose .table-note {
+  margin-top: -0.5rem;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--faint);
+}
+
+/* ===== 结论里最重要的一句：加粗 + 字底下一道浅蓝荧光笔线 ===== */
+.app-prose .takeaway {
+  font-weight: 600;
+  color: var(--foreground);
+  /* 只画在字的下半部分：中文字体的行框比字形高，线要停在字底附近，不能贴着行框底边 */
+  background: linear-gradient(
+    transparent 52%,
+    color-mix(in srgb, var(--accent) 30%, transparent) 52%,
+    color-mix(in srgb, var(--accent) 30%, transparent) 88%,
+    transparent 88%
+  );
 }

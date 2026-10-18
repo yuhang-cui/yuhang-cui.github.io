@@ -24,6 +24,8 @@ const posts = defineCollection({
       canonicalURL: z.string().optional(),
       hideEditPost: z.boolean().optional(),
       timezone: z.string().optional(),
+      // 文章语言：中文文章不用写；英文版放在同一个文件夹里，文件名 index.en.md(x)，写 lang: en
+      lang: z.enum(["zh", "en"]).default("zh"),
     }),
 });
 
@@ -34,6 +36,7 @@ const pages = defineCollection({
     description: z.string().optional(),
     ogImage: z.string().optional(),
     canonicalURL: z.string().optional(),
+    lang: z.enum(["zh", "en"]).default("zh"),
   }),
 });
 

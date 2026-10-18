@@ -1,0 +1,98 @@
+---
+title: "Breaking the Overnight High or Low: 94.4% of Days Break at Least One Side"
+description: "A backtest on 3,878 ES trading days from 2010 to 2026 with a complete overnight session: does today's RTH break the overnight (Globex) high or low? 94.4% of days break at least one side, and both sides break more than twice as often as with the prior day's range."
+stat: "94.4%"
+statLabel: "break at least one side of the overnight range"
+pubDatetime: 2026-05-08T20:00:00+08:00
+featured: true
+tags: [Research]
+lang: en
+---
+
+import BreakoutExplorer from "@/components/BreakoutExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./breakout.en.py?raw";
+
+> **Bottom line**: on **94.4%** of days, today's RTH breaks at least one side of today's overnight range. Only 5.6% of days break neither.
+>
+> One side at a time: the overnight high gets taken out **61.1%** of the time, the overnight low **54.6%**.
+>
+> <span class="takeaway">How I use it: once you've decided which way you're trading today, the overnight high or low on that side is a fairly reliable target.</span>
+
+The overnight session is also called Globex (the old-school traders' name) or ETH.
+
+<BreakoutExplorer defaultRef="globex" />
+
+## The overnight range almost always breaks
+
+Out of 3,878 trading days, **94.4%** broke at least one side of the overnight range.
+
+And it's steady: every year falls between 88.2% and 97.5%. Even the lowest year, 2020, came close to nine in ten.
+
+## The rest: two-sided breaks are more common
+
+- **Both sides broken (21.2%)**: about one day in five, RTH breaks both the top and the bottom of the overnight range.
+- **Neither side broken (5.6%)**: RTH stays inside the overnight range all day. That's rare.
+
+## A weak direction bias
+
+Up only is **39.8%**, down only **33.3%**, a 6.5-point gap. In 16 years, 5 had more downside breaks than upside: 2010, 2012, 2015, 2016 and 2022.
+
+Were those 5 years all down years? I checked against the data, and **no**:
+
+| Year | ES full-year change | Overnight high broken | Overnight low broken |
+|---|---:|---:|---:|
+| 2010 (from June) | +17.9% | 56.7% | 59.0% |
+| 2012 | +11.9% | 55.4% | 58.4% |
+| 2015 | −0.1% | 53.4% | 61.3% |
+| 2016 | +11.7% | 53.9% | 60.1% |
+| 2022 | −19.0% | 59.7% | 63.4% |
+
+<p class="table-note">Full-year change: from the RTH open on the year's first trading day to the RTH close on its last. The continuous contract isn't back-adjusted, so roll gaps are included and this is only approximate.</p>
+
+Only 2022 was a real bear market. 2015 was basically flat, and the other three years were up for the year. On the flip side, 2011 (−0.8%) and 2018 (−6.7%) finished down, yet the overnight range still broke to the upside more often.
+
+So the full-year move has little to do with which way RTH breaks the overnight range. The overnight range is redrawn every day, and the side that breaks reflects that day's action, not the year's trend. Even in 2022, a bear market down 19% for the year, the overnight low broke only 3.7 points more often than the high.
+
+## By year: wider overnight ranges, lower break rates
+
+Broadly, the wider the overnight range relative to RTH, the lower the break rate. The lowest and highest years:
+
+| Year | Overnight width / RTH width (median) | At least one side broken |
+|---|---:|---:|
+| 2020 | 0.98 | 88.2% |
+| 2019 | 0.85 | 90.0% |
+| 2023 | 0.66 | 97.5% |
+
+<p class="table-note">Overnight width / RTH width: for each day, divide "overnight high − overnight low" by "that day's RTH high − RTH low", then take the median across the year's trading days. It's not a percentage of price but the relative width of the two ranges: 0.98 means that on a typical day that year, the overnight range was about as wide as RTH; 0.66 means it was only about two-thirds as wide.</p>
+
+2020 was extremely volatile. The overnight range was almost as wide as RTH, so RTH had a harder time getting outside it. In 2023 the overnight range was relatively narrow, and RTH broke out of it almost every day.
+
+## Compared with the prior day's high and low
+
+Switch to "Prior day H/L" and you'll see the prior day's range breaks a bit less often (89.6%), and both sides break less than half as often as with the overnight range (9.7% vs 21.2%).
+
+The reason is the width of the two ranges. The overnight range is narrower, with a median of only 0.77 of the same day's RTH range. Yesterday's RTH range is about as wide as today's, with a median of 1.01. The narrower the range, the higher the odds of a one-sided or two-sided break. See [Breaking the Prior Day's High or Low](/en/posts/prior-day-high-low/).
+
+## Definition and how to reproduce it
+
+<ResearchCard title="Breaking the overnight high or low" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09. See [how I cleaned it](/en/posts/data-cleaning/).
+- **RTH**: 09:30–16:15 US Eastern, i.e. 1-minute bars from 09:30 to 16:14, or 81 five-minute bars.
+- **Overnight session**: previous trading day 16:15 to 09:29 today. The overnight high / low is the highest high / lowest low in that window.
+- **Skipped days**: the 46 days with incomplete overnight data (fewer than 800 one-minute bars) don't count, leaving 3,878.
+- **Upside breakout**: today's RTH high is **strictly above** the overnight high, i.e. at least 1 tick (0.25 points) higher. Exactly equal doesn't count.
+- **Downside breakout**: today's RTH low is strictly below the overnight low.
+- **Four outcomes**: up only, down only, both sides, neither.
+
+</ResearchCard>
+
+## Limitations
+
+- **It only checks whether price broke, not how far**: one tick beyond is a breakout. The overnight range is narrow to begin with, so a break doesn't mean a trend.
+- **It doesn't track which side broke first**: on two-sided days, up-then-down and down-then-up are lumped together.
+- **The 46 days with incomplete overnight data are excluded**: RTH was normal on those days; only part of the overnight data is missing.
+
+(Updated in October 2026: recalculated with the cleaned data, replaced the earlier sample numbers, and added the interactive stats and the reproduction card.)

@@ -24,7 +24,7 @@ export default defineConfig({
   outDir: "./dist.nosync", // 以 .nosync 结尾，iCloud 不会同步构建产物
   devToolbar: { enabled: false }, // 关闭本地预览时底部的 Astro 开发工具栏
   // 文章列表页已删除（首页就是全部文章），旧链接跳回首页
-  redirects: { "/posts": "/" },
+  redirects: { "/posts": "/", "/en/posts": "/en/" },
   integrations: [
     mdx(),
     sitemap({
@@ -33,7 +33,7 @@ export default defineConfig({
     }),
   ],
   i18n: {
-    locales: ["zh"],
+    locales: ["zh", "en"],
     defaultLocale: "zh",
     routing: {
       prefixDefaultLocale: false,

@@ -1,0 +1,86 @@
+---
+// 研究卡片：同一项研究的三种写法，用标签页切换。
+// 定义写在卡片的内容里（slot）；prompt 和 code 是纯文本，从文章文件夹里的 .txt / .py 读进来（?raw）。
+import { useTranslations } from "@/i18n";
+
+type Props = {
+  title: string;
+  prompt: string;
+  code: string;
+};
+const { title, prompt, code } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
+const id = `rc-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<section class="rc" aria-label={title} data-copy={t.research.copy} data-copied={t.research.copied}>
+  <div class="rc-head">
+    <p class="rc-title">{title}</p>
+    <div class="rc-tabs" role="tablist">
+      <button type="button" role="tab" id={`${id}-t0`} aria-controls={`${id}-p0`} aria-selected="true">{t.research.definition}</button>
+      <button type="button" role="tab" id={`${id}-t1`} aria-controls={`${id}-p1`} aria-selected="false" tabindex="-1">Prompt</button>
+      <button type="button" role="tab" id={`${id}-t2`} aria-controls={`${id}-p2`} aria-selected="false" tabindex="-1">Python</button>
+    </div>
+  </div>
+
+  <div class="rc-panel rc-def" role="tabpanel" id={`${id}-p0`} aria-labelledby={`${id}-t0`}>
+    <slot />
+  </div>
+  <div class="rc-panel" role="tabpanel" id={`${id}-p1`} aria-labelledby={`${id}-t1`} hidden>
+    <button type="button" class="rc-copy">{t.research.copy}</button>
+    <pre class="rc-pre rc-prose">{prompt.trim()}</pre>
+  </div>
+  <div class="rc-panel" role="tabpanel" id={`${id}-p2`} aria-labelledby={`${id}-t2`} hidden>
+    <button type="button" class="rc-copy">{t.research.copy}</button>
+    <pre class="rc-pre rc-code">{code.trim()}</pre>
+  </div>
+</section>
+
+<script>
+  document.addEventListener("click", async e => {
+    const t = e.target as HTMLElement;
+
+    const tab = t.closest<HTMLButtonElement>(".rc-tabs [role=tab]");
+    if (tab) {
+      const card = tab.closest(".rc")!;
+      card.querySelectorAll<HTMLButtonElement>("[role=tab]").forEach(b => {
+        const on = b === tab;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+        card.querySelector<HTMLElement>(`#${b.getAttribute("aria-controls")}`)!.hidden = !on;
+      });
+      return;
+    }
+
+    const copy = t.closest<HTMLButtonElement>(".rc-copy");
+    if (copy) {
+      const text = copy.parentElement!.querySelector("pre")!.textContent ?? "";
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // 小红书 / 微信内置浏览器可能禁用剪贴板 API，退回老办法
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      const card = copy.closest<HTMLElement>(".rc")!;
+      copy.textContent = card.dataset.copied!;
+      setTimeout(() => (copy.textContent = card.dataset.copy!), 1600);
+    }
+  });
+
+  // 左右方向键在标签之间切换
+  document.addEventListener("keydown", e => {
+    const tab = (e.target as HTMLElement).closest<HTMLButtonElement>(".rc-tabs [role=tab]");
+    if (!tab || (e.key !== "ArrowRight" && e.key !== "ArrowLeft")) return;
+    const tabs = Array.from(tab.parentElement!.querySelectorAll<HTMLButtonElement>("[role=tab]"));
+    const next = tabs[(tabs.indexOf(tab) + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+    next.focus();
+    next.click();
+  });
+</script>

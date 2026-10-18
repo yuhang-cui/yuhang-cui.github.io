@@ -4,27 +4,29 @@
 import IconX from "@/assets/icons/socials/x.svg";
 import IconGithub from "@/assets/icons/socials/github.svg";
 import IconXiaohongshu from "@/assets/icons/socials/xiaohongshu.svg";
+import { useTranslations } from "@/i18n";
 
 type Props = { variant?: "fixed" | "inline" };
 const { variant = "fixed" } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
 
 // 联系方式：url 留 "#" 的是占位，之后换成真实链接；qr: true 表示点击后弹出二维码
 const links = [
-  { name: "小红书", url: "https://www.xiaohongshu.com/user/profile/60e019cb0000000001000ef1", Icon: IconXiaohongshu, qr: true },
+  { name: t.aboutCard.xiaohongshu, url: "https://www.xiaohongshu.com/user/profile/60e019cb0000000001000ef1", Icon: IconXiaohongshu, qr: true },
   { name: "GitHub", url: "https://github.com/yuhang-cui", Icon: IconGithub },
   { name: "X", url: "#", Icon: IconX },
 ];
 ---
 
-<aside class:list={["about-card", `about-card--${variant}`]} aria-label="关于我">
-  <p class="about-card-hi">Hi，</p>
-  <p class="about-card-name">我是兰森</p>
-  <p class="about-card-text">欢迎来到我的研究笔记。</p>
+<aside class:list={["about-card", `about-card--${variant}`]} aria-label={t.aboutCard.label}>
+  <p class="about-card-hi">{t.aboutCard.hi}</p>
+  <p class="about-card-name">{t.aboutCard.name}</p>
+  <p class="about-card-text">{t.aboutCard.welcome}</p>
   <p class="about-card-text">
-    我是一名学习 Al Brooks 价格行为的 Trader。Al 在书里给出了很多概率，我想用代码和历史数据，把它们一条条验证一遍。
+    {t.aboutCard.intro}
   </p>
   <p class="about-card-text">
-    我也会把自己交易中的心得和刻意练习的技巧与感悟写在这里，希望能帮助到你。
+    {t.aboutCard.practice}
   </p>
   <ul class="about-card-links">
     {
@@ -32,7 +34,7 @@ const links = [
         <li>
           <a
             href={url}
-            title={url === "#" ? `${name}（链接待添加）` : name}
+            title={url === "#" ? `${name} (${t.aboutCard.linkPending})` : name}
             aria-label={name}
             {...(qr && { "data-xhs-open": "", "aria-haspopup": "dialog" })}
             {...(url !== "#" && { target: "_blank", rel: "noopener noreferrer" })}

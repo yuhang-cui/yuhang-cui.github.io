@@ -1,0 +1,11 @@
+---
+import type { GetStaticPathsOptions } from "astro";
+import CategoryPage from "../../../tags/[tag]/[...page].astro";
+import { categoryStaticPaths } from "@/utils/staticPaths";
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+  return categoryStaticPaths("en", paginate);
+}
+---
+
+<CategoryPage {...Astro.props} />

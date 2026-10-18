@@ -66,4 +66,73 @@ export interface UIStrings {
     message: string;
     goHome: string;
   };
+  site: {
+    title: string;
+    description: string;
+    author: string;
+  };
+  lang: {
+    label: string;
+    zh: string;
+    en: string;
+  };
+  aboutCard: {
+    label: string;
+    hi: string;
+    name: string;
+    welcome: string;
+    intro: string;
+    practice: string;
+    xiaohongshu: string;
+    linkPending: string;
+  };
+  xhs: {
+    dialogLabel: string;
+    close: string;
+    qrAlt: string;
+    open: string;
+  };
+  toc: {
+    title: string;
+  };
+  categories: {
+    count: string;
+    countOne: string;
+    empty: string;
+    desc: Record<string, string>;
+  };
+  research: {
+    definition: string;
+    copy: string;
+    copied: string;
+  };
+  promptCard: {
+    copyLabel: string;
+    copied: string;
+    expand: string;
+    collapse: string;
+  };
+  breakout: {
+    label: string;
+    refGroup: string;
+    fromYear: string;
+    toYear: string;
+    allYears: string;
+    up: string;
+    down: string;
+    both: string;
+    none: string;
+    prev: string;
+    globex: string;
+    days: string;
+    yearRange: string;
+    singleYear: string;
+    heroLabel: string;
+    sample: string;
+    share: string;
+    onlyYear: string;
+    byYear: string;
+    byYearHint: string;
+    compare: string;
+  };
 }

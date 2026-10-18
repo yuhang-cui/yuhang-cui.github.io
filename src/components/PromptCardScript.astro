@@ -1,11 +1,27 @@
 ---
 // Prompt 卡片的交互：自动给文章里每张 .prompt-card 加上“复制”和“展开全部”按钮。
 // 写文章时只需要写 HTML 结构（见 README 或 data-cleaning 那篇），按钮由这里自动生成。
+// 按钮文字按页面语言来，放在下面这个隐藏元素的 data 属性里给脚本读。
+import { useTranslations } from "@/i18n";
+
+const t = useTranslations(Astro.currentLocale);
 ---
+
+<div
+  id="prompt-card-i18n"
+  hidden
+  data-copy-label={t.promptCard.copyLabel}
+  data-copied={t.promptCard.copied}
+  data-expand={t.promptCard.expand}
+  data-collapse={t.promptCard.collapse}
+></div>
 
 <script>
   const COPY_ICON =
     '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>';
+
+  const label = (key: string) =>
+    document.getElementById("prompt-card-i18n")?.dataset[key] ?? "";
 
   function setup() {
     document.querySelectorAll<HTMLElement>(".prompt-card").forEach(item => {
@@ -18,7 +34,7 @@
       const copy = document.createElement("button");
       copy.type = "button";
       copy.className = "prompt-copy";
-      copy.setAttribute("aria-label", "复制这段 prompt");
+      copy.setAttribute("aria-label", label("copyLabel"));
       copy.innerHTML = COPY_ICON;
       head.appendChild(copy);
 
@@ -28,7 +44,7 @@
         const more = document.createElement("button");
         more.type = "button";
         more.className = "prompt-more";
-        more.textContent = "展开全部";
+        more.textContent = label("expand");
         item.appendChild(more);
       }
     });
@@ -53,7 +69,7 @@
         ta.remove();
       }
       copy.classList.add("is-done");
-      copy.setAttribute("data-tip", "已复制");
+      copy.setAttribute("data-tip", label("copied"));
       setTimeout(() => { copy.classList.remove("is-done"); copy.removeAttribute("data-tip"); }, 1600);
       return;
     }
@@ -61,7 +77,7 @@
     if (more) {
       const item = more.closest(".prompt-card")!;
       const open = item.classList.toggle("is-open");
-      more.textContent = open ? "收起" : "展开全部";
+      more.textContent = open ? label("collapse") : label("expand");
     }
   });
 

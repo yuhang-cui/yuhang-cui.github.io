@@ -22,8 +22,8 @@ function getIdSlug(id: string): string {
 
 function getPostSlugPath(id: string, filePath: string | undefined): string {
   const pathSegments = getPostPathSegments(filePath);
-  // 一篇文章一个文件夹（posts/eth-breakout/index.md）时，网址只用文件夹名
-  if (/\/index\.mdx?$/.test(filePath ?? "") && pathSegments.length > 0) {
+  // 一篇文章一个文件夹（posts/eth-breakout/index.md，英文版 index.en.md）时，网址只用文件夹名
+  if (/\/index(\.en)?\.mdx?$/.test(filePath ?? "") && pathSegments.length > 0) {
     return pathSegments.join("/");
   }
   const slug = getIdSlug(id);

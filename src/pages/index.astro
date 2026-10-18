@@ -1,5 +1,4 @@
 ---
-import { getCollection } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
@@ -7,16 +6,18 @@ import Footer from "@/components/Footer.astro";
 import Card from "@/components/Card.astro";
 import AboutCard from "@/components/AboutCard.astro";
 import { getSortedPosts } from "@/utils/getSortedPosts";
+import { getPostsByLocale } from "@/utils/localePosts";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 
-const posts = await getCollection("posts");
+const posts = await getPostsByLocale(locale);
 const sortedPosts = getSortedPosts(posts);
 const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
-const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+// “最新”列出全部文章，精选的文章也在里面
+const recentPosts = sortedPosts;
 const homePath = getRelativeLocaleUrl(locale, "");
 ---
 
@@ -29,7 +30,7 @@ const homePath = getRelativeLocaleUrl(locale, "");
     class="app-layout my-1"
   >
     <!-- 页面不显示大标题，但保留一个隐藏的标题，供搜索引擎和读屏软件识别 -->
-    <h1 class="sr-only">{config.site.title}</h1>
+    <h1 class="sr-only">{t.site.title}</h1>
 
     {
       featuredPosts.length > 0 && (

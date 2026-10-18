@@ -11,7 +11,7 @@ const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 ---
 
-<Layout title={`${t.notFound.title} | ${config.site.title}`}>
+<Layout title={`${t.notFound.title} | ${t.site.title}`}>
   <Header />
 
   <main
@@ -22,6 +22,8 @@ const t = useTranslations(locale);
       <h1 class="text-accent text-9xl font-bold">404</h1>
       <span aria-hidden="true"> ¯\_(ツ)_/¯ </span>
       <p class="mt-4 text-2xl sm:text-3xl">{t.notFound.message}</p>
+      <!-- GitHub Pages 对所有不存在的网址（包括 /en/…）都显示这一页，所以中英文都写上 -->
+      <p class="text-muted-foreground mt-2" lang="en">Page not found · <a class="underline decoration-dashed underline-offset-4" href="/en/">Go to the English home page</a></p>
       <LinkButton
         href={getRelativeLocaleUrl(locale, "")}
         class="my-6 text-lg underline decoration-dashed underline-offset-8"

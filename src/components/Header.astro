@@ -11,6 +11,7 @@ import LinkButton from "./LinkButton.astro";
 import { stripBase, stripLocale } from "@/utils/withBase";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
+import { switchLocalePath } from "@/utils/localePosts";
 
 const { site, features } = config;
 
@@ -26,6 +27,10 @@ const pathWithoutTrailingSlash =
     : relativePath;
 
 const currentPath = stripLocale(pathWithoutTrailingSlash, locale);
+
+// 语言切换：跳到当前页面的另一种语言版本
+const zhHref = switchLocalePath(relativePath, "zh");
+const enHref = switchLocalePath(relativePath, "en");
 
 const isActive = (path: string) => {
   const currentPathArray = currentPath.split("/").filter(p => p.trim());
@@ -52,7 +57,7 @@ const isActive = (path: string) => {
       href={getRelativeLocaleUrl(locale, "")}
       class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-xl sm:leading-none"
     >
-      {site.title}
+      {t.site.title}
     </a>
     <nav
       id="nav-menu"
@@ -128,10 +133,22 @@ const isActive = (path: string) => {
           )
         }
         <li class="col-span-2 flex items-center justify-center">
-          <div class="lang-switch" aria-label="语言">
-            <span class="lang-active" aria-current="true">中文</span>
+          <div class="lang-switch" role="group" aria-label={t.lang.label}>
+            {
+              locale === "en" ? (
+                <a class="lang-off" href={zhHref} hreflang="zh" lang="zh">{t.lang.zh}</a>
+              ) : (
+                <span class="lang-active" aria-current="true">{t.lang.zh}</span>
+              )
+            }
             <span class="lang-sep" aria-hidden="true">/</span>
-            <button type="button" class="lang-off" title="英文版即将上线" aria-disabled="true">EN</button>
+            {
+              locale === "en" ? (
+                <span class="lang-active" aria-current="true">{t.lang.en}</span>
+              ) : (
+                <a class="lang-off" href={enHref} hreflang="en" lang="en">{t.lang.en}</a>
+              )
+            }
           </div>
         </li>
         {

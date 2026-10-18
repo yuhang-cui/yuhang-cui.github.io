@@ -1,0 +1,90 @@
+---
+title: "Breaking the Prior Day's High or Low: 89.6% of Days Break at Least One Side"
+description: "A backtest on 3,816 clean ES trading days from 2010 to 2026: does today's RTH break yesterday's RTH high or low? 89.6% of days break at least one side, almost exactly Al Brooks' \"90% rule\"."
+stat: "89.6%"
+statLabel: "break at least one side of the prior day"
+pubDatetime: 2026-06-13T20:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import BreakoutExplorer from "@/components/BreakoutExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./breakout.en.py?raw";
+
+> **Bottom line**: on **89.6%** of days, today's RTH breaks at least one side of yesterday's RTH high or low. Only 10.4% of days break neither.
+>
+> One side at a time: yesterday's high gets taken out **55.7%** of the time, yesterday's low **43.7%**.
+>
+> <span class="takeaway">How I use it: once you've decided which way you're trading today, yesterday's high or low on that side is a fairly reliable target.</span>
+
+I've been going through Al Brooks' old live sessions, and he keeps bringing up the "90% rule" for yesterday's high and low. So I tested it on cleaned ES data from 2010 to 2026, looking at one thing only: does today break yesterday's high or low?
+
+<BreakoutExplorer defaultRef="prev" />
+
+## It's basically the 90% rule
+
+Out of 3,816 trading days, **89.6%** broke at least one side of yesterday's range. That's almost exactly the 90% Brooks talks about.
+
+And it holds up year after year: every year falls between 80.0% and 93.2%. Even the quietest year, 2017, didn't drop below 80%.
+
+In other words, **yesterday's high and low are the two most reliable magnets on the chart.** Mark them before the open. Odds are, price will test at least one of them today.
+
+## The rest: about one in ten each
+
+- **Neither side broken (10.4%)**: price stays inside yesterday's range all day. An inside day.
+- **Both sides broken (9.7%)**: it breaks one side, then reverses and breaks the other. Usually a big, volatile day or a two-sided chop. An outside day.
+
+Both are rare, and both are days when breakout trades tend to fail.
+
+## Direction bias: more upside breaks than downside
+
+Up only is **46.0%**, down only just **34.0%**, a 12-point gap. In 16 years, only 2022 had more downside breaks than upside.
+
+Is that just because most years in the sample went up? I checked against the data: **it's related, but not one-to-one**:
+
+| Year | ES full-year change | Up only | Down only |
+|---|---:|---:|---:|
+| 2011 | −0.8% | 42.9% | 39.9% |
+| 2018 | −6.7% | 43.3% | 33.5% |
+| 2022 | −19.0% | 39.9% | 42.9% |
+
+<p class="table-note">Full-year change: from the RTH open on the year's first trading day to the RTH close on its last. The continuous contract isn't back-adjusted, so roll gaps are included and this is only approximate.</p>
+
+2011 and 2018 both finished down for the year, and yesterday's range still broke to the upside more often. Only a bear market like 2022, down 19% for the year, flipped the direction. So more upside breaks is the norm; you only need to switch in a sustained bear market.
+
+## By year: the hit rate tells you the market's mood
+
+**2017** had the lowest hit rate, just 80.0%: volatility was tiny that year, and one day in five stayed stuck inside yesterday's range. Strongly trending or volatile years like **2022, 2013 and 2020** were all above 92%.
+
+So when yesterday's high and low keep getting broken, the market is in an active phase. When inside days start piling up, it's consolidating, and that's when breakout trades should back off.
+
+## Compared with the overnight high and low
+
+Switch to "Overnight H/L" and you'll see the overnight range gets broken more often (94.4%), and both sides break more than twice as often as with the prior day (21.2% vs 9.7%).
+
+The reason is the width of the two ranges. Yesterday's RTH range is about as wide as today's RTH range, with a median width ratio of 1.01. The overnight range is narrower, with a median of only 0.77 of the same day's RTH range. The narrower the range, the higher the odds of a one-sided or two-sided break. See [Breaking the Overnight High or Low](/en/posts/eth-breakout/).
+
+## Definition and how to reproduce it
+
+<ResearchCard title="Breaking the prior day's high or low" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09. See [how I cleaned it](/en/posts/data-cleaning/).
+- **RTH**: 09:30–16:15 US Eastern, i.e. 1-minute bars from 09:30 to 16:14, or 81 five-minute bars. The overnight session is excluded.
+- **Prior day's high / low**: the highest high / lowest low of all of yesterday's RTH bars. Today also uses RTH only.
+- **Which day is "yesterday"**: the most recent stock market trading day before today. After a market holiday, it's the last trading day before the holiday. For example, the Tuesday after Martin Luther King Jr. Day uses the previous Friday.
+- **Skipped days**: if yesterday was removed during cleaning (a half day, the Monday of a roll, etc.), or the two days are different contracts, today doesn't count, and I don't search further back. 108 days were skipped, leaving 3,816.
+- **Upside breakout**: today's RTH high is **strictly above** yesterday's high, i.e. at least 1 tick (0.25 points) higher. Exactly equal doesn't count. Gapping open above yesterday's high counts as a breakout.
+- **Downside breakout**: today's RTH low is strictly below yesterday's low.
+- **Four outcomes**: up only, down only, both sides, neither.
+
+</ResearchCard>
+
+## Limitations
+
+- **It only checks whether price broke, not how far**: one tick beyond is a breakout. So this number tells you yesterday's high or low will get tested, not how far a breakout will run or whether it holds.
+- **More upside breaks is the norm, but not a law**: in a sustained bear market like 2022, the direction flips.
+- **Holidays and days around rolls are skipped**: those days aren't normal anyway, but these stats don't describe them.
+
+(First published on Xiaohongshu. Updated in October 2026: switched to the cleaned data, standardized RTH as 09:30–16:15 and updated the numbers; added the interactive stats and the reproduction card.)

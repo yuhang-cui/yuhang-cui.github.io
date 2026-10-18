@@ -3,7 +3,7 @@ title: "开盘 18 bar range 的 90% 定律似乎是 81.4%"
 description: "Al Brooks 说开盘 18 根 K 线的区间先被突破一侧后，另一侧大概率守住，概率约 90%。我用 ES 的 1 分钟数据验证了 4019 个交易日，结果是 81.4%。"
 stat: "81.4%"
 statLabel: "另一侧守住"
-pubDatetime: 2025-06-10T20:00:00+08:00
+pubDatetime: 2026-06-10T20:00:00+08:00
 tags: [Research]
 ---
 

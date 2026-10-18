@@ -1,5 +1,4 @@
 ---
-import { getCollection } from "astro:content";
 import type { GetStaticPathsOptions } from "astro";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
@@ -7,27 +6,13 @@ import Main from "@/components/Main.astro";
 import Card from "@/components/Card.astro";
 import Footer from "@/components/Footer.astro";
 import Pagination from "@/components/Pagination.astro";
-import { CATEGORIES } from "@/utils/categories";
-import { getSortedPosts } from "@/utils/getSortedPosts";
-import { slugifyAll } from "@/utils/slugify";
-import { useTranslations } from "@/i18n";
+import { categoryStaticPaths } from "@/utils/staticPaths";
+import { tplStr, useTranslations } from "@/i18n";
 import config from "@/config";
 
-// 6 个分类都生成页面，没有文章的分类也能点进来
+// 6 个分类都生成页面，没有文章的分类也能点进来；英文版在 src/pages/en/tags/ 下
 export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
-  const posts = await getCollection("posts", ({ data }) => !data.draft);
-
-  return CATEGORIES.flatMap(category => {
-    const tagPosts = getSortedPosts(
-      posts.filter(({ data }) => slugifyAll(data.tags).includes(category.slug))
-    );
-
-    return paginate(tagPosts, {
-      params: { tag: category.slug },
-      props: { category },
-      pageSize: config.posts.perPage,
-    });
-  });
+  return categoryStaticPaths("zh", paginate);
 }
 
 const { page, category } = Astro.props;
@@ -36,13 +21,13 @@ const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 ---
 
-<Layout title={`${t.pages.tagTitle}: ${category.name} | ${config.site.title}`}>
+<Layout title={`${t.pages.tagTitle}: ${category.name} | ${t.site.title}`}>
   <Header />
 
 
   <Main
     pageTitle={category.name}
-    pageDesc={`${category.desc} · ${page.total} 篇`}
+    pageDesc={`${t.categories.desc[category.slug]} · ${page.total === 1 ? t.categories.countOne : tplStr(t.categories.count, { n: page.total })}`}
   >
     {
       page.data.length > 0 ? (
@@ -50,7 +35,7 @@ const t = useTranslations(locale);
           {page.data.map(data => <Card {...data} />)}
         </ul>
       ) : (
-        <p class="cat-empty">这个分类还没有文章。</p>
+        <p class="cat-empty">{t.categories.empty}</p>
       )
     }
   </Main>

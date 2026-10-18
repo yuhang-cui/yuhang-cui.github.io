@@ -2,6 +2,7 @@
 // 文章目录：宽屏固定在左侧（“关于我”卡片的位置），左边一条竖向进度条跟着阅读位置走；
 // 窄屏放在日期下面，默认收起。标题少于 3 个的文章不显示。
 import type { MarkdownHeading } from "astro";
+import { useTranslations } from "@/i18n";
 
 type Props = {
   headings: MarkdownHeading[];
@@ -9,14 +10,15 @@ type Props = {
 };
 
 const { headings, variant } = Astro.props;
+const t = useTranslations(Astro.currentLocale);
 const items = headings.filter(h => h.depth === 2 || h.depth === 3);
 ---
 
 {
   items.length >= 3 &&
     (variant === "side" ? (
-      <nav class="toc-card" aria-label="目录">
-        <p class="toc-title">目录</p>
+      <nav class="toc-card" aria-label={t.toc.title}>
+        <p class="toc-title">{t.toc.title}</p>
         <div class="toc-scroll">
           <div class="toc-body">
             <span class="toc-rail" aria-hidden="true">
@@ -37,7 +39,7 @@ const items = headings.filter(h => h.depth === 2 || h.depth === 3);
     ) : (
       <details class="toc-inline">
         <summary>
-          目录
+          {t.toc.title}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
         </summary>
         <ol class="toc-list">

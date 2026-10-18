@@ -1,6 +1,7 @@
 ---
 import Layout from "./Layout.astro";
 import config from "@/config";
+import { useTranslations } from "@/i18n";
 
 type Props = {
   title?: string;
@@ -12,6 +13,7 @@ type Props = {
 };
 
 const { site } = config;
+const t = useTranslations(Astro.currentLocale ?? site.lang);
 
 const { title, description, ogImage, canonicalURL, pubDatetime, modDatetime } =
   Astro.props;
@@ -19,14 +21,14 @@ const { title, description, ogImage, canonicalURL, pubDatetime, modDatetime } =
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  headline: title ?? site.title,
+  headline: title ?? t.site.title,
   image: ogImage,
   ...(pubDatetime && { datePublished: pubDatetime.toISOString() }),
   ...(modDatetime && { dateModified: modDatetime.toISOString() }),
   author: [
     {
       "@type": "Person",
-      name: site.author,
+      name: t.site.author,
       ...(site.profile && { url: site.profile }),
     },
   ],
