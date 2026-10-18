@@ -1,0 +1,26 @@
+---
+// 小红书二维码弹窗：点击个人卡片里的小红书图标时打开。
+// 手机没法扫自己屏幕上的二维码，所以下面另外放一个直接打开主页的链接。
+const XHS_PROFILE = "https://www.xiaohongshu.com/user/profile/60e019cb0000000001000ef1";
+---
+
+<dialog id="xhs-dialog" class="xhs-dialog" aria-label="小红书二维码">
+  <button type="button" class="xhs-dialog-close" aria-label="关闭" data-xhs-close>×</button>
+  <img src="/xiaohongshu-card.webp" alt="兰森的小红书二维码" width="900" height="1250" loading="lazy" />
+  <a class="xhs-dialog-link" href={XHS_PROFILE} target="_blank" rel="noopener noreferrer">在小红书打开 →</a>
+</dialog>
+
+<script>
+  // 用事件委托：页面切换后元素会被替换，但 document 上的监听一直有效
+  document.addEventListener("click", e => {
+    const target = e.target as HTMLElement;
+    const dialog = document.getElementById("xhs-dialog") as HTMLDialogElement | null;
+    if (!dialog) return;
+    if (target.closest("[data-xhs-open]")) {
+      e.preventDefault();
+      dialog.showModal();
+    } else if (target.closest("[data-xhs-close]") || target === dialog) {
+      dialog.close();                          // 点关闭按钮或弹窗外的空白处关闭
+    }
+  });
+</script>

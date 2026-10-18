@@ -4,7 +4,7 @@ description: "用 ES 16 年、3894 个完整交易日回测：今天会不会突
 stat: "89.8%"
 statLabel: "至少突破昨日一侧"
 pubDatetime: 2026-06-13T20:00:00+08:00
-tags: [research, ES, prior-day-levels]
+tags: [Research]
 ---
 
 > **一句话结论**：**89.8%** 的日子，会突破昨日高低点的至少一侧。

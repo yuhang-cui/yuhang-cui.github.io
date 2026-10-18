@@ -2,7 +2,7 @@
 title: "散户也配被机构关注吗"
 description: "很多股民觉得自己是“韭菜”，天天被机构收割。但用苹果开盘两小时的成交量算一笔账，真相可能是：我们散户，连被收割的资格都没有。"
 pubDatetime: 2025-09-12T20:00:00+08:00
-tags: [thinking, market-structure]
+tags: [Thinking]
 ---
 
 <mark class="pink">很多股民觉得自己是‘韭菜’，天天被机构收割。</mark>

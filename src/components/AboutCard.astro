@@ -8,9 +8,9 @@ import IconXiaohongshu from "@/assets/icons/socials/xiaohongshu.svg";
 type Props = { variant?: "fixed" | "inline" };
 const { variant = "fixed" } = Astro.props;
 
-// 联系方式：url 留 "#" 的是占位，之后换成真实链接
+// 联系方式：url 留 "#" 的是占位，之后换成真实链接；qr: true 表示点击后弹出二维码
 const links = [
-  { name: "小红书", url: "#", Icon: IconXiaohongshu },
+  { name: "小红书", url: "https://www.xiaohongshu.com/user/profile/60e019cb0000000001000ef1", Icon: IconXiaohongshu, qr: true },
   { name: "GitHub", url: "https://github.com/yuhang-cui", Icon: IconGithub },
   { name: "X", url: "#", Icon: IconX },
 ];
@@ -24,19 +24,20 @@ const links = [
     我是一名学习 Al Brooks 价格行为的 Trader。Al 在书里给出了很多概率，我想用代码和历史数据，把它们一条条验证一遍。
   </p>
   <p class="about-card-text">
-    我也会把自己交易中的心得和感悟写在这里。我还在学习，写下的东西不一定都对，希望能帮助到你。
+    我也会把自己交易中的心得和刻意练习的技巧与感悟写在这里，希望能帮助到你。
   </p>
   <ul class="about-card-links">
     {
-      links.map(({ name, url, Icon }) => (
+      links.map(({ name, url, Icon, qr }) => (
         <li>
           <a
             href={url}
             title={url === "#" ? `${name}（链接待添加）` : name}
             aria-label={name}
+            {...(qr && { "data-xhs-open": "", "aria-haspopup": "dialog" })}
             {...(url !== "#" && { target: "_blank", rel: "noopener noreferrer" })}
           >
-            <Icon class="size-5" />
+            <Icon class={qr ? "h-[14px] w-auto" : "size-5"} />
           </a>
         </li>
       ))

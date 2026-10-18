@@ -6,6 +6,8 @@ import { resolveDefaultOgImagePath } from "@/utils/resolveDefaultOgImagePath";
 import { getAssetPath } from "@/utils/withBase";
 import config from "@/config";
 import AboutCard from "@/components/AboutCard.astro";
+import XhsDialog from "@/components/XhsDialog.astro";
+import PromptCardScript from "@/components/PromptCardScript.astro";
 import "@/styles/global.css";
 
 type Props = {
@@ -13,6 +15,8 @@ type Props = {
   description?: string;
   ogImage?: string;
   canonicalURL?: string;
+  /** 文章页不显示左侧“关于我”卡片 */
+  hideAboutCard?: boolean;
 };
 
 const { site } = config;
@@ -22,6 +26,7 @@ const {
   description = site.description,
   ogImage = resolveDefaultOgImagePath(config),
   canonicalURL = new URL(Astro.url.pathname, Astro.site).href,
+  hideAboutCard = false,
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.site ?? Astro.url);
@@ -119,7 +124,9 @@ const rssHref = getRelativeLocaleUrl(
   <body
     class="bg-background font-app text-foreground selection:bg-accent/75 selection:text-accent-foreground flex min-h-svh flex-col"
   >
-    <AboutCard />
+    {!hideAboutCard && <AboutCard />}
+    <XhsDialog />
+    <PromptCardScript />
     <slot />
   </body>
 </html>

@@ -1,6 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { tagColorClass } from "@/utils/tagColor";
+import { categoryColorClass } from "@/utils/categories";
 import config from "@/config";
 
 type Props = {
@@ -19,9 +19,9 @@ const locale = Astro.currentLocale ?? config.site.lang;
     href={getRelativeLocaleUrl(locale, `tags/${tag}/`)}
     transition:name={tag}
     class:list={[
-      "tag-pill hover:opacity-75 focus-visible:opacity-75",
-      tagColorClass(tag),
-      { "text-[12px]!": size === "lg" },
+      "tag-pill",
+      categoryColorClass(tag),
+      { "tag-pill--lg": size === "lg" },
     ]}
   >
     {tagName}

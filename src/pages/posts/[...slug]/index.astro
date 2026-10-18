@@ -120,6 +120,10 @@ const ogImage = ogImageUrl
       {title}
     </h1>
 
+    <ul class="mt-4 flex flex-wrap gap-2">
+      {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />)}
+    </ul>
+
     <div class="my-2 flex items-center gap-2">
       <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
       <span
@@ -150,10 +154,6 @@ const ogImage = ogImageUrl
     <EditPost class="sm:hidden" {hideEditPost} {post} />
 
     <BackToTopButton />
-
-    <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8">
-      {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />)}
-    </ul>
 
     <ShareLinks />
 
@@ -219,7 +219,7 @@ const ogImage = ogImageUrl
 
   function attachCopyButtons() {
     const copyButtonLabel = "Copy";
-    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+    const codeBlocks = Array.from(document.querySelectorAll("pre:not(.prompt-text)"));
 
     for (const codeBlock of codeBlocks) {
       const wrapper = document.createElement("div");

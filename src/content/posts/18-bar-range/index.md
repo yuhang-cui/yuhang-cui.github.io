@@ -4,7 +4,7 @@ description: "Al Brooks 说开盘 18 根 K 线的区间先被突破一侧后，�
 stat: "81.4%"
 statLabel: "另一侧守住"
 pubDatetime: 2025-06-10T20:00:00+08:00
-tags: [research, ES, 18-bar]
+tags: [Research]
 ---
 
 > **一句话结论**：在先突破一侧的日子里，对侧守住的比例是 **81.4%**，而不是 Al Brooks 说的 90%。

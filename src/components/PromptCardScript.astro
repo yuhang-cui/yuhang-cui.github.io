@@ -1,0 +1,70 @@
+---
+// Prompt 卡片的交互：自动给文章里每张 .prompt-card 加上“复制”和“展开全部”按钮。
+// 写文章时只需要写 HTML 结构（见 README 或 data-cleaning 那篇），按钮由这里自动生成。
+---
+
+<script>
+  const COPY_ICON =
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>';
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".prompt-card").forEach(item => {
+      if (item.dataset.ready) return;
+      item.dataset.ready = "1";
+      const text = item.querySelector<HTMLElement>(".prompt-text");
+      const head = item.querySelector<HTMLElement>(".prompt-card-head");
+      if (!text || !head) return;
+
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "prompt-copy";
+      copy.setAttribute("aria-label", "复制这段 prompt");
+      copy.innerHTML = COPY_ICON;
+      head.appendChild(copy);
+
+      // 内容不超过 4 行时不需要“展开”
+      if (text.scrollHeight > text.clientHeight + 4) {
+        item.classList.add("is-clamped");
+        const more = document.createElement("button");
+        more.type = "button";
+        more.className = "prompt-more";
+        more.textContent = "展开全部";
+        item.appendChild(more);
+      }
+    });
+  }
+
+  document.addEventListener("click", async e => {
+    const t = e.target as HTMLElement;
+    const copy = t.closest<HTMLButtonElement>(".prompt-copy");
+    if (copy) {
+      const text = copy.closest(".prompt-card")?.querySelector(".prompt-text")?.textContent ?? "";
+      try {
+        await navigator.clipboard.writeText(text.trim());
+      } catch {
+        // 小红书/微信等内置浏览器可能禁用剪贴板 API，退回老办法
+        const ta = document.createElement("textarea");
+        ta.value = text.trim();
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      copy.classList.add("is-done");
+      copy.setAttribute("data-tip", "已复制");
+      setTimeout(() => { copy.classList.remove("is-done"); copy.removeAttribute("data-tip"); }, 1600);
+      return;
+    }
+    const more = t.closest<HTMLButtonElement>(".prompt-more");
+    if (more) {
+      const item = more.closest(".prompt-card")!;
+      const open = item.classList.toggle("is-open");
+      more.textContent = open ? "收起" : "展开全部";
+    }
+  });
+
+  setup();
+  document.addEventListener("astro:page-load", setup);
+</script>

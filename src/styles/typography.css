@@ -91,13 +91,35 @@
     }
 
     table {
+      /* 细线表格：只留横线，不画竖线和外框 */
       th,
       td {
-        @apply border-border border p-2;
+        @apply border-border border-0 border-b px-3 py-2.5;
+        font-variant-numeric: tabular-nums;
+      }
+
+      th:first-child,
+      td:first-child {
+        padding-left: 0;
+      }
+
+      th:last-child,
+      td:last-child {
+        padding-right: 0;
       }
 
       th {
-        @apply py-1.5;
+        /* 表头不换行，避免“天数”这种短表头被挤成竖排 */
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--summary);
+        border-bottom-color: var(--foreground);
+        border-bottom-color: color-mix(in srgb, var(--foreground) 35%, transparent);
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
       }
 
       th[align="center"],

@@ -5,6 +5,8 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { getPostUrl } from "@/utils/getPostPaths";
 import { toTransitionName } from "@/utils/toTransitionName";
+import { categoryColorClass } from "@/utils/categories";
+import { slugifyStr } from "@/utils/slugify";
 import config from "@/config";
 
 dayjs.extend(utc);
@@ -26,7 +28,7 @@ const {
   statLabel,
 } = data;
 
-// 第一个标签当作文章分类，显示在标题上方
+// 第一个标签就是文章分类，显示在标题下方
 const category = tags[0];
 const date = dayjs(pubDatetime)
   .tz(postTimezone ?? config.site.timezone)
@@ -39,17 +41,16 @@ const date = dayjs(pubDatetime)
     class:list={["post-link group", { "post-link--stat": stat }]}
   >
     <div>
-      <p class="post-meta">
-        {category && <span class="post-meta-cat">{category}</span>}
-        {category && <span aria-hidden="true"> · </span>}
-        <time datetime={dayjs(pubDatetime).toISOString()}>{date}</time>
-      </p>
       <Heading
         transition:name={toTransitionName(id)}
-        class="text-foreground group-hover:text-accent mt-2 text-lg leading-snug font-semibold transition-colors sm:text-xl"
+        class="text-foreground group-hover:text-accent text-lg leading-snug font-semibold transition-colors sm:text-xl"
       >
         {title}
       </Heading>
+      <p class="post-meta mt-2">
+        {category && <span class:list={["tag-pill", categoryColorClass(slugifyStr(category))]}>{category}</span>}
+        <time datetime={dayjs(pubDatetime).toISOString()}>{date}</time>
+      </p>
       <p class="post-card-summary mt-1.5 line-clamp-2 text-[15px] leading-relaxed">
         {description}
       </p>

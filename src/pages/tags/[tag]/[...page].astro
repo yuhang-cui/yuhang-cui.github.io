@@ -7,46 +7,52 @@ import Main from "@/components/Main.astro";
 import Card from "@/components/Card.astro";
 import Footer from "@/components/Footer.astro";
 import Pagination from "@/components/Pagination.astro";
-import { getUniqueTags } from "@/utils/getUniqueTags";
+import { CATEGORIES } from "@/utils/categories";
 import { getSortedPosts } from "@/utils/getSortedPosts";
 import { slugifyAll } from "@/utils/slugify";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
+// 6 个分类都生成页面，没有文章的分类也能点进来
 export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
-  const tags = getUniqueTags(posts);
 
-  return tags.flatMap(({ tag, tagName }) => {
+  return CATEGORIES.flatMap(category => {
     const tagPosts = getSortedPosts(
-      posts.filter(({ data }) => slugifyAll(data.tags).includes(tag))
+      posts.filter(({ data }) => slugifyAll(data.tags).includes(category.slug))
     );
 
     return paginate(tagPosts, {
-      params: { tag },
-      props: { tagName },
+      params: { tag: category.slug },
+      props: { category },
       pageSize: config.posts.perPage,
     });
   });
 }
 
-const { page, tagName } = Astro.props;
+const { page, category } = Astro.props;
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 ---
 
-<Layout title={`${t.pages.tagTitle}: ${tagName} | ${config.site.title}`}>
+<Layout title={`${t.pages.tagTitle}: ${category.name} | ${config.site.title}`}>
   <Header />
 
 
   <Main
-    pageTitle={`${t.pages.tagTitle}: ${tagName}`}
-    pageDesc={`${t.pages.tagDesc} "${tagName}".`}
+    pageTitle={category.name}
+    pageDesc={`${category.desc} · ${page.total} 篇`}
   >
-    <ul>
-      {page.data.map(data => <Card {...data} />)}
-    </ul>
+    {
+      page.data.length > 0 ? (
+        <ul>
+          {page.data.map(data => <Card {...data} />)}
+        </ul>
+      ) : (
+        <p class="cat-empty">这个分类还没有文章。</p>
+      )
+    }
   </Main>
 
   <Pagination {page} />
