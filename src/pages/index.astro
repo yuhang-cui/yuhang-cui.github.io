@@ -38,7 +38,7 @@ const homePath = getRelativeLocaleUrl(locale, "");
           <h2 class="section-label">{t.home.featured}</h2>
           <ul>
             {featuredPosts.map(data => (
-              <Card variant="h3" {...data} />
+              <Card variant="h3" {...data} noTransition />
             ))}
           </ul>
         </section>

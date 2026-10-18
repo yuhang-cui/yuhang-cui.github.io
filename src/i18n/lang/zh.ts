@@ -121,6 +121,14 @@ export default {
     expand: "展开全部",
     collapse: "收起",
   },
+  searchUi: {
+    placeholder: "搜索…",
+    label: "搜索文章",
+    count: "找到 {{n}} 篇",
+    countOne: "找到 1 篇",
+    none: "没有找到包含“{{q}}”的文章。",
+    hint: "输入关键词，比如：突破、夜盘、Al Brooks。多个词用空格分开。",
+  },
   breakout: {
     label: "突破统计",
     refGroup: "参照线",

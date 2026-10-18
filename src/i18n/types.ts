@@ -112,6 +112,14 @@ export interface UIStrings {
     expand: string;
     collapse: string;
   };
+  searchUi: {
+    placeholder: string;
+    label: string;
+    count: string;
+    countOne: string;
+    none: string;
+    hint: string;
+  };
   breakout: {
     label: string;
     refGroup: string;

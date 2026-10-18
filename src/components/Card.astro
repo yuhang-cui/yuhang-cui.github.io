@@ -14,9 +14,11 @@ dayjs.extend(timezone);
 
 type Props = {
   variant?: "h2" | "h3";
+  /** 同一页出现两次的文章（精选里也在最新里），只给一处加过渡动画名，否则浏览器报重复 */
+  noTransition?: boolean;
 } & CollectionEntry<"posts">;
 
-const { variant: Heading = "h2", id, data, filePath } = Astro.props;
+const { variant: Heading = "h2", id, data, filePath, noTransition = false } = Astro.props;
 
 const {
   title,
@@ -42,7 +44,7 @@ const date = dayjs(pubDatetime)
   >
     <div>
       <Heading
-        transition:name={toTransitionName(id)}
+        transition:name={noTransition ? undefined : toTransitionName(id)}
         class="text-foreground group-hover:text-accent text-lg leading-snug font-semibold transition-colors sm:text-xl"
       >
         {title}

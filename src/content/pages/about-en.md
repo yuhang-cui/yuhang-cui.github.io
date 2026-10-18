@@ -1,6 +1,6 @@
 ---
 title: "About"
-description: "I'm Lansen, a trader learning Al Brooks' price action."
+description: "I'm Young, a trader learning Al Brooks' price action."
 lang: en
 ---
 

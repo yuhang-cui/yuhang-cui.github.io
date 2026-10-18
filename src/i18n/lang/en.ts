@@ -69,9 +69,9 @@ export default {
     goHome: "Go back home",
   },
   site: {
-    title: "Lansen · PA Research",
+    title: "Young · PA Research",
     description: "Testing common Price Action trading claims with data.",
-    author: "Lansen",
+    author: "Young",
   },
   lang: {
     label: "Language",
@@ -81,7 +81,7 @@ export default {
   aboutCard: {
     label: "About me",
     hi: "Hi,",
-    name: "I'm Lansen",
+    name: "I'm Young",
     welcome: "Welcome to my research notes.",
     intro: "I'm a trader learning Al Brooks' price action. Al gives a lot of probabilities in his books, and I want to check them one by one with code and historical data.",
     practice: "I'll also write down what I learn from my own trading and the skills I'm deliberately practicing. I hope it helps you.",
@@ -91,7 +91,7 @@ export default {
   xhs: {
     dialogLabel: "Xiaohongshu QR code",
     close: "Close",
-    qrAlt: "Lansen's Xiaohongshu QR code",
+    qrAlt: "Young's Xiaohongshu QR code",
     open: "Open on Xiaohongshu →",
   },
   toc: {
@@ -120,6 +120,14 @@ export default {
     copied: "Copied",
     expand: "Show all",
     collapse: "Show less",
+  },
+  searchUi: {
+    placeholder: "Search…",
+    label: "Search posts",
+    count: "{{n}} posts found",
+    countOne: "1 post found",
+    none: "No posts contain “{{q}}”.",
+    hint: "Type a keyword, like breakout, overnight or Al Brooks. Separate multiple words with spaces.",
   },
   breakout: {
     label: "Breakout stats",

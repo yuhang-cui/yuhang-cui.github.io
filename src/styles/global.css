@@ -1223,3 +1223,90 @@ a.tag-pill:hover {
     transparent 88%
   );
 }
+
+/* ===== 站内搜索：页头的胶囊搜索框 + 搜索页 ===== */
+.search-box {
+  width: 200px;
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid #9c9890;
+  border-radius: 9999px;
+  background: var(--background);
+  font-size: 14px;
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.search-box::placeholder {
+  color: var(--muted-foreground);
+}
+.search-box:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+/* 去掉浏览器给 type=search 加的放大镜和清除按钮的默认样式差异 */
+.search-box::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+.header-search {
+  display: flex;
+}
+@media (max-width: 639px) {
+  .header-search,
+  .header-search .search-box {
+    width: 100%;
+  }
+  .header-search {
+    margin-bottom: 6px;
+  }
+}
+
+.search-box--page {
+  width: 100%;
+  height: 46px;
+  padding: 0 20px;
+  font-size: 16px;
+}
+.search-status {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--faint);
+}
+.search-results {
+  margin-top: 8px;
+}
+.search-result + .search-result {
+  border-top: 1px solid var(--border);
+}
+.search-result a {
+  display: block;
+  padding: 20px 0;
+}
+.search-result-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--foreground);
+  transition: color 0.15s ease;
+}
+.search-result a:hover .search-result-title {
+  color: var(--accent);
+}
+.search-result .post-meta {
+  margin-top: 8px;
+}
+.search-result-snippet {
+  margin-top: 8px;
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--summary);
+}
+mark.search-hit {
+  color: inherit;
+  background: linear-gradient(
+    transparent 52%,
+    color-mix(in srgb, var(--accent) 30%, transparent) 52%,
+    color-mix(in srgb, var(--accent) 30%, transparent) 88%,
+    transparent 88%
+  );
+}
