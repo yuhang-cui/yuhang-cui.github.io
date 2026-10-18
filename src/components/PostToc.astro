@@ -1,0 +1,136 @@
+---
+// 文章目录：宽屏固定在左侧（“关于我”卡片的位置），左边一条竖向进度条跟着阅读位置走；
+// 窄屏放在日期下面，默认收起。标题少于 3 个的文章不显示。
+import type { MarkdownHeading } from "astro";
+
+type Props = {
+  headings: MarkdownHeading[];
+  variant: "side" | "inline";
+};
+
+const { headings, variant } = Astro.props;
+const items = headings.filter(h => h.depth === 2 || h.depth === 3);
+---
+
+{
+  items.length >= 3 &&
+    (variant === "side" ? (
+      <nav class="toc-card" aria-label="目录">
+        <p class="toc-title">目录</p>
+        <div class="toc-scroll">
+          <div class="toc-body">
+            <span class="toc-rail" aria-hidden="true">
+              <span class="toc-rail-fill" />
+            </span>
+            <ol class="toc-list">
+              {items.map(h => (
+                <li class={`toc-item toc-depth-${h.depth}`}>
+                  <a href={`#${h.slug}`} data-toc-slug={h.slug}>
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </nav>
+    ) : (
+      <details class="toc-inline">
+        <summary>
+          目录
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+        </summary>
+        <ol class="toc-list">
+          {items.map(h => (
+            <li class={`toc-item toc-depth-${h.depth}`}>
+              <a href={`#${h.slug}`} data-toc-slug={h.slug}>
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </details>
+    ))
+}
+
+<script>
+  // 读到哪一节就高亮哪一项；竖向进度条从顶部长到当前位置（在两个标题之间按阅读比例插值）
+  const HEADER_OFFSET = 120;
+  let controller: AbortController | null = null;
+
+  function setup() {
+    controller?.abort();
+    const card = document.querySelector<HTMLElement>(".toc-card");
+    const article = document.getElementById("article");
+    if (!card || !article) return;
+    controller = new AbortController();
+
+    const links = Array.from(card.querySelectorAll<HTMLAnchorElement>("a[data-toc-slug]"));
+    const heads = links
+      .map(a => document.getElementById(a.dataset.tocSlug!))
+      .filter((h): h is HTMLElement => !!h);
+    const fill = card.querySelector<HTMLElement>(".toc-rail-fill")!;
+    const scroller = card.querySelector<HTMLElement>(".toc-scroll")!;
+    if (heads.length !== links.length) return;
+
+    const mid = (a: HTMLElement) => a.offsetTop + a.offsetHeight / 2;
+    const docTop = (el: HTMLElement) => el.getBoundingClientRect().top + window.scrollY;
+    let active = -1;
+
+    function update() {
+      const y = window.scrollY + HEADER_OFFSET;
+      const tops = heads.map(docTop);
+      const end = docTop(article!) + article!.offsetHeight;
+
+      let i = -1;
+      for (let k = 0; k < tops.length; k++) if (tops[k] <= y) i = k;
+
+      // 进度条长度：当前项中点 +（下一项中点 - 当前项中点）× 本节已读比例
+      let height: number;
+      if (i < 0) {
+        const start = docTop(article!);
+        const f = Math.min(Math.max((y - start) / (tops[0] - start), 0), 1);
+        height = mid(links[0]) * f;
+      } else {
+        const next = i + 1 < tops.length ? tops[i + 1] : end;
+        const f = Math.min(Math.max((y - tops[i]) / (next - tops[i]), 0), 1);
+        const from = mid(links[i]);
+        const to = i + 1 < links.length ? mid(links[i + 1]) : links[i].offsetTop + links[i].offsetHeight;
+        height = from + (to - from) * f;
+      }
+      fill.style.height = `${height}px`;
+
+      if (i !== active) {
+        links.forEach((a, k) => a.classList.toggle("is-active", k === i));
+        active = i;
+        // 目录很长时，让当前项保持在卡片可见范围内
+        const a = links[i];
+        if (a && scroller.scrollHeight > scroller.clientHeight) {
+          const top = a.offsetTop - scroller.clientHeight / 2;
+          scroller.scrollTo({ top, behavior: "smooth" });
+        }
+      }
+    }
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        update();
+        ticking = false;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true, signal: controller.signal });
+    window.addEventListener("resize", onScroll, { signal: controller.signal });
+    update();
+  }
+
+  // 窄屏目录：点了某一项就收起
+  document.addEventListener("click", e => {
+    const a = (e.target as HTMLElement).closest(".toc-inline a");
+    if (a) a.closest("details")?.removeAttribute("open");
+  });
+
+  document.addEventListener("astro:page-load", setup);
+</script>
