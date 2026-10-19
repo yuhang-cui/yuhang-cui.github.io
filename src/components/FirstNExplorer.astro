@@ -144,7 +144,8 @@ const strings = {
       s1.addEventListener("change", draw);
 
       // 宽度变了（换屏、转手机）就按新宽度重画，字号保持不变
-      let lastW = 0;
+      draw();
+      let lastW = view.clientWidth;
       new ResizeObserver(() => {
         const w = Math.round(view.clientWidth);
         if (w && w !== lastW) {

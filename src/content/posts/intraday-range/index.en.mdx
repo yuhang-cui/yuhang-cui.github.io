@@ -1,0 +1,68 @@
+---
+title: "How Far Does ES Move in a Day? The Median Intraday Range Over 16 Years Is 0.90%"
+description: "Using 3,924 trading days of cleaned ES data from 2010 to 2026, I looked at the distribution of the RTH range (high minus low, divided by the open) and how it changes year by year. A typical day moves 0.90%, and half of all days fall between 0.62% and 1.34%."
+stat: "0.90%"
+statLabel: "median intraday range"
+pubDatetime: 2026-05-04T20:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import RangeExplorer from "@/components/RangeExplorer.astro";
+
+> **Bottom line**: on a typical ES day, the RTH high and low are **0.90%** apart. Half of all days fall between **0.62% and 1.34%**.
+>
+> Only **9.8%** of days reach 2% or more, about one day in ten. Just 2.7% reach 3% or more.
+>
+> <span class="takeaway">How I use it: at the open, multiply the opening price by 0.9% to estimate roughly how many points today might move. If the day has already moved more than 2%, it's a big-range day of the kind you only get about once every ten days.</span>
+
+I measure the intraday range as a percentage: if today's RTH high and low are 80 points apart and the open is 8,000, the range is 80 ÷ 8,000 = 1%. Using percentages is the only way to compare 2010, when ES was around 1,000, with today's prices.
+
+<RangeExplorer />
+
+## A typical day: around 0.9%
+
+Out of 3,924 trading days:
+
+- The median is **0.90%**: half of days are smaller, half are larger.
+- The middle half of days fall between **0.62% and 1.34%**.
+- Days with a range under 1% make up **57.1%**; under 1.5%, **80.5%**.
+
+## The distribution is right-skewed, not normal
+
+The histogram rises steeply on the left and trails off in a long tail on the right. Most days are packed between 0.5% and 1.3%, but every so often there's a 5%, 8% or even 10% day.
+
+That's why the average (1.11%) is higher than the median (0.90%): a handful of huge days pull the average up. For a "typical day", the median is the better guide.
+
+The biggest days:
+
+| Date | Range | What happened |
+|---|---:|---|
+| 2025-04-09 | 10.84% | Tariff pause announced, huge rally |
+| 2025-04-07 | 8.49% | Selloff and rebound after the tariff announcement |
+| 2020-03-13 | 8.35% | COVID panic |
+| 2020-03-12 | 8.22% | COVID panic |
+| 2020-03-16 | 8.05% | COVID panic |
+
+## By year: 2017 was the calmest, 2022 the wildest
+
+- **2017** had a median of just **0.48%**, the lowest in 16 years. A typical day moved half as much as in other years.
+- **2022** had the highest median, **1.72%**. It was a bear market: even the smallest 10% of days moved at least 0.98%, more than the 16-year median.
+- **2020** had a median of 1.26%, but the longest tail: the biggest 10% of days (24 of them) were all above 3.53%, and 15 of those were in March.
+- 2026 through September has a median of 0.87%, about the same as the 16-year figure.
+
+The high-volatility years line up with the market backdrop: the 2011 European debt crisis, COVID in 2020, rate hikes and the bear market in 2022, and tariffs in 2025.
+
+## Definitions
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09, 3,924 trading days. See [how I cleaned it](/en/posts/data-cleaning/). Half-day sessions were already removed during cleaning.
+- **Open**: the open of the 09:30 1-minute bar.
+- **Range**: (RTH high − RTH low) ÷ open.
+
+## Limitations
+
+- **It only looks at high minus low, not direction**: up 1% and down 1% count as the same range, and where the day closes doesn't matter.
+- **News days aren't separated**: FOMC, CPI and jobs-report days are counted together with ordinary days.
+- **Converting to points depends on the price level**: the same 0.9% is more points when ES is trading higher.
+
+(First published in May 2026. Updated in October 2026: recalculated with the cleaned data, and added the interactive distribution chart, cumulative curve and by-year view.)

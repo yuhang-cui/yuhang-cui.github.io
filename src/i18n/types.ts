@@ -154,4 +154,26 @@ export interface UIStrings {
     bar: string;
     note: string;
   };
+  range: {
+    label: string;
+    heroLabel: string;
+    heroSub: string;
+    bars: string;
+    band: string;
+    median: string;
+    p90: string;
+    bin: string;
+    overflow: string;
+    cum: string;
+    cumOver: string;
+    middleHalf: string;
+    yearsTitle: string;
+    yearsHint: string;
+    allMedian: string;
+    qTitle: string;
+    qHint: string;
+    qTip: string;
+    qMax: string;
+    note: string;
+  };
 }

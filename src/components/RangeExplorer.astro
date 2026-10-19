@@ -1,0 +1,220 @@
+---
+// 日内波幅分布：可选年份的直方图（鼠标移到柱子上看这一格的天数和累计占比）+ 逐年变化（点某一年只看这一年）。
+// 年份选择和 BreakoutExplorer、FirstNExplorer 一样：某一年、某年到某年、全部年份。
+import data from "@/data/range-by-year.json";
+import { renderRange, years, type RangeData } from "@/utils/rangeView";
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+const t = useTranslations(Astro.currentLocale);
+const s = t.range;
+const b = t.breakout;
+const d = data as RangeData;
+const ys = years(d);
+const y0 = ys[0];
+const y1 = ys[ys.length - 1];
+const c = { sample: b.sample, days: b.days, thousands: b.thousands, onlyYear: b.onlyYear };
+const payload = { data: d, s, c, yearRange: b.yearRange, singleYear: b.singleYear };
+---
+
+<section class="bx rg" data-y0={y0} data-y1={y1} aria-label={s.label}>
+  <div class="bx-controls">
+    <label class="bx-range">
+      <select class="bx-y0" aria-label={b.fromYear}>
+        {ys.map(y => <option value={y} selected={y === y0}>{y}</option>)}
+      </select>
+      <span>–</span>
+      <select class="bx-y1" aria-label={b.toYear}>
+        {ys.map(y => <option value={y} selected={y === y1}>{y}</option>)}
+      </select>
+    </label>
+    <button type="button" class="bx-reset">{b.allYears}</button>
+  </div>
+
+  <div class="rg-view" set:html={renderRange(d, s, c, tplStr(b.yearRange, { a: y0, b: y1 }), y0, y1, 640)} />
+
+  <script type="application/json" class="rg-data" set:html={JSON.stringify(payload)} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+  import { groupNum } from "@/utils/breakoutView";
+  import {
+    renderRange,
+    stats,
+    yearStats,
+    binLabel,
+    hx,
+    yxOf,
+    qx,
+    qy,
+    QM,
+    fmt,
+    BINS,
+    HM,
+    YM,
+    type RangeData,
+    type RangeStrings,
+    type Common,
+  } from "@/utils/rangeView";
+
+  type Payload = { data: RangeData; s: RangeStrings; c: Common; yearRange: string; singleYear: string };
+
+  // 提示框放在指针旁边，靠右时翻到左边
+  function placeTip(box: HTMLElement, tip: HTMLElement, svg: SVGSVGElement, x: number, w: number, e: PointerEvent) {
+    const r = svg.getBoundingClientRect();
+    tip.hidden = false;
+    const px = (x / w) * r.width;
+    const tw = tip.offsetWidth;
+    tip.style.left = `${px + 14 + tw > r.width ? px - 14 - tw : px + 14}px`;
+    tip.style.top = `${Math.max(0, e.clientY - r.top - tip.offsetHeight / 2)}px`;
+  }
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".rg").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const p: Payload = JSON.parse(root.querySelector(".rg-data")!.textContent!);
+      const { s, c } = p;
+      const view = root.querySelector<HTMLElement>(".rg-view")!;
+      const s0 = root.querySelector<HTMLSelectElement>(".bx-y0")!;
+      const s1 = root.querySelector<HTMLSelectElement>(".bx-y1")!;
+      const first = root.dataset.y0!;
+      const last = root.dataset.y1!;
+
+      const draw = () => {
+        let a = +s0.value;
+        let b = +s1.value;
+        if (a > b) [a, b] = [b, a];
+        const range = a === b ? tplStr(p.singleYear, { a }) : tplStr(p.yearRange, { a, b });
+        const w = Math.round(view.clientWidth || 640);
+        view.innerHTML = renderRange(p.data, s, c, range, a, b, w);
+        const st = stats(p.data, a, b);
+        hoverHist(st, w);
+        hoverQ(st, w);
+        hoverYears(yearStats(p.data, a, b), w);
+      };
+
+      // 直方图：指针在哪一格，就高亮那根柱子，显示天数、占比、累计
+      function hoverHist(st: ReturnType<typeof stats>, w: number) {
+        const box = view.querySelector<HTMLElement>(".rg-hist-box")!;
+        const svg = box.querySelector("svg")!;
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+        const bars = svg.querySelectorAll<SVGRectElement>(".rg-bar");
+        const hide = () => {
+          tip.hidden = true;
+          bars.forEach(b => b.classList.remove("is-hover"));
+        };
+        const show = (e: PointerEvent) => {
+          const r = svg.getBoundingClientRect();
+          const x = ((e.clientX - r.left) / r.width) * w;
+          const i = Math.floor(((x - HM.l) / (w - HM.l - HM.r)) * (BINS + 1));
+          if (i < 0 || i > BINS) return hide();
+          bars.forEach(b => b.classList.toggle("is-hover", +b.dataset.i! === i));
+          const n = Math.round((st.share[i] * st.total) / 100);
+          const cum =
+            i < BINS
+              ? tplStr(s.cum, { b: fmt.pc1((i + 1) / 10), p: fmt.pc1(st.cumShare[i]) })
+              : tplStr(s.cumOver, { p: fmt.pc1(st.share[i]) });
+          tip.innerHTML =
+            `<p class="fn-tip-h">${binLabel(s, i)}</p>` +
+            `<p class="fn-tip-r">${tplStr(c.days, { n: groupNum(n, c.thousands) })}<b>${fmt.pc1(st.share[i])}</b></p>` +
+            `<p class="fn-tip-r rg-tip-cum">${cum}</p>`;
+          placeTip(box, tip, svg, hx(i + 1, w), w, e);
+        };
+        svg.addEventListener("pointermove", show);
+        svg.addEventListener("pointerdown", show);
+        svg.addEventListener("pointerleave", hide);
+      }
+
+      // 分位数曲线：指针在横轴哪个比例，就显示“这么多日子的波幅不超过多少”
+      function hoverQ(st: ReturnType<typeof stats>, w: number) {
+        const box = view.querySelector<HTMLElement>(".rg-q-box")!;
+        const svg = box.querySelector("svg")!;
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+        const rule = svg.querySelector<SVGLineElement>(".fn-rule")!;
+        const dot = svg.querySelector<SVGCircleElement>(".rg-qhover")!;
+        const hide = () => {
+          svg.classList.remove("is-hover");
+          tip.hidden = true;
+        };
+        const show = (e: PointerEvent) => {
+          const r = svg.getBoundingClientRect();
+          const x = ((e.clientX - r.left) / r.width) * w;
+          const pct = Math.round(((x - QM.l) / (w - QM.l - QM.r)) * 100);
+          if (pct < 0 || pct > 100) return hide();
+          const v = st.curve[pct * 2];
+          const cx = qx(pct, w);
+          rule.setAttribute("x1", String(cx));
+          rule.setAttribute("x2", String(cx));
+          dot.setAttribute("cx", String(cx));
+          dot.setAttribute("cy", String(qy(v)));
+          svg.classList.add("is-hover");
+          tip.innerHTML = `<p class="fn-tip-r">${tplStr(s.qTip, { p: pct + "%", v: fmt.pc(v) })}</p>`;
+          placeTip(box, tip, svg, cx, w, e);
+        };
+        svg.addEventListener("pointermove", show);
+        svg.addEventListener("pointerdown", show);
+        svg.addEventListener("pointerleave", hide);
+      }
+
+      // 逐年变化：指针在哪一年就显示那年的分位数；点一下只看那一年
+      function hoverYears(ys: ReturnType<typeof yearStats>, w: number) {
+        const box = view.querySelector<HTMLElement>(".rg-years-box")!;
+        const svg = box.querySelector("svg")!;
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+        const cols = svg.querySelectorAll<SVGGElement>(".rg-yr");
+        const at = (e: PointerEvent) => {
+          const r = svg.getBoundingClientRect();
+          const x = ((e.clientX - r.left) / r.width) * w;
+          const i = Math.floor(((x - YM.l) / (w - YM.l - YM.r)) * ys.length);
+          return i >= 0 && i < ys.length ? i : -1;
+        };
+        const hide = () => {
+          tip.hidden = true;
+          cols.forEach(g => g.classList.remove("is-hover"));
+        };
+        svg.addEventListener("pointermove", e => {
+          const i = at(e);
+          if (i < 0) return hide();
+          const d = ys[i];
+          cols.forEach(g => g.classList.toggle("is-hover", +g.dataset.i! === i));
+          tip.innerHTML =
+            `<p class="fn-tip-h">${d.y} · ${tplStr(c.days, { n: groupNum(d.total, c.thousands) })}</p>` +
+            `<p class="fn-tip-r">${s.median}<b>${fmt.pc(d.p50)}</b></p>` +
+            `<p class="fn-tip-r">${s.middleHalf}<b>${fmt.pc(d.p25)}–${fmt.pc(d.p75)}</b></p>` +
+            `<p class="fn-tip-r">10%–90%<b>${fmt.pc(d.p10)}–${fmt.pc(d.p90)}</b></p>`;
+          placeTip(box, tip, svg, yxOf(i, ys.length, w), w, e);
+        });
+        svg.addEventListener("pointerleave", hide);
+        svg.addEventListener("click", e => {
+          const i = at(e as PointerEvent);
+          if (i < 0) return;
+          s0.value = s1.value = String(ys[i].y);
+          draw();
+        });
+      }
+
+      root.querySelector(".bx-reset")!.addEventListener("click", () => {
+        s0.value = first;
+        s1.value = last;
+        draw();
+      });
+      s0.addEventListener("change", draw);
+      s1.addEventListener("change", draw);
+
+      // 宽度变了就按新宽度重画，字号保持不变
+      draw();
+      let lastW = view.clientWidth;
+      new ResizeObserver(() => {
+        const w = Math.round(view.clientWidth);
+        if (w && w !== lastW) {
+          lastW = w;
+          draw();
+        }
+      }).observe(view);
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>

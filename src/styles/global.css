@@ -1227,6 +1227,37 @@ a.tag-pill:hover {
   color: var(--faint);
 }
 
+/* ===== 日内波幅分布（RangeExplorer），外框沿用 .bx，坐标轴和提示框沿用 .fn-* ===== */
+.rg-bar { fill: color-mix(in srgb, var(--accent) 38%, white); transition: fill 0.1s ease; }
+.rg-bar.is-over { fill: color-mix(in srgb, var(--accent) 22%, white); }
+.rg-bar.is-hover { fill: var(--accent); }
+.rg-band { fill: color-mix(in srgb, var(--accent) 8%, transparent); }
+.rg-curve { fill: none; stroke: var(--accent); stroke-width: 1.75; stroke-linejoin: round; pointer-events: none; }
+.rg-median { stroke: var(--foreground); stroke-width: 1.5; }
+.rg-p90 { stroke: var(--summary); stroke-dasharray: 4 4; }
+.fn-chart text.rg-mark-t { fill: var(--summary); font-size: 11.5px; }
+.rg-hist,
+.rg-years { cursor: crosshair; }
+.rg-years { cursor: pointer; }
+.rg-hit { fill: transparent; }
+.rg-whisk { stroke: color-mix(in srgb, var(--accent) 45%, white); stroke-width: 1.5; }
+.rg-iqr { stroke: color-mix(in srgb, var(--accent) 55%, white); stroke-width: 9; stroke-linecap: round; }
+.rg-med { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.rg-yr { transition: opacity 0.15s ease; }
+.rg-yr.is-off { opacity: 0.3; }
+.rg-yr.is-hover { opacity: 1; }
+.rg-yr.is-hover .rg-iqr { stroke: var(--accent); }
+.fn-legend i.rg-key-bar { background: color-mix(in srgb, var(--accent) 38%, white); }
+.fn-legend i.rg-key-band { background: color-mix(in srgb, var(--accent) 12%, white); border: 1px solid color-mix(in srgb, var(--accent) 25%, white); }
+.fn-legend i.rg-key-line { width: 2px; height: 12px; border-radius: 0; background: var(--foreground); vertical-align: -1px; }
+.fn-legend i.rg-key-dash { width: 2px; height: 12px; border-radius: 0; background: repeating-linear-gradient(var(--summary) 0 3px, transparent 3px 6px); vertical-align: -1px; }
+.rg-tip-cum { color: var(--summary) !important; }
+.rg-qline { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.rg-qdot { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.fn-dot.rg-qhover { fill: var(--accent); }
+.rg-q { cursor: crosshair; }
+.rg .bx-sub { margin-top: 28px !important; }
+
 /* ===== 研究卡片：定义 / Prompt / Python 三个标签页（ResearchCard） ===== */
 .app-prose .rc {
   margin: 1.75rem 0;
