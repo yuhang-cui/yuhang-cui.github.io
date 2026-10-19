@@ -13,6 +13,8 @@ export const CLS: Cls[] = ["up", "down", "both", "none"];
 
 const pct = (n: number, total: number) => (total ? (100 * n) / total : 0);
 const fmt = (v: number) => v.toFixed(1) + "%";
+// 天数的千位分隔：英文 3,924，中文不加（分隔符来自界面文字 breakout.thousands）
+export const groupNum = (n: number, sep: string) => String(n).replace(/\B(?=(\d{3})+$)/g, sep);
 
 export function years(data: ByYear, ref: Ref): number[] {
   return Object.keys(data[ref]).map(Number).sort((a, b) => a - b);
@@ -31,7 +33,7 @@ function sum(data: ByYear, ref: Ref, y0: number, y1: number) {
 function bar(s: BreakoutStrings, counts: Record<Cls, number>, total: number, label: string) {
   const segs = CLS.map(k =>
     counts[k] > 0
-      ? `<span class="bx-seg bx-${k}" style="flex:${counts[k]}" title="${s[k]} ${fmt(pct(counts[k], total))} (${tplStr(s.days, { n: counts[k] })})"></span>`
+      ? `<span class="bx-seg bx-${k}" style="flex:${counts[k]}" title="${s[k]} ${fmt(pct(counts[k], total))} (${tplStr(s.days, { n: groupNum(counts[k], s.thousands) })})"></span>`
       : ""
   ).join("");
   return `<div class="bx-bar" role="img" aria-label="${label}">${segs}</div>`;
@@ -52,7 +54,7 @@ export function renderBreakout(
     k => `<div class="bx-tile">
       <p class="bx-tile-k"><i class="bx-${k}"></i>${s[k]}</p>
       <p class="bx-tile-v">${fmt(pct(counts[k], total))}</p>
-      <p class="bx-tile-n">${tplStr(s.days, { n: counts[k] })}</p>
+      <p class="bx-tile-n">${tplStr(s.days, { n: groupNum(counts[k], s.thousands) })}</p>
     </div>`
   ).join("");
 
@@ -84,7 +86,7 @@ export function renderBreakout(
     <div class="bx-hero">
       <p class="bx-hero-k">${tplStr(s.heroLabel, { range, ref: s[ref] })}</p>
       <p class="bx-hero-v">${fmt(any)}</p>
-      <p class="bx-hero-n">${tplStr(s.sample, { n: total })}</p>
+      <p class="bx-hero-n">${tplStr(s.sample, { n: groupNum(total, s.thousands) })}</p>
     </div>
     ${bar(s, counts, total, tplStr(s.share, { what: range }))}
     <div class="bx-tiles">${tiles}</div>

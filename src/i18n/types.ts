@@ -142,5 +142,16 @@ export interface UIStrings {
     byYear: string;
     byYearHint: string;
     compare: string;
+    thousands: string;
+  };
+  firstN: {
+    label: string;
+    either: string;
+    low: string;
+    high: string;
+    both: string;
+    heroLabel: string;
+    bar: string;
+    note: string;
   };
 }

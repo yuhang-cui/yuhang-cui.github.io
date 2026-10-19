@@ -1,0 +1,159 @@
+---
+// 前 N 根 K 线包含全天高低点的概率：可选年份的折线图，鼠标移到哪根 K 线就显示那根的四个比例。
+// 年份选择和 BreakoutExplorer 一样：某一年、某年到某年、全部年份。
+import data from "@/data/first-n-by-year.json";
+import { renderFirstN, years, type FirstNData } from "@/utils/firstNView";
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+const t = useTranslations(Astro.currentLocale);
+const s = t.firstN;
+const b = t.breakout;
+const d = data as FirstNData;
+const ys = years(d);
+const y0 = ys[0];
+const y1 = ys[ys.length - 1];
+const strings = {
+  s,
+  sample: b.sample,
+  yearRange: b.yearRange,
+  singleYear: b.singleYear,
+  days: b.days,
+  thousands: b.thousands,
+};
+---
+
+<section class="bx fn" data-y0={y0} data-y1={y1} aria-label={s.label}>
+  <div class="bx-controls">
+    <label class="bx-range">
+      <select class="bx-y0" aria-label={b.fromYear}>
+        {ys.map(y => <option value={y} selected={y === y0}>{y}</option>)}
+      </select>
+      <span>–</span>
+      <select class="bx-y1" aria-label={b.toYear}>
+        {ys.map(y => <option value={y} selected={y === y1}>{y}</option>)}
+      </select>
+    </label>
+    <button type="button" class="bx-reset">{b.allYears}</button>
+  </div>
+
+  <div
+    class="fn-view"
+    set:html={renderFirstN(d, s, b.sample, b.thousands, tplStr(b.yearRange, { a: y0, b: y1 }), y0, y1, 640)}
+  />
+
+  <script type="application/json" class="fn-data" set:html={JSON.stringify({ data: d, ...strings })} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+  import {
+    renderFirstN,
+    series,
+    barTime,
+    xOf,
+    yOf,
+    LINES,
+    BARS,
+    M,
+    type FirstNData,
+    type FirstNStrings,
+  } from "@/utils/firstNView";
+  import { groupNum } from "@/utils/breakoutView";
+
+  type Payload = {
+    data: FirstNData;
+    s: FirstNStrings;
+    sample: string;
+    yearRange: string;
+    singleYear: string;
+    days: string;
+    thousands: string;
+  };
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".fn").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const p: Payload = JSON.parse(root.querySelector(".fn-data")!.textContent!);
+      const view = root.querySelector<HTMLElement>(".fn-view")!;
+      const s0 = root.querySelector<HTMLSelectElement>(".bx-y0")!;
+      const s1 = root.querySelector<HTMLSelectElement>(".bx-y1")!;
+      const first = root.dataset.y0!;
+      const last = root.dataset.y1!;
+
+      const draw = () => {
+        let a = +s0.value;
+        let b = +s1.value;
+        if (a > b) [a, b] = [b, a];
+        const range = a === b ? tplStr(p.singleYear, { a }) : tplStr(p.yearRange, { a, b });
+        const chart = () => view.querySelector<HTMLElement>(".fn-chart");
+        const w = Math.round(chart()?.clientWidth || 640);
+        view.innerHTML = renderFirstN(p.data, p.s, p.sample, p.thousands, range, a, b, w);
+        hover(chart()!, series(p.data, a, b), w);
+      };
+
+      // 鼠标（或手指）在图上移动：竖线 + 四个点 + 提示框，显示离得最近的那根 K 线
+      function hover(box: HTMLElement, { days, points }: ReturnType<typeof series>, w: number) {
+        const svg = box.querySelector("svg")!;
+        const rule = svg.querySelector<SVGLineElement>(".fn-rule")!;
+        const dots = svg.querySelectorAll<SVGCircleElement>(".fn-dot");
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+
+        const show = (e: PointerEvent) => {
+          const r = svg.getBoundingClientRect();
+          const x = ((e.clientX - r.left) / r.width) * w;
+          if (x < M.l - 6 || x > w - M.r + 6) return hide();
+          const n = Math.min(BARS, Math.max(1, Math.round(1 + ((x - M.l) / (w - M.l - M.r)) * (BARS - 1))));
+          const pt = points[n - 1];
+          const cx = xOf(n, w);
+          rule.setAttribute("x1", String(cx));
+          rule.setAttribute("x2", String(cx));
+          dots.forEach(dot => {
+            dot.setAttribute("cx", String(cx));
+            dot.setAttribute("cy", String(yOf(pt[dot.dataset.k as keyof typeof pt])));
+          });
+          svg.classList.add("is-hover");
+          tip.innerHTML =
+            `<p class="fn-tip-h">${tplStr(p.s.bar, { n, t: barTime(n) })} · ${tplStr(p.days, { n: groupNum(days, p.thousands) })}</p>` +
+            LINES.map(
+              ({ k, color }) =>
+                `<p class="fn-tip-r"><i style="background:${color}"></i>${p.s[k]}<b>${pt[k].toFixed(1)}%</b></p>`
+            ).join("");
+          tip.hidden = false;
+          const px = (cx / w) * r.width;
+          const tw = tip.offsetWidth;
+          tip.style.left = `${px + 14 + tw > r.width ? px - 14 - tw : px + 14}px`;
+          tip.style.top = `${Math.max(0, e.clientY - r.top - tip.offsetHeight / 2)}px`;
+        };
+        const hide = () => {
+          svg.classList.remove("is-hover");
+          tip.hidden = true;
+        };
+        svg.addEventListener("pointermove", show);
+        svg.addEventListener("pointerdown", show);
+        svg.addEventListener("pointerleave", hide);
+      }
+
+      root.querySelector(".bx-reset")!.addEventListener("click", () => {
+        s0.value = first;
+        s1.value = last;
+        draw();
+      });
+      s0.addEventListener("change", draw);
+      s1.addEventListener("change", draw);
+
+      // 宽度变了（换屏、转手机）就按新宽度重画，字号保持不变
+      let lastW = 0;
+      new ResizeObserver(() => {
+        const w = Math.round(view.clientWidth);
+        if (w && w !== lastW) {
+          lastW = w;
+          draw();
+        }
+      }).observe(view);
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>

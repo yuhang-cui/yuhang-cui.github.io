@@ -151,5 +151,16 @@ export default {
     byYear: "By year",
     byYearHint: "Right column: share of days that broke at least one side. Click a year to see only that year.",
     compare: "Prior day vs overnight",
+    thousands: ",",
+  },
+  firstN: {
+    label: "Odds the first N bars contain the day's high or low",
+    either: "High or low",
+    low: "Low of day",
+    high: "High of day",
+    both: "Both",
+    heroLabel: "{{range}} · by bar 18 (11:00), the day's high or low is already in",
+    bar: "Bar {{n}} · {{t}}",
+    note: "X axis: the close of each 5-minute RTH bar. Y axis: share of days whose high / low of the day is already in. Hover (or tap) to see each bar's numbers; the dashed line is bar 18.",
   },
 } satisfies UIStrings;

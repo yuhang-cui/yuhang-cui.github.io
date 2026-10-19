@@ -16,9 +16,11 @@ type Props = {
   variant?: "h2" | "h3";
   /** 同一页出现两次的文章（精选里也在最新里），只给一处加过渡动画名，否则浏览器报重复 */
   noTransition?: boolean;
+  /** 首页“精选”里用：做成浅底色卡片 */
+  boxed?: boolean;
 } & CollectionEntry<"posts">;
 
-const { variant: Heading = "h2", id, data, filePath, noTransition = false } = Astro.props;
+const { variant: Heading = "h2", id, data, filePath, noTransition = false, boxed = false } = Astro.props;
 
 const {
   title,
@@ -37,7 +39,7 @@ const date = dayjs(pubDatetime)
   .format("YYYY-MM-DD");
 ---
 
-<li class="post-item">
+<li class:list={["post-item", { "post-item--card": boxed }]}>
   <a
     href={getPostUrl(id, filePath, Astro.currentLocale)}
     class:list={["post-link group", { "post-link--stat": stat }]}

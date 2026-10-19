@@ -151,5 +151,16 @@ export default {
     byYear: "逐年分布",
     byYearHint: "右侧是至少突破一侧的比例，点某一年只看这一年",
     compare: "两种参照线对比",
+    thousands: "",
+  },
+  firstN: {
+    label: "前 N 根 K 线包含全天高低点的概率",
+    either: "至少一个",
+    low: "最低点",
+    high: "最高点",
+    both: "两个都是",
+    heroLabel: "{{range}} · 到第 18 根（11:00），全天最高点或最低点已经出现",
+    bar: "第 {{n}} 根 · {{t}}",
+    note: "横轴是日盘第几根 5 分钟 K 线结束的时间，纵轴是全天最高点 / 最低点已经出现的日子占比。鼠标移到图上（手机上点一下）看每一根的数字，虚线是第 18 根。",
   },
 } satisfies UIStrings;

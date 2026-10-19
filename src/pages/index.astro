@@ -35,10 +35,12 @@ const homePath = getRelativeLocaleUrl(locale, "");
     {
       featuredPosts.length > 0 && (
         <section id="featured" class="pt-10">
-          <h2 class="section-label">{t.home.featured}</h2>
-          <ul>
+          <h2 class="section-title">
+            {t.home.featured}<span class="section-count">{featuredPosts.length}</span>
+          </h2>
+          <ul class="post-cards">
             {featuredPosts.map(data => (
-              <Card variant="h3" {...data} noTransition />
+              <Card variant="h3" {...data} noTransition boxed />
             ))}
           </ul>
         </section>
@@ -47,8 +49,10 @@ const homePath = getRelativeLocaleUrl(locale, "");
 
     {
       recentPosts.length > 0 && (
-        <section id="recent-posts" class="pt-12 pb-10">
-          <h2 class="section-label">{t.home.recentPosts}</h2>
+        <section id="recent-posts" class="pt-16 pb-10">
+          <h2 class="section-title">
+            {t.home.recentPosts}<span class="section-count">{recentPosts.length}</span>
+          </h2>
           <ul>
             {recentPosts.map(data => (
               <Card variant="h3" {...data} />

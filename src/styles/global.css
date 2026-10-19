@@ -107,13 +107,44 @@
 }
 
 /* 首页区块小标题 */
-.section-label {
-  font-size: 13px;
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 22px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.section-count {
+  font-size: 15px;
+  font-weight: 400;
   color: var(--faint);
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 首页“精选”：浅底色卡片，和“最新”的分隔线列表区分开 */
+.post-cards {
+  display: grid;
+  gap: 12px;
+}
+.post-item.post-item--card {
+  border-top: 0;
+  border-radius: 14px;
+  background: #f4f2ed;
+  transition: background 0.15s ease;
+}
+.post-item--card:hover {
+  background: #efece6;
+}
+.post-item--card .post-link {
+  padding: 22px 24px;
+}
+@media (max-width: 480px) {
+  .post-item--card .post-link {
+    padding: 18px;
+  }
 }
 
 /* ===== 分类标签：仿 Notion 的浅底色小方块，颜色见 src/utils/categories.ts ===== */
@@ -1092,6 +1123,108 @@ a.tag-pill:hover {
   .bx-year {
     transition: none;
   }
+}
+
+/* ===== 文章里的推导卡片（calc-card） ===== */
+.app-prose .calc-card {
+  margin: 1.5rem 0;
+  padding: 16px 20px;
+  border: 1px solid rgb(0 0 0 / 0.09);
+  border-radius: 14px;
+  background: #fbfbf9;
+}
+.app-prose .calc-card > :first-child {
+  margin-top: 0;
+}
+.app-prose .calc-card > :last-child {
+  margin-bottom: 0;
+}
+.app-prose .calc-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* ===== 前 N 根 K 线包含全天高低点的折线图（FirstNExplorer），外框和年份选择沿用 .bx ===== */
+.fn-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 16px 0 6px;
+  font-size: 13px;
+  color: var(--summary);
+}
+.fn-legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 2px;
+}
+.fn-chart {
+  position: relative;
+}
+.fn-chart svg {
+  display: block;
+  overflow: visible;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+.fn-chart text {
+  fill: var(--faint);
+  font-size: 12px;
+}
+.fn-grid { stroke: rgb(0 0 0 / 0.06); }
+.fn-axis { stroke: rgb(0 0 0 / 0.22); }
+.fn-ref { stroke: var(--faint); stroke-dasharray: 4 4; }
+.fn-rule { stroke: rgb(0 0 0 / 0.25); }
+.fn-rule,
+.fn-dot {
+  opacity: 0;
+}
+.fn-chart svg.is-hover .fn-rule,
+.fn-chart svg.is-hover .fn-dot {
+  opacity: 1;
+}
+.fn-tip {
+  position: absolute;
+  z-index: 2;
+  min-width: 170px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
+  font-size: 12.5px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.fn-tip-h {
+  margin-bottom: 3px !important;
+  color: var(--faint);
+}
+.fn-tip-r {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--prose);
+}
+.fn-tip-r i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.fn-tip-r b {
+  margin-left: auto;
+  padding-left: 16px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.fn-note {
+  margin-top: 10px !important;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--faint);
 }
 
 /* ===== 研究卡片：定义 / Prompt / Python 三个标签页（ResearchCard） ===== */

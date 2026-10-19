@@ -1,0 +1,91 @@
+---
+title: "The 90% Rule for the Opening 18-Bar Range Looks More Like 81.2%"
+description: "Al Brooks says the high or low of the first 18 bars ends up as the high or low of the day about 90% of the time. I tested it on 3,924 trading days of cleaned ES data from 2010 to 2026. The result: 81.2%. It takes until bar 28 (11:50) to reach 90%."
+stat: "81.2%"
+statLabel: "high or low of day in by bar 18"
+pubDatetime: 2026-06-10T20:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import FirstNExplorer from "@/components/FirstNExplorer.astro";
+
+> **Bottom line**: by the close of the 18th 5-minute bar (11:00), the high or low of the day is already in on **81.2%** of days, not the 90% Al Brooks talks about.
+>
+> One side at a time: the low of the day is already in **47.8%** of the time, the high **38.6%**. The low tends to get set earlier.
+>
+> <span class="takeaway">How I use it: after 11:00, at least one of the opening 18-bar high and low is likely to be the high or low of the day, so they make useful reference levels for stops or targets.</span>
+
+Al Brooks puts it this way: once one side of the opening 18-bar range breaks, the other side holds about 90% of the time. If the other side holds, its high or low is the high or low of the day. So I counted it directly: do the first N bars already contain the high or low of the day?
+
+<FirstNExplorer />
+
+## Bar 18: 81.2%, not 90%
+
+Out of 3,924 trading days, by the close of bar 18 the high or low of the day was already in on **81.2%** of them. Both were in on only 5.2%, and neither on 18.8%.
+
+It takes until bar **28** (11:50) to reach 90%.
+
+Year by year, bar 18 ranges from 73.4% (2024) to 87.1% (2017). No year reaches 90%.
+
+## Once one side breaks, how often does the other hold?
+
+81.2% is the number at the close of bar 18, before you know which side will break. Once you know which side broke, you have to recalculate:
+
+<div class="calc-card">
+
+<p class="calc-card-title">The math: once you know which side broke</p>
+
+Take 100 days. At the close of bar 18:
+
+| Case | Days |
+|---|---:|
+| Only the high is in | 33.4 |
+| Only the low is in | 42.6 |
+| Both are in | 5.2 |
+| Neither is in | 18.8 |
+
+**The bottom breaks**: the low of the day isn't in the first 18 bars, so "only the low" and "both" (47.8 days) are ruled out. Of the 52.2 days left, the top holds (only the high is in) on 33.4:
+
+Odds the top is the high of the day = 33.4 ÷ (33.4 + 18.8) = **64.0%**
+
+**The top breaks**: same logic. Of the 61.4 days left, the bottom holds (only the low is in) on 42.6:
+
+Odds the bottom is the low of the day = 42.6 ÷ (42.6 + 18.8) = **69.4%**
+
+</div>
+
+A big part of the 81.2% comes from the side that breaks being the extreme itself. Once that side breaks, that part is gone and only the other side is left to hold, so the odds drop to the 60s.
+
+## The low comes in earlier than the high
+
+At bar 18, the low is already in 47.8% of the time, the high only 38.6%.
+
+- The low passes 50% by bar **21** (11:15).
+- The high doesn't pass 50% until bar **35** (12:25).
+
+The yearly numbers agree: in 15 of 17 years the low came in earlier, 2022 was a tie, and only 2016 had the high slightly ahead.
+
+One possible reason is that ES has mostly gone up over these 16 years: on up days, the high often doesn't come until the afternoon. That's just my guess; I haven't tested it.
+
+## The first hour matters most
+
+- **Bar 6 (10:00), 52.8%**: just half an hour after the open, more than half of days already have their high or low of the day.
+- **Bar 14 (10:40), 75.7%**: a little over an hour in, three days out of four already have one extreme set.
+- **Bar 28 (11:50), 90.3%**: before the morning is over, nine days out of ten have already seen their high or low of the day.
+- **Bar 40 (12:50), 94.5%**: halfway through RTH, almost every day (about 19 out of 20) already has one extreme in.
+
+The curve is steep early and flattens out after 11:00. In other words, the high or low of the day is usually set within the first hour or so.
+
+## Definitions
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09, 3,924 trading days. See [how I cleaned it](/en/posts/data-cleaning/).
+- **High / low of the day**: the highest / lowest price of that day's RTH.
+- **Already in**: if the highest price of the first N bars equals the high of the day, the high is already in. A later bar that only matches the same price still counts as already in. Same for the low.
+
+## Limitations
+
+- **Trend days and range days are not separated**: all trading days are counted together.
+- **2010 starts in June and 2026 ends in September**: both years have fewer days, so a single-year curve is bumpier.
+
+(First published on Xiaohongshu. Updated in October 2026: recalculated with the cleaned data, RTH now ends at 16:15, switched to counting whether the first N bars contain the high or low of the day, and added the interactive chart with year selection.)
