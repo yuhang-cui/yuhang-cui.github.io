@@ -1,0 +1,8 @@
+I have a CSV of cleaned 1-minute ES futures bars (Databento's ES.c.0 continuous contract, with columns ts_event, open, high, low; timestamps in UTC). Please write Python code that checks whether price comes back to the open after the first RTH bar opens on its high or low (no tail on the opening side). Rules:
+1. Convert timestamps to US Eastern time (US/Eastern), handling daylight saving time automatically. Use RTH only, 09:30–16:15, meaning 1-minute bars from 09:30 to 16:14. Open = the open of the 09:30 1-minute bar.
+2. Use 1, 5, 15, 30 and 60 minutes for the first bar (built from the 1-minute bars; for 5 minutes, that's the five bars from 09:30 to 09:34).
+3. Opens on the low: the open equals the first bar's low exactly (no tolerance); opens on the high: the open equals the first bar's high exactly. Together these are "opens on its high or low".
+4. Back to the open: after the first bar closes, for a bar that opened on its low, some minute's low ≤ the open; for a bar that opened on its high, some minute's high ≥ the open. Record the first minute it happens.
+5. Open holds to the close: the open is the RTH low (or high) of the whole day. That's the same as "the daily bar opens on its high or low", and it doesn't depend on the first bar's size.
+6. Print: the sample size, and the number of days the daily bar opens on its high and on its low; for each first-bar size, the number and share of days that open on the high or low, the share that come back to the open that day, and the share where the open holds to the close; for the 5-minute first bar, also print the share back to the open by 9:40, 10:00, 10:30 and 11:30, and the time by which half of the days that came back had done so.
+Please add comments to every step explaining why it's done that way.

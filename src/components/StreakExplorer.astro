@@ -1,0 +1,100 @@
+---
+// 连续阳线 / 阴线之后：日线 / 周线、日盘 / 全天、年份都可以切换；鼠标移到某一列看连涨、连跌 N 根之后的数字。
+import data from "@/data/streaks.json";
+import { renderStreak, years, type StreakData } from "@/utils/streakView";
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+const t = useTranslations(Astro.currentLocale);
+const s = t.streak;
+const b = t.breakout;
+const d = data as StreakData;
+const ys = years(d);
+const y0 = ys[0];
+const y1 = ys[ys.length - 1];
+const c = { yearRange: b.yearRange, singleYear: b.singleYear, thousands: b.thousands };
+---
+
+<section class="bx zx sx" data-y0={y0} data-y1={y1} aria-label={s.label}>
+  <div class="bx-controls">
+    <div class="bx-switch" role="group" aria-label={s.tfGroup} data-k="tf">
+      <button type="button" data-v="d" aria-pressed="true">{s.day}</button>
+      <button type="button" data-v="w" aria-pressed="false">{s.week}</button>
+    </div>
+    <div class="bx-switch" role="group" aria-label={s.sesGroup} data-k="ses">
+      <button type="button" data-v="r" aria-pressed="true">{s.rth}</button>
+      <button type="button" data-v="f" aria-pressed="false">{s.full}</button>
+    </div>
+    <label class="bx-range">
+      <select class="bx-y0" aria-label={b.fromYear}>
+        {ys.map(y => <option value={y} selected={y === y0}>{y}</option>)}
+      </select>
+      <span>–</span>
+      <select class="bx-y1" aria-label={b.toYear}>
+        {ys.map(y => <option value={y} selected={y === y1}>{y}</option>)}
+      </select>
+    </label>
+    <button type="button" class="bx-reset">{b.allYears}</button>
+  </div>
+
+  <div class="sx-view" set:html={renderStreak(d, s, c, tplStr(b.yearRange, { a: y0, b: y1 }), "d", "r", y0, y1, 640)} />
+
+  <script type="application/json" class="sx-data" set:html={JSON.stringify({ data: d, s, c })} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+  import { groupNum } from "@/utils/breakoutView";
+  import { mount, bindHover, placeTip, svgX, rangeLabel, pc1, share } from "@/utils/chartKit";
+  import { renderStreak, pool, wilson, nLabel, band, cx, B, MAXN, THIN, type StreakData, type StreakStrings, type StreakText } from "@/utils/streakView";
+
+  type Payload = { data: StreakData; s: StreakStrings; c: StreakText };
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".sx").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const { data, s, c }: Payload = JSON.parse(root.querySelector(".sx-data")!.textContent!);
+      const view = root.querySelector<HTMLElement>(".sx-view")!;
+
+      mount(root, view, ({ y0, y1, opt }, w) => {
+        view.innerHTML = renderStreak(data, s, c, rangeLabel(c, y0, y1), opt.tf, opt.ses, y0, y1, w);
+        const st = pool(data, opt.tf, opt.ses, y0, y1);
+        const box = view.querySelector<HTMLElement>(".sx-box")!;
+        const svg = box.querySelector("svg")!;
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+        const cols = svg.querySelectorAll<SVGRectElement>(".sx-col");
+
+        // 指针在第几列，就显示连涨、连跌这么多根之后的数字
+        const row = (p: [number, number], key: string, label: string) => {
+          if (!p[0]) return "";
+          const [lo, hi] = wilson(p);
+          return (
+            `<p class="fn-tip-r"><i class="sx-key-${key}"></i>${label} · ${tplStr(s.times, { n: groupNum(p[0], c.thousands) })}<b>${pc1(share(p[1], p[0]))}</b></p>` +
+            `<p class="fn-tip-r sx-tip-ci">${tplStr(s.ci, { a: pc1(lo), b: pc1(hi) })}${p[0] < THIN ? " · " + s.thin : ""}</p>`
+          );
+        };
+        bindHover(
+          box,
+          e => {
+            const i = Math.floor((svgX(svg, w, e) - B.l) / band(w));
+            if (i < 0 || i >= MAXN) return false;
+            cols.forEach(r => r.classList.toggle("is-hover", +r.dataset.i! === i));
+            tip.innerHTML =
+              `<p class="fn-tip-h">${tplStr(s.tipHead, { n: nLabel(s, i) })}</p>` +
+              row(st.u[i], "u", s.afterUp) +
+              row(st.b[i], "b", s.afterDn) +
+              `<p class="fn-tip-r sx-tip-ci">${s.base} ${pc1(share(st.base[1], st.base[0]))}</p>`;
+            placeTip(tip, svg, cx(i, w), w, e);
+          },
+          () => {
+            tip.hidden = true;
+            cols.forEach(r => r.classList.remove("is-hover"));
+          }
+        );
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>

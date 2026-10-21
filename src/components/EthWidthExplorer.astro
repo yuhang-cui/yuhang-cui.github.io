@@ -1,0 +1,83 @@
+---
+// 夜盘区间宽度和突破：可选年份；鼠标移到某一组（手机上点一下）看四种结果的比例。颜色和突破统计卡片一样。
+import data from "@/data/eth-width.json";
+import { renderWidth, years, type WidthData } from "@/utils/ethWidthView";
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+const t = useTranslations(Astro.currentLocale);
+const s = t.ethWidth;
+const b = t.breakout;
+const d = data as WidthData;
+const ys = years(d);
+const y0 = ys[0];
+const y1 = ys[ys.length - 1];
+---
+
+<section class="bx zx wx" data-y0={y0} data-y1={y1} aria-label={s.label}>
+  <div class="bx-controls">
+    <label class="bx-range">
+      <select class="bx-y0" aria-label={b.fromYear}>
+        {ys.map(y => <option value={y} selected={y === y0}>{y}</option>)}
+      </select>
+      <span>–</span>
+      <select class="bx-y1" aria-label={b.toYear}>
+        {ys.map(y => <option value={y} selected={y === y1}>{y}</option>)}
+      </select>
+    </label>
+    <button type="button" class="bx-reset">{b.allYears}</button>
+  </div>
+
+  <div class="wx-view" set:html={renderWidth(d, s, b, tplStr(b.yearRange, { a: y0, b: y1 }), y0, y1)} />
+
+  <script type="application/json" class="wx-data" set:html={JSON.stringify({ data: d, s, b })} />
+</section>
+
+<script>
+  import { mount, rangeLabel } from "@/utils/chartKit";
+  import type { BreakoutStrings } from "@/utils/breakoutView";
+  import { renderWidth, pool, tipHtml, type WidthData, type WidthStrings } from "@/utils/ethWidthView";
+
+  type Payload = { data: WidthData; s: WidthStrings; b: BreakoutStrings };
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".wx").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const { data, s, b }: Payload = JSON.parse(root.querySelector(".wx-data")!.textContent!);
+      const view = root.querySelector<HTMLElement>(".wx-view")!;
+
+      mount(root, view, ({ y0, y1 }) => {
+        view.innerHTML = renderWidth(data, s, b, rangeLabel(b, y0, y1), y0, y1);
+        const rows = pool(data, y0, y1);
+        const box = view.querySelector<HTMLElement>(".wx-rows")!;
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+        const lines = box.querySelectorAll<HTMLElement>(".wx-row");
+
+        // 指针在哪一组，就在那一行下面显示四种结果的比例
+        const show = (e: PointerEvent) => {
+          const row = (e.target as HTMLElement).closest<HTMLElement>(".wx-row");
+          if (!row) return hide();
+          const i = +row.dataset.i!;
+          lines.forEach(r => r.classList.toggle("is-hover", r === row));
+          tip.innerHTML = tipHtml(rows[i], i, s, b);
+          tip.hidden = false;
+          const r = box.getBoundingClientRect();
+          const x = e.clientX - r.left;
+          const tw = tip.offsetWidth;
+          tip.style.left = `${Math.max(0, Math.min(r.width - tw, x - tw / 2))}px`;
+          tip.style.top = `${row.offsetTop + row.offsetHeight + 4}px`;
+        };
+        const hide = () => {
+          tip.hidden = true;
+          lines.forEach(r => r.classList.remove("is-hover"));
+        };
+        box.addEventListener("pointermove", show);
+        box.addEventListener("pointerdown", show);
+        box.addEventListener("pointerleave", hide);
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>

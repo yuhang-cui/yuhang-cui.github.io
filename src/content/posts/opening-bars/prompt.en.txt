@@ -1,0 +1,13 @@
+I have a CSV of cleaned 1-minute ES futures bars (Databento's ES.c.0 continuous contract, with columns ts_event, open, high, low, close; timestamps in UTC). Please write Python code that measures what happens on days when the first N RTH bars are all bull bars (or all bear bars). Rules:
+1. Convert timestamps to US Eastern time (US/Eastern), handling daylight saving time automatically. Use RTH only, 09:30–16:15, meaning 1-minute bars from 09:30 to 16:14.
+2. Build 5, 15, 30 and 60-minute bars from the 1-minute bars, starting at 09:30; a short last bar still counts (for example, the last 60-minute bar is 15:30–16:15). Each bar's open is its first minute's open and its close is its last minute's close.
+3. Bull bar: close > open; bear bar: close < open; equal counts as neither.
+4. Signal: the first N bars of the day are all bull bars (or all bear bars), with N = 1 to 8 for 5 and 15-minute bars and N = 1 to 6 for 30 and 60-minute bars.
+5. For each signal, measure four things (shown for bull bars; reverse everything for bear bars):
+   - The day closes up: RTH close > RTH open;
+   - Close above the signal close: RTH close > bar N's close, i.e. buying at bar N's close would be profitable at the close;
+   - The low of the day is already in: the day's RTH low is inside the first N bars;
+   - New high later: after bar N, some bar's high is above the highest high of the first N bars.
+6. Print the share of all days closing up and down; then for each bar size, each N, and bull and bear separately, print the number of signal days, their share of all days, and the four shares above.
+7. Finally, look separately at days when the first 6 sixty-minute bars are all bull bars: bar 6 closes at 15:30. Print the number of such days, the share closing above the 15:30 close, the number of days falling more than 0.3% from 15:30 to the close, and the median distance from the close to the day's high as a share of the day's range.
+Please add comments to every step explaining why it's done that way.

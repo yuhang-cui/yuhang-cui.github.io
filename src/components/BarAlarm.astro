@@ -1,0 +1,360 @@
+---
+// K 线收线提醒：每根 K 线收线前响一下（默认 5 分钟图、提前 1 分钟，美东时间，只在日盘响）。
+// 可以单独关掉接下来某几根，或者静音一段时间。设置和“哪几根不响”存在本机浏览器里。
+// 声音用 Web Audio 按音频时钟提前排好，后台标签页里计时器被浏览器放慢也能准时响。
+import { useTranslations } from "@/i18n";
+
+const s = useTranslations(Astro.currentLocale).barAlarm;
+---
+
+<section class="bx ba" aria-label={s.label} data-s={JSON.stringify(s)}>
+  <div class="ba-top">
+    <div>
+      <p class="bx-hero-k ba-clock-k">{s.etNow}</p>
+      <p class="ba-clock" aria-live="off">--:--:--</p>
+    </div>
+    <button type="button" class="ba-run" aria-pressed="false">{s.start}</button>
+  </div>
+
+  <div class="ba-status">
+    <p class="ba-state">{s.stopped}</p>
+    <p class="ba-next"></p>
+    <div class="ba-bar"><span></span></div>
+  </div>
+
+  <div class="ba-quick" role="group" aria-label={s.quick}>
+    <button type="button" data-skip="1">{s.skip1} <kbd>N</kbd></button>
+    <button type="button" data-skip="2">{s.skip2}</button>
+    <button type="button" data-skip="3">{s.skip3}</button>
+    <button type="button" data-mute="15">{s.mute15}</button>
+    <button type="button" data-mute="30">{s.mute30}</button>
+    <button type="button" data-restore>{s.restore} <kbd>R</kbd></button>
+  </div>
+
+  <p class="bx-sub">{s.upcoming}<span>{s.upcomingHint}</span></p>
+  <ul class="ba-list"></ul>
+
+  <details class="ba-settings">
+    <summary>{s.settings}</summary>
+    <div class="ba-grid">
+      <label>{s.tf}
+        <select name="tf">
+          {[1, 2, 3, 5, 10, 15].map(m => <option value={m} selected={m === 5}>{m} {s.min}</option>)}
+        </select>
+      </label>
+      <label>{s.lead}
+        <select name="lead">
+          {[15, 30, 60, 90, 120].map(v => <option value={v} selected={v === 60}>{v < 60 ? `${v} ${s.sec}` : `${v / 60} ${s.min}`}</option>)}
+        </select>
+      </label>
+      <label>{s.from}<input name="from" type="time" value="09:30" /></label>
+      <label>{s.to}<input name="to" type="time" value="16:15" /></label>
+      <label>{s.volume}<input name="vol" type="range" min="0" max="1" step="0.05" value="0.6" /></label>
+      <label class="ba-check"><input name="notify" type="checkbox" />{s.notify}</label>
+    </div>
+    <button type="button" class="bx-reset ba-test">{s.test}</button>
+  </details>
+
+  <p class="fn-note">{s.note}</p>
+</section>
+
+<script>
+  type S = Record<string, string>;
+  type Settings = { tf: number; lead: number; from: string; to: string; vol: number; notify: boolean };
+  type Saved = { settings: Settings; skipped: number[]; muteUntil: number };
+
+  const KEY = "bar-alarm-v1";
+  const DEFAULTS: Settings = { tf: 5, lead: 60, from: "09:30", to: "16:15", vol: 0.6, notify: false };
+
+  // —— 本机存储：读写失败（隐私模式等）就当没有 ——
+  function load(): Saved {
+    try {
+      const v = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (v) return { settings: { ...DEFAULTS, ...v.settings }, skipped: v.skipped || [], muteUntil: v.muteUntil || 0 };
+    } catch {}
+    return { settings: { ...DEFAULTS }, skipped: [], muteUntil: 0 };
+  }
+  function save(v: Saved) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(v));
+    } catch {}
+  }
+
+  // —— 美东时间：用 Intl 算出此刻美东和本机的时差，夏令时自动处理 ——
+  const etFmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", weekday: "short",
+  });
+  function etParts(ms: number) {
+    const p = Object.fromEntries(etFmt.formatToParts(new Date(ms)).map(x => [x.type, x.value]));
+    return { y: +p.year, mo: +p.month, d: +p.day, h: +p.hour, mi: +p.minute, s: +p.second, wd: p.weekday };
+  }
+  // 美东某天某分钟对应的真实时刻（毫秒）
+  function etToMs(y: number, mo: number, d: number, minutes: number) {
+    const guess = Date.UTC(y, mo - 1, d, 0, minutes);
+    const p = etParts(guess);
+    const shown = Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi);
+    return guess - (shown - guess);
+  }
+  const hm = (v: string) => {
+    const [h, m] = v.split(":").map(Number);
+    return h * 60 + m;
+  };
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const clock = (ms: number, sec = false) => {
+    const p = etParts(ms);
+    return `${pad(p.h)}:${pad(p.mi)}${sec ? ":" + pad(p.s) : ""}`;
+  };
+
+  type Bar = { n: number; open: number; close: number; alarm: number; day: string };
+
+  // 从 now 开始往后的 count 根 K 线（只算周一到周五的日盘；不含交易所假日）
+  function upcoming(st: Settings, now: number, count: number): Bar[] {
+    const out: Bar[] = [];
+    const a = hm(st.from);
+    const b = hm(st.to);
+    const n = Math.floor((b - a) / st.tf);
+    let p = etParts(now);
+    for (let dayStep = 0; out.length < count && dayStep < 10; dayStep++) {
+      const base = Date.UTC(p.y, p.mo - 1, p.d + dayStep);
+      const day = new Date(base);
+      const wd = day.getUTCDay();
+      if (wd === 0 || wd === 6) continue;
+      const [y, mo, d] = [day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate()];
+      for (let i = 1; i <= n && out.length < count; i++) {
+        const close = etToMs(y, mo, d, a + i * st.tf);
+        if (close <= now) continue;
+        out.push({ n: i, open: close - st.tf * 60000, close, alarm: close - st.lead * 1000, day: `${mo}/${d}` });
+      }
+    }
+    return out;
+  }
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".ba").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const s: S = JSON.parse(root.dataset.s!);
+      const $ = <T extends Element>(q: string) => root.querySelector<T>(q)!;
+      const state = load();
+      let running = false;
+      let ctx: AudioContext | null = null;
+      let scheduled: { at: number; nodes: AudioScheduledSourceNode[] } | null = null;
+      let lastTick = Date.now();
+      let listHtml = "";
+
+      // 设置面板 ← 存储
+      const form = $<HTMLDetailsElement>(".ba-settings");
+      const field = (name: string) => form.querySelector<HTMLInputElement>(`[name=${name}]`)!;
+      field("tf").value = String(state.settings.tf);
+      field("lead").value = String(state.settings.lead);
+      field("from").value = state.settings.from;
+      field("to").value = state.settings.to;
+      field("vol").value = String(state.settings.vol);
+      field("notify").checked = state.settings.notify;
+
+      const isSkipped = (b: Bar) => state.skipped.includes(b.close) || b.alarm < state.muteUntil;
+      const persist = () => {
+        // 只留还没过去的“不响”记录
+        state.skipped = state.skipped.filter(t => t > Date.now());
+        save(state);
+      };
+
+      // —— 声音：两声短促的“嘀” ——
+      function beepAt(when: number) {
+        if (!ctx) return [];
+        const nodes: AudioScheduledSourceNode[] = [];
+        for (const [offset, freq] of [[0, 880], [0.22, 1175]] as const) {
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          const t0 = when + offset;
+          g.gain.setValueAtTime(0, t0);
+          g.gain.linearRampToValueAtTime(state.settings.vol, t0 + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+          osc.connect(g).connect(ctx.destination);
+          osc.start(t0);
+          osc.stop(t0 + 0.2);
+          nodes.push(osc);
+        }
+        return nodes;
+      }
+      function unschedule() {
+        scheduled?.nodes.forEach(n => {
+          try {
+            n.stop();
+          } catch {}
+        });
+        scheduled = null;
+      }
+      // 把下一次要响的提醒按音频时钟排好；目标变了就重排
+      function reschedule(next: Bar | undefined) {
+        if (!running || !ctx || !next) return unschedule();
+        if (scheduled?.at === next.alarm) return;
+        unschedule();
+        const when = ctx.currentTime + Math.max(0, (next.alarm - Date.now()) / 1000);
+        scheduled = { at: next.alarm, nodes: beepAt(when) };
+      }
+
+      function notify(b: Bar) {
+        if (!state.settings.notify || !("Notification" in window) || Notification.permission !== "granted") return;
+        try {
+          new Notification(s.notifyTitle.replace("{{n}}", String(b.n)), {
+            body: s.notifyBody.replace("{{t}}", clock(b.close)),
+            silent: true,
+          });
+        } catch {}
+      }
+
+      // —— 画面 ——
+      const list = $<HTMLUListElement>(".ba-list");
+      function render() {
+        const now = Date.now();
+        // 提前量不是整分钟（比如 30 秒）时，提醒时间要带秒
+        const at = (ms: number) => clock(ms, state.settings.lead % 60 !== 0);
+        const bars = upcoming(state.settings, now - state.settings.tf * 60000, 13);
+        const current = bars.find(b => b.open <= now && now < b.close);
+        const future = bars.filter(b => b.alarm > now);
+        const next = future.find(b => !isSkipped(b));
+
+        $(".ba-clock").textContent = clock(now, true);
+        const runBtn = $<HTMLButtonElement>(".ba-run");
+        runBtn.textContent = running ? s.stop : s.start;
+        runBtn.setAttribute("aria-pressed", String(running));
+        root.classList.toggle("is-running", running);
+
+        const fill = $<HTMLElement>(".ba-bar span");
+        if (current) {
+          const left = Math.ceil((current.close - now) / 1000);
+          $(".ba-state").textContent = s.inBar
+            .replace("{{n}}", String(current.n))
+            .replace("{{left}}", `${Math.floor(left / 60)}:${pad(left % 60)}`);
+          fill.style.width = `${((now - current.open) / (current.close - current.open)) * 100}%`;
+        } else {
+          $(".ba-state").textContent = s.outside;
+          fill.style.width = "0";
+        }
+        $(".ba-next").textContent = !running
+          ? s.stopped
+          : next
+            ? s.nextAlarm
+                .replace("{{t}}", at(next.alarm))
+                .replace("{{n}}", String(next.n))
+                .replace("{{in}}", fmtIn(next.alarm - now))
+            : s.noAlarm;
+        if (state.muteUntil > now)
+          $(".ba-next").textContent += " · " + s.mutedUntil.replace("{{t}}", clock(state.muteUntil));
+
+        const html = future
+          .slice(0, 12)
+          .map(b => {
+            const off = isSkipped(b);
+            const today = etParts(now);
+            const dayTag = b.day === `${today.mo}/${today.d}` ? "" : `<span class="ba-day">${b.day}</span>`;
+            return `<li class="${off ? "is-off" : ""}">
+              <span class="ba-n">${s.bar.replace("{{n}}", String(b.n))}</span>
+              <span class="ba-win">${dayTag}${clock(b.open)}–${clock(b.close)}</span>
+              <span class="ba-at">${s.ringAt.replace("{{t}}", at(b.alarm))}</span>
+              <button type="button" data-close="${b.close}" aria-pressed="${!off}">${off ? s.off : s.on}</button>
+            </li>`;
+          })
+          .join("");
+        // 内容变了才重画列表，免得点按钮时列表刚好被替换掉
+        if (html !== listHtml) list.innerHTML = listHtml = html;
+
+        reschedule(next);
+        // 系统通知跟着计时器走：上一次检查到现在之间到点的提醒都发（声音已经排在音频时钟上）
+        if (running)
+          bars.filter(b => b.alarm > lastTick && b.alarm <= now && !isSkipped(b)).forEach(notify);
+        lastTick = now;
+      }
+      const fmtIn = (ms: number) => {
+        const t = Math.max(0, Math.round(ms / 1000));
+        return t >= 3600 ? `${Math.floor(t / 3600)}h${pad(Math.floor((t % 3600) / 60))}m` : `${Math.floor(t / 60)}:${pad(t % 60)}`;
+      };
+
+      // —— 操作 ——
+      function skipNext(k: number) {
+        const now = Date.now();
+        const future = upcoming(state.settings, now, 40).filter(b => b.alarm > now && !isSkipped(b));
+        future.slice(0, k).forEach(b => state.skipped.push(b.close));
+        persist();
+        render();
+      }
+      function restoreAll() {
+        state.skipped = [];
+        state.muteUntil = 0;
+        persist();
+        render();
+      }
+      async function toggleRun() {
+        running = !running;
+        if (running) {
+          ctx ??= new AudioContext();
+          await ctx.resume();
+        } else unschedule();
+        render();
+      }
+
+      root.addEventListener("click", e => {
+        const t = e.target as HTMLElement;
+        if (t.closest(".ba-run")) return void toggleRun();
+        const sk = t.closest<HTMLElement>("[data-skip]");
+        if (sk) return skipNext(+sk.dataset.skip!);
+        const mu = t.closest<HTMLElement>("[data-mute]");
+        if (mu) {
+          state.muteUntil = Date.now() + +mu.dataset.mute! * 60000;
+          persist();
+          return render();
+        }
+        if (t.closest("[data-restore]")) return restoreAll();
+        const one = t.closest<HTMLElement>("[data-close]");
+        if (one) {
+          const c = +one.dataset.close!;
+          state.skipped = state.skipped.includes(c) ? state.skipped.filter(x => x !== c) : [...state.skipped, c];
+          persist();
+          return render();
+        }
+        if (t.closest(".ba-test")) {
+          ctx ??= new AudioContext();
+          ctx.resume().then(() => beepAt(ctx!.currentTime + 0.05));
+        }
+      });
+
+      form.addEventListener("change", async e => {
+        const t = e.target as HTMLInputElement;
+        state.settings = {
+          tf: +field("tf").value,
+          lead: +field("lead").value,
+          from: field("from").value || DEFAULTS.from,
+          to: field("to").value || DEFAULTS.to,
+          vol: +field("vol").value,
+          notify: field("notify").checked,
+        };
+        if (t.name === "notify" && t.checked && "Notification" in window && Notification.permission === "default")
+          await Notification.requestPermission();
+        unschedule(); // 音量、周期变了都要按新设置重排
+        persist();
+        render();
+      });
+
+      // 键盘：N 跳过下一根，R 全部恢复（输入框里不算）
+      document.addEventListener("keydown", e => {
+        if (!document.body.contains(root)) return;
+        if ((e.target as HTMLElement).closest("input, select, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+        if (e.key === "n" || e.key === "N") skipNext(1);
+        if (e.key === "r" || e.key === "R") restoreAll();
+      });
+
+      render();
+      const timer = window.setInterval(() => {
+        if (!document.body.contains(root)) return window.clearInterval(timer);
+        render();
+      }, 250);
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>

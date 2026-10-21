@@ -1,0 +1,109 @@
+---
+// 开盘连续同色 K 线：K 线周期、阳线 / 阴线、年份都可以切换；鼠标移到某个 N 上看四件事的比例。
+import data from "@/data/opening-bars.json";
+import { renderOpenBars, years, TFS, type OpenBarsData } from "@/utils/openBarsView";
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+const t = useTranslations(Astro.currentLocale);
+const s = t.openBars;
+const b = t.breakout;
+const d = data as OpenBarsData;
+const ys = years(d);
+const y0 = ys[0];
+const y1 = ys[ys.length - 1];
+const c = { yearRange: b.yearRange, singleYear: b.singleYear, thousands: b.thousands };
+---
+
+<section class="bx zx cx" data-y0={y0} data-y1={y1} aria-label={s.label}>
+  <div class="bx-controls">
+    <div class="bx-switch" role="group" aria-label={s.tfGroup} data-k="tf">
+      {TFS.map(k => <button type="button" data-v={k} aria-pressed={k === "60" ? "true" : "false"}>{tplStr(s.min, { n: k })}</button>)}
+    </div>
+    <div class="bx-switch" role="group" aria-label={s.dirGroup} data-k="dir">
+      <button type="button" data-v="u" aria-pressed="true">{s.bull}</button>
+      <button type="button" data-v="d" aria-pressed="false">{s.bear}</button>
+    </div>
+    <label class="bx-range">
+      <select class="bx-y0" aria-label={b.fromYear}>
+        {ys.map(y => <option value={y} selected={y === y0}>{y}</option>)}
+      </select>
+      <span>–</span>
+      <select class="bx-y1" aria-label={b.toYear}>
+        {ys.map(y => <option value={y} selected={y === y1}>{y}</option>)}
+      </select>
+    </label>
+    <button type="button" class="bx-reset">{b.allYears}</button>
+  </div>
+
+  <div class="cx-view" set:html={renderOpenBars(d, s, c, tplStr(b.yearRange, { a: y0, b: y1 }), "60", "u", y0, y1, 640)} />
+
+  <script type="application/json" class="cx-data" set:html={JSON.stringify({ data: d, s, c })} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+  import { groupNum } from "@/utils/breakoutView";
+  import { mount, bindHover, placeTip, svgX, rangeLabel, pc1, share } from "@/utils/chartKit";
+  import {
+    renderOpenBars,
+    pool,
+    px,
+    signalEnd,
+    label,
+    LINES,
+    THIN,
+    B,
+    type OpenBarsData,
+    type OpenBarsStrings,
+    type OpenBarsText,
+  } from "@/utils/openBarsView";
+
+  type Payload = { data: OpenBarsData; s: OpenBarsStrings; c: OpenBarsText };
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".cx").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const { data, s, c }: Payload = JSON.parse(root.querySelector(".cx-data")!.textContent!);
+      const view = root.querySelector<HTMLElement>(".cx-view")!;
+
+      mount(root, view, ({ y0, y1, opt }, w) => {
+        const { tf, dir } = opt;
+        view.innerHTML = renderOpenBars(data, s, c, rangeLabel(c, y0, y1), tf, dir, y0, y1, w);
+        const st = pool(data, tf, dir, y0, y1);
+        const N = st.rows.length;
+        const box = view.querySelector<HTMLElement>(".cx-box")!;
+        const svg = box.querySelector("svg")!;
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+        const rule = svg.querySelector<SVGLineElement>(".fn-rule")!;
+
+        // 指针离哪个 N 最近，就显示那个 N 的四个比例
+        bindHover(
+          box,
+          e => {
+            const x = svgX(svg, w, e);
+            if (x < B.l || x > w - B.r) return false;
+            let n = 1;
+            for (let k = 2; k <= N; k++) if (Math.abs(px(k, N, w) - x) < Math.abs(px(n, N, w) - x)) n = k;
+            const r = st.rows[n - 1];
+            rule.setAttribute("x1", String(px(n, N, w)));
+            rule.setAttribute("x2", String(px(n, N, w)));
+            svg.classList.add("is-hover");
+            tip.innerHTML =
+              `<p class="fn-tip-h">${tplStr(dir === "u" ? s.tipHeadU : s.tipHeadD, { n, d: groupNum(r[0], c.thousands), p: pc1(share(r[0], st.days)) })}</p>` +
+              `<p class="fn-tip-h">${tplStr(s.tipTime, { t: signalEnd(tf, n) })}${r[0] < THIN ? " · " + s.thin : ""}</p>` +
+              LINES.map(({ k, i, color }) => `<p class="fn-tip-r"><i style="background:${color}"></i>${label(s, k, dir)}<b>${pc1(share(r[i], r[0]))}</b></p>`).join("");
+            placeTip(tip, svg, px(n, N, w), w, e);
+          },
+          () => {
+            svg.classList.remove("is-hover");
+            tip.hidden = true;
+          }
+        );
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>

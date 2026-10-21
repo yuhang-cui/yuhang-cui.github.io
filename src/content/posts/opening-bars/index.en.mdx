@@ -1,0 +1,109 @@
+---
+title: "Two Bull Hours at the Open: The Day Closes Up 84.5% of the Time, but Buying Then Pays Off Only 56%"
+description: "When the first two 60-minute ES RTH bars both close up, the day closes up 84.5% of the time. But if you buy at the close of the second bar, you're still ahead at the close only 56.3% of the time. The more useful number: by then, the low of the day is already in 77.5% of the time."
+stat: "84.5%"
+statLabel: "day closes up after two bull 60-minute bars"
+pubDatetime: 2026-10-21T11:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import OpenBarsExplorer from "@/components/OpenBarsExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./openbars.en.py?raw";
+
+> **Bottom line**: when the first two 60-minute ES RTH bars (09:30–11:30) both close up, the day closes up **84.5%** of the time; when both close down, the day closes down 79.9% of the time. This kind of open happens about every other day.
+>
+> But most of that high win rate is already "spent": buying at the close of the second bar (11:30), you're still ahead at the close only **56.3%** of the time, about the same as buying on any random day.
+>
+> <span class="takeaway">How I use it: after two bull hours at the open, the two numbers that matter more are these: the low of the day is already in 77.5% of the time, and price makes a new high later 82.0% of the time. That favors buying a pullback with a stop below the day's low, rather than chasing at 11:30.</span>
+
+When I traded breakouts, I used to see a string of bull bars at the open and couldn't wait to get in. I'd buy almost in a panic, completely gripped by FOMO. And then, more often than not, I'd find I had bought the top.
+
+Al Brooks often says that in a strong trend you can buy the close. So does a string of bull bars at the open count as that kind of trend? When is it buying the close with the trend, and when is it just chasing?
+
+![After a string of bull bars at the open, buying at the close of bar 12 meant buying near the high of the day](./buy-the-close-2026-10-21.webp)
+
+<p class="img-caption">5-minute chart, 2026-10-21. From bar 4 on, almost every bar closed up, and the first 60-minute bar closed strong. Buying at the close of bar 12 (10:30, which is also the close of the first 60-minute bar) meant buying near the high of the day: after a few sideways bars, bar 21, a big bear bar, dropped straight back below the moving average, and price never got back to the entry that day.</p>
+
+To answer that question, I used ES data from 2010 to 2026 to see how the day closes after consecutive same-color bars at the open. I focused on the 60-minute chart, and also looked at how many same-color bars in a row appear at the open on the 5, 15 and 30-minute charts.
+
+<OpenBarsExplorer />
+
+## First two 60-minute bars both bull: the day closes up 84.5% of the time
+
+| First two 60-minute bars | Both bull | Both bear |
+|---|---:|---:|
+| How often | 1,062 days (27.1%) | 874 days (22.3%) |
+| Day closes the same color | **84.5%** | **79.9%** |
+| Close beyond bar 2's close | 56.3% | 45.7% |
+| Opposite extreme already in | 77.5% | 74.9% |
+| New high (low) later | 82.0% | 75.1% |
+
+- **It's common**: the two cases together make up 49.4% of days, so about every other day the first two hours are the same color.
+- **The day closes the same color most of the time**: 84.5% for bull, 79.9% for bear.
+- **Bear is a little weaker than bull**: every number is a few points lower for bear bars, which fits ES's overall upward drift over these 16 years.
+
+## Why buying then pays off only 56% of the time
+
+"The day closes up" compares the close with the **open**. By 11:30 the two bull bars are already done, the day is probably up a fair amount already, and it counts as an up day as long as the close doesn't fall back below the open. So most of that 84.5% has **already happened**.
+
+The question you can actually trade is: if you enter at 11:30 after seeing the signal, can you still make money from there to the close?
+
+- After two bull bars, the close is above the second bar's close only **56.3%** of the time. Across all days, 54.6% close up, so that's about the same.
+- After two bear bars it's even clearer: the close is below the second bar's close only **45.7%** of the time, less than half. In other words, on days when the first two hours both go down, the rest of the day more often claws some of it back.
+
+So two same-color hours at the open tell you "which side the day will probably close on", not "how much is left to make if you get in now".
+
+## Two more useful numbers
+
+After two bull hours at the open:
+
+- **The low of the day is already in: 77.5%**. With a long stop below the day's low, you won't get hit by a "new low of the day" on roughly eight days out of ten.
+- **A new high later: 82.0%**. On about eight days out of ten, price trades above the morning high after 11:30, so the morning high is a level to watch, not the top.
+
+The matching numbers for two bear bars are 74.9% and 75.1%, a little weaker than for bull bars.
+
+## Six bull hours in a row: no big selloff into the close
+
+On the 60-minute chart, you'll see that "new high later" drops from 84.4% at bar 5 to 66.7% at bar 6. It looks as if everyone is dumping their longs into the close, but the data says otherwise:
+
+- 87 days opened with six bull 60-minute bars in a row. Bar 6 closes at 15:30, leaving only the last 45 minutes.
+- On those 87 days, the close was above the 15:30 close 55.2% of the time, and only 3 days fell more than 0.3% into the close. The close was typically just 11% of the day's range below the high, essentially near the high.
+- So "new high later" drops mainly because there's too little time left to make another new high. Profit-taking into the close mostly shows up as price stalling near the high, not as a long slide.
+
+## Shorter bars
+
+On the 5, 15 and 30-minute charts, consecutive same-color bars at the open are a much weaker signal:
+
+| First N bars all bull | Day closes up |
+|---|---:|
+| 5 minutes × 2 bars (to 9:40) | 67.1% |
+| 15 minutes × 2 bars (to 10:00) | 72.9% |
+| 30 minutes × 2 bars (to 10:30) | 78.1% |
+| 60 minutes × 2 bars (to 11:30) | 84.5% |
+| 60 minutes × 3 bars (to 12:30) | 93.6% |
+
+The pattern is simple: the more time the signal uses up, the higher "the day closes up" goes, but the less time and room are left for you. And "close above the signal close", for bull combinations with more than 100 days, stays between 51% and 61%; none of them clearly beats "buying on any random day".
+
+## Definition and how to reproduce it
+
+<ResearchCard title="Consecutive same-color bars at the open" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09, 3,924 trading days. See [how I cleaned it](/en/posts/data-cleaning/).
+- **RTH**: 09:30–16:15 US Eastern. The 5, 15, 30 and 60-minute bars all start at 09:30, and a short last bar still counts (the last 60-minute bar is 15:30–16:15).
+- **Bull / bear bars**: close > open is a bull bar, close < open is a bear bar; equal counts as neither.
+- **Signal**: the first N bars of the day are all bull bars (or all bear bars).
+- **The day closes up**: RTH close > RTH open, i.e. the daily bar is a bull bar.
+- **Close above the signal close**: RTH close > bar N's close.
+- **Low of the day already in**: the day's RTH low is inside the first N bars.
+- **New high later**: after bar N, some bar's high is above the highest high of the first N bars.
+
+</ResearchCard>
+
+## Limitations
+
+- **It only looks at the close, not the path**: "close above the signal close" doesn't mean price didn't drop a lot first; stops and targets need a separate study.
+- **Bar size and shape aren't separated**: two big bull bars and two small ones may mean different things; whether bar 2 is an inside bar, or where it closes, isn't split out here.
+- **The opening location isn't considered**: for example, two bull bars after a gap up may mean something different from two bull bars after a gap down.

@@ -30,3 +30,16 @@ cls = pd.Series(np.select([up & down, up, down], ["both sides", "up only", "down
 print("sample days", len(cls))
 print((cls.value_counts(normalize=True) * 100).round(1).to_string())
 print("at least one side %.1f%%" % (100 * (cls != "neither").mean()))
+
+# Overnight range width: divided by the average RTH range of the last 8 days (not including today), so it's known before the open
+adr = (rth.hi - rth.lo).rolling(8).mean().shift(1).loc[night.index]
+ok = adr.notna()                                      # the first 8 days of the data have no average range; skip them
+width = ((night.hi - night.lo) / adr * 100)[ok]
+groups = pd.cut(width, [0, 30, 40, 50, 60, 70, 80, 100, 120, np.inf], right=False)
+print(f"\nOvernight width: {ok.sum()} days, median {width.median():.1f}%, middle half {width.quantile(0.25):.1f}%–{width.quantile(0.75):.1f}%")
+tab = pd.crosstab(groups, cls[ok], normalize="index").mul(100).round(1)
+tab["days"] = groups.value_counts().sort_index()
+print(tab.to_string())
+narrow, wide = cls[ok][width < 50], cls[ok][width >= 100]       # under half the average daily range / more than a full one
+print(f"Overnight width < 50%: {len(narrow)} days, both sides {100 * (narrow == 'both sides').mean():.1f}%; "
+      f">= 100%: {len(wide)} days, both sides {100 * (wide == 'both sides').mean():.1f}%, neither {100 * (wide == 'neither').mean():.1f}%")

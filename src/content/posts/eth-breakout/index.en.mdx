@@ -10,6 +10,7 @@ lang: en
 ---
 
 import BreakoutExplorer from "@/components/BreakoutExplorer.astro";
+import EthWidthExplorer from "@/components/EthWidthExplorer.astro";
 import ResearchCard from "@/components/ResearchCard.astro";
 import prompt from "./prompt.en.txt?raw";
 import code from "./breakout.en.py?raw";
@@ -17,6 +18,8 @@ import code from "./breakout.en.py?raw";
 > **Bottom line**: on **94.4%** of days, today's RTH breaks at least one side of today's overnight range. Only 5.6% of days break neither.
 >
 > One side at a time: the overnight high gets taken out **61.1%** of the time, the overnight low **54.6%**.
+>
+> The narrower the overnight range, the more often both sides break: on days when the overnight range is under half the average daily range, **36.7%** break both sides; on days when it's wider than a full average daily range, only 8.5% break both sides, and 15.7% stay inside the overnight range all day.
 >
 > <span class="takeaway">How I use it: once you've decided which way you're trading today, the overnight high or low on that side is a fairly reliable target.</span>
 
@@ -41,7 +44,7 @@ Up only is **39.8%**, down only **33.3%**, a 6.5-point gap. In 16 years, 5 had m
 
 Were those 5 years all down years? I checked against the data, and **no**:
 
-| Year | ES full-year change | Overnight high broken | Overnight low broken |
+| Year | Full year | High broken | Low broken |
 |---|---:|---:|---:|
 | 2010 (from June) | +17.9% | 56.7% | 59.0% |
 | 2012 | +11.9% | 55.4% | 58.4% |
@@ -59,7 +62,7 @@ So the full-year move has little to do with which way RTH breaks the overnight r
 
 Broadly, the wider the overnight range relative to RTH, the lower the break rate. The lowest and highest years:
 
-| Year | Overnight width / RTH width (median) | At least one side broken |
+| Year | Overnight / RTH width | Either side broken |
 |---|---:|---:|
 | 2020 | 0.98 | 88.2% |
 | 2019 | 0.85 | 90.0% |
@@ -68,6 +71,18 @@ Broadly, the wider the overnight range relative to RTH, the lower the break rate
 <p class="table-note">Overnight width / RTH width: for each day, divide "overnight high − overnight low" by "that day's RTH high − RTH low", then take the median across the year's trading days. It's not a percentage of price but the relative width of the two ranges: 0.98 means that on a typical day that year, the overnight range was about as wide as RTH; 0.66 means it was only about two-thirds as wide.</p>
 
 2020 was extremely volatile. The overnight range was almost as wide as RTH, so RTH had a harder time getting outside it. In 2023 the overnight range was relatively narrow, and RTH broke out of it almost every day.
+
+## Day by day: the narrower the overnight range, the more often both sides break
+
+The width above is relative to that day's RTH range, which you only know at the close. Here's a measure you can calculate before the open: divide the overnight range by the average RTH range of the last 8 days, and you know whether today's overnight range is wide or narrow compared with normal.
+
+<EthWidthExplorer />
+
+- The overnight range is typically about 70% of the average daily range (median 70.3%; half of days fall between 52.8% and 93.6%).
+- **The narrower it is, the more often both sides break**: on the 84 days under 30%, both sides broke 56.0% of the time, and not a single day broke neither side; between 30% and 50%, more than 30% of days still broke both sides.
+- **The wider it is, the more often RTH stays boxed in**: on the 785 days wider than the average daily range, only 8.5% broke both sides, and 15.7% stayed inside the overnight range all day, about three times the usual 5.6%.
+
+<span class="takeaway">How I use it: before the open, I check how wide the overnight range is. On narrow days (under half the average daily range), both the overnight high and low are likely to get taken out, so I'm careful about parking a stop just beyond them. On wide days (more than the average daily range), RTH never leaves the overnight range on about one day in six or seven, so breakout entries fail more often.</span>
 
 ## Compared with the prior day's high and low
 
@@ -86,6 +101,7 @@ The reason is the width of the two ranges. The overnight range is narrower, with
 - **Upside breakout**: today's RTH high is **strictly above** the overnight high, i.e. at least 1 tick (0.25 points) higher. Exactly equal doesn't count.
 - **Downside breakout**: today's RTH low is strictly below the overnight low.
 - **Four outcomes**: up only, down only, both sides, neither.
+- **Overnight width**: (overnight high − overnight low) ÷ the average RTH range of the last 8 days (each day's RTH high − low, not including today). The first 8 days of the data have no average range, so they're left out of the width groups, leaving 3,871 days.
 
 </ResearchCard>
 
@@ -95,4 +111,4 @@ The reason is the width of the two ranges. The overnight range is narrower, with
 - **It doesn't track which side broke first**: on two-sided days, up-then-down and down-then-up are lumped together.
 - **The 46 days with incomplete overnight data are excluded**: RTH was normal on those days; only part of the overnight data is missing.
 
-(Updated in October 2026: recalculated with the cleaned data, replaced the earlier sample numbers, and added the interactive stats and the reproduction card.)
+(Updated in October 2026: recalculated with the cleaned data, replaced the earlier sample numbers, and added the interactive stats and the reproduction card; later added the stats grouped by overnight range width.)

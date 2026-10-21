@@ -1,0 +1,79 @@
+---
+title: "Opening on the High or Low: Price Comes Back to the Open 76% of the Time"
+description: "The first 5-minute ES RTH bar opens on its high or low (no tail on the opening side) on only 3.6% of days. On those days, 76.2% trade back to the open the same day, half of them before 10:00. The whole daily bar opened on its high or low on only 35 days in 16 years."
+stat: "76.2%"
+statLabel: "back to the open that day (5-minute first bar)"
+pubDatetime: 2026-10-21T12:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import ShavedExplorer from "@/components/ShavedExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./shaved.en.py?raw";
+
+> **Bottom line**: the first 5-minute ES RTH bar opens on its high or low (no tail on the opening side) on only **3.6%** of days in 16 years. On those days, price trades back to the open the same day **76.2%** of the time.
+>
+> And it comes back fast: on half of those days, price is back at the open before 10:00. The whole daily bar opened on its high or low on only 35 of 3,924 days (0.89%).
+>
+> <span class="takeaway">How I use it: when the first bar opens on its low and runs straight up, I don't assume the open is today's low. On three days out of four, price comes back to test the open, so it's a pullback level worth waiting for.</span>
+
+Daily bars almost always have tails: days when the open is exactly the day's high or low are very rare. So when the first bar of the day opens on its own high or low (a "shaved open": the opening side has been shaved off, with no tail), does price come back to test the open later? How long does it take?
+
+<ShavedExplorer />
+
+## Rare: only 3.6% for a 5-minute first bar
+
+Out of 3,924 trading days, the first 5-minute bar opened on its low on 78 days and on its high on 66, 143 days in total (**3.64%**; one day was both, 2020-03-16, when a circuit breaker halted trading right at the open).
+
+The longer the first bar, the harder it is for the open to be that bar's high or low: 7.8% for a 1-minute bar, 2.4% for 15 minutes, and only 1.5% for 60 minutes.
+
+## Most come back, and quickly
+
+On the 143 days when the first 5-minute bar opened on its high or low:
+
+| By | Back to the open |
+|---|---:|
+| 9:40 (close of bar 2) | 24.5% |
+| 10:00 | 49.7% |
+| 10:30 | 61.5% |
+| 11:30 | 66.4% |
+| Close | **76.2%** |
+
+Of the days that came back, half did so by the close of bar 3 (9:45). So the "shaved" side of the opening bar usually gets its tail filled in quickly.
+
+The remaining 24.5% are days when the open held all the way to the close as the day's low (high), meaning the daily bar opened on its low (high).
+
+## The longer the first bar, the less often price comes back
+
+| First bar | Days | Back to the open | Holds to the close |
+|---|---:|---:|---:|
+| 1 minute | 307 (7.82%) | 89.6% | 11.4% |
+| 5 minutes | 143 (3.64%) | 76.2% | 24.5% |
+| 15 minutes | 94 (2.40%) | 63.8% | 37.2% |
+| 30 minutes | 80 (2.04%) | 57.5% | 43.8% |
+| 60 minutes | 58 (1.48%) | 41.4% | 60.3% |
+
+The reason is simple: the 35 days when the daily bar opened on its high or low are always included, whatever the first bar's size. The longer the first bar, the fewer "false" shaved opens are left besides those 35, so the share that comes back naturally drops. With a 60-minute first bar, six in ten of the shaved opens are days when the open held to the close.
+
+So for this question, a first bar of 1 to 30 minutes works best. A 60-minute first bar already takes up a seventh of the session, leaving much less time for price to "come back".
+
+## Definition and how to reproduce it
+
+<ResearchCard title="Opening on the high or low" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09, 3,924 trading days. See [how I cleaned it](/en/posts/data-cleaning/).
+- **RTH**: 09:30–16:15 US Eastern. **Open**: the open of the 09:30 1-minute bar.
+- **First bar**: 1, 5, 15, 30 and 60 minutes, built from the 1-minute bars.
+- **Opens on the low**: the open equals the first bar's low **exactly**, so the first bar has no lower tail. **Opens on the high** works the same way.
+- **Back to the open**: after the first bar closes, price trades at the open again (for a bar that opened on its low, the low falls back to the open).
+- **Open holds to the close**: the open is the RTH low (high) of the whole day, the same as the daily bar opening on its low (high).
+
+</ResearchCard>
+
+## Limitations
+
+- **The sample is small**: only 143 days with a 5-minute first bar, a few to twenty a year, so the rate jumps around a lot when you pick a single year on the chart.
+- **It only checks whether price got back to the open**: whether it bounced from there or broke through isn't measured.
+- **It's sensitive to the data**: "opens on its high or low" requires the open to equal the high (low) exactly, and one tick off doesn't count. With a different data source, a slightly different first print at the open could change the count.

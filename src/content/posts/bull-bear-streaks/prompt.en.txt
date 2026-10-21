@@ -1,0 +1,11 @@
+I have a CSV of cleaned 1-minute ES futures bars (Databento's ES.c.0 continuous contract, with columns ts_event, open, close; timestamps in UTC; half-day sessions and contract-roll days already removed). Please write Python code that measures the odds the next bar closes up after N bull (bear) bars in a row. Rules:
+1. Convert timestamps to US Eastern time (US/Eastern), handling daylight saving time automatically. Build two kinds of daily bars:
+   - RTH: open = the open of the 09:30 1-minute bar, close = the close of the 16:14 bar (09:30–16:15).
+   - Full day: open at 18:00 the evening before, close at 17:00 (1-minute bars after 18:00 belong to the next trading day), like the ES1! daily bars on TradingView. Keep only trading days that have an RTH session; the first day's overnight session is incomplete, so drop it.
+2. Weekly bars: combine the daily bars of the same week (Monday to Friday); open = the first day's open, close = the last day's close.
+3. Bull bar: close > open; bear bar: close < open; equal is a doji.
+4. Streak count: bull bars count +1, +2, +3, …; bear bars −1, −2, −3, …; when the direction changes, restart at ±1; a doji resets to 0.
+5. On the daily chart, "in a row" follows stock market trading days: use the NYSE calendar (pandas' built-in holiday rules plus the unscheduled closures on 2012-10-29, 2012-10-30, 2018-12-05 and 2025-01-09) to find the previous trading day. If it isn't in the data (it was removed in cleaning), start counting over and don't count that pair. On the weekly chart, the two weeks must be consecutive.
+6. Stats: after each "N in a row", check whether the next bar closes up; skip cases where the next bar is a doji. Put 8 or more in a row into one group.
+7. For each of the four combinations (RTH / full day × daily / weekly), print: the total number of cases, the unconditional share of next bars closing up, the share after 2+ bull bars and after 2+ bear bars, and the number of cases and the share closing up for each group from 1 to 8+ bull bars and 1 to 8+ bear bars. Add a 95% interval (Wilson method) to every share.
+Please add comments to every step explaining why it's done that way.

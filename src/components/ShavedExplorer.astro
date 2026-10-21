@@ -1,0 +1,88 @@
+---
+// 开盘就是最高 / 最低价：第一根 K 线的周期、年份都可以切换；鼠标移到曲线上看到某个时间为止回到开盘价的比例。
+import data from "@/data/shaved-open.json";
+import { renderShaved, years, TFS, type ShavedData } from "@/utils/shavedView";
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+const t = useTranslations(Astro.currentLocale);
+const s = t.shaved;
+const b = t.breakout;
+const d = data as ShavedData;
+const ys = years(d);
+const y0 = ys[0];
+const y1 = ys[ys.length - 1];
+const c = { yearRange: b.yearRange, singleYear: b.singleYear, thousands: b.thousands };
+---
+
+<section class="bx zx ox" data-y0={y0} data-y1={y1} aria-label={s.label}>
+  <div class="bx-controls">
+    <div class="bx-switch" role="group" aria-label={s.tfGroup} data-k="tf">
+      {TFS.map(k => <button type="button" data-v={k} aria-pressed={k === "5" ? "true" : "false"}>{tplStr(s.min, { n: k })}</button>)}
+    </div>
+    <label class="bx-range">
+      <select class="bx-y0" aria-label={b.fromYear}>
+        {ys.map(y => <option value={y} selected={y === y0}>{y}</option>)}
+      </select>
+      <span>–</span>
+      <select class="bx-y1" aria-label={b.toYear}>
+        {ys.map(y => <option value={y} selected={y === y1}>{y}</option>)}
+      </select>
+    </label>
+    <button type="button" class="bx-reset">{b.allYears}</button>
+  </div>
+
+  <div class="ox-view" set:html={renderShaved(d, s, c, tplStr(b.yearRange, { a: y0, b: y1 }), "5", y0, y1, 640)} />
+
+  <script type="application/json" class="ox-data" set:html={JSON.stringify({ data: d, s, c })} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+  import { mount, bindHover, placeTip, svgX, rangeLabel, pc1, share, barEnd } from "@/utils/chartKit";
+  import { renderShaved, pool, cx, cy, C, BARS, type ShavedData, type ShavedStrings, type ShavedText } from "@/utils/shavedView";
+
+  type Payload = { data: ShavedData; s: ShavedStrings; c: ShavedText };
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".ox").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const { data, s, c }: Payload = JSON.parse(root.querySelector(".ox-data")!.textContent!);
+      const view = root.querySelector<HTMLElement>(".ox-view")!;
+
+      mount(root, view, ({ y0, y1, opt }, w) => {
+        view.innerHTML = renderShaved(data, s, c, rangeLabel(c, y0, y1), opt.tf, y0, y1, w);
+        const st = pool(data, opt.tf, y0, y1);
+        const box = view.querySelector<HTMLElement>(".ox-back-box")!;
+        const svg = box.querySelector("svg")!;
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+        const rule = svg.querySelector<SVGLineElement>(".fn-rule")!;
+        const dot = svg.querySelector<SVGCircleElement>(".ox-dot")!;
+
+        // 指针在哪个时间，就显示到那时为止回到开盘价的比例
+        bindHover(
+          box,
+          e => {
+            const k = Math.round(((svgX(svg, w, e) - C.l) / (w - C.l - C.r)) * BARS);
+            if (k < 1 || k > BARS) return false;
+            const v = share(st.cum[k], st.n) || 0;
+            rule.setAttribute("x1", String(cx(k, w)));
+            rule.setAttribute("x2", String(cx(k, w)));
+            dot.setAttribute("cx", String(cx(k, w)));
+            dot.setAttribute("cy", String(cy(v)));
+            svg.classList.add("is-hover");
+            tip.innerHTML = `<p class="fn-tip-h">${tplStr(s.by, { t: barEnd(k - 1) })}</p><p class="fn-tip-r">${s.cumTip}<b>${pc1(v)}</b></p>`;
+            placeTip(tip, svg, cx(k, w), w, e);
+          },
+          () => {
+            svg.classList.remove("is-hover");
+            tip.hidden = true;
+          }
+        );
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>

@@ -1,0 +1,11 @@
+I have a CSV of cleaned 1-minute ES futures bars (Databento's ES.c.0 continuous contract, with columns ts_event, instrument_id, open, high, low, close; timestamps in UTC). Please write Python code that checks whether ES's RTH moves and ranges differ from Monday to Friday. Rules:
+1. Convert timestamps to US Eastern time (US/Eastern), handling daylight saving time automatically. Use RTH only, 09:30–16:15, meaning 1-minute bars from 09:30 to 16:14. Open = the open of the 09:30 bar, close = the close of the 16:14 bar, high / low = the highest high / lowest low of the RTH bars.
+2. Compute three numbers for each day:
+   - RTH change % = (close − open) ÷ open × 100; above 0 is an up day;
+   - Close-to-close change % = (today's close − yesterday's close) ÷ yesterday's close × 100. Yesterday = the most recent stock market trading day before today, based on the NYSE calendar (pandas' built-in holiday rules plus the unscheduled closures on 2012-10-29, 2012-10-30, 2018-12-05 and 2025-01-09). If that day isn't in the data, or the two days have different instrument_id values, skip the close-to-close number for that day;
+   - Intraday range % = (RTH high − RTH low) ÷ open × 100.
+3. Weekdays follow the calendar (in a week with a Monday holiday, Tuesday is still Tuesday).
+4. Group by weekday and print, for each group: the number of days, the RTH up-day share and its 95% interval (Wilson method), the close-to-close up share, the mean and median close-to-close change, and the median range.
+5. Split the data into 2010–2017 and 2018–2026 and print the same table for each half, to see whether the results hold in both.
+6. Then look at Fridays, month ends and quarter ends: month end = the last stock market trading day of each month (by the NYSE calendar; months where that day isn't in the data don't count), quarter end = the month end in March, June, September and December. For each, print the number of days, the RTH up-day share and the close-to-close up share with their 95% intervals, and compare with all days. Finally, list the 5 biggest close-to-close drops.
+Please add comments to every step explaining why it's done that way.

@@ -1,0 +1,110 @@
+---
+title: "Day-of-Week Effect: Mondays Have the Smallest Range, Thursdays the Largest, and Fridays Close Up Most Often"
+description: "Using 3,924 ES trading days from 2010 to 2026, I compared the up-day share, the daily change and the intraday range by weekday. Direction barely differs; only Friday's 58.1% RTH up-day share stands out, and it holds in both halves of the data. The range differences are more stable: Monday's median of 0.83% is the smallest and Thursday's 0.96% the largest."
+stat: "58.1%"
+statLabel: "Fridays closing up in RTH"
+pubDatetime: 2026-10-21T16:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import WeekdayExplorer from "@/components/WeekdayExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./weekday.en.py?raw";
+
+> **Bottom line**: across the five weekdays, direction barely differs. 54.6% of all days close up in RTH; only Friday is a bit higher (**58.1%**), and that's true in both 2010–2017 and 2018–2026.
+>
+> The range differences are clearer and more stable: Monday's median intraday range is **0.83%**, the smallest; Thursday's is **0.96%**, the largest. Both halves of the data show the same order.
+>
+> Al Brooks' idea that money tends to buy at the end of the week and the end of the month, so prices tend to rise: Friday fits; but the last trading day of the month is actually more likely to fall, closing up in RTH only 47.6% of the time.
+>
+> <span class="takeaway">How I use it: I don't use the weekday to call direction. But it helps set expectations: on Mondays I don't put targets too far away, and on Thursdays I leave my stops a bit wider.</span>
+
+Trading folklore has plenty of weekday sayings: "Mondays like to reverse", "longs take profits before the Friday close", "Thursdays tend to sell off". I split 16 years of ES trading days by weekday and looked at three things: the share of up days, the mean and median change, and the intraday range.
+
+<WeekdayExplorer />
+
+## Direction: only Friday stands out a little
+
+| Weekday | Days | RTH up | Up close to close |
+|---|---:|---:|---:|
+| All days | 3,924 | 54.6% | 55.2% |
+| Monday | 698 | 55.7% | 57.9% |
+| Tuesday | 838 | 53.1% | 52.7% |
+| Wednesday | 833 | 52.2% | 56.1% |
+| Thursday | 818 | 54.4% | 54.3% |
+| Friday | 737 | **58.1%** | 55.7% |
+
+<p class="table-note">RTH up: the RTH close is above the RTH open. Up close to close: today's close is above yesterday's close, including the overnight move.</p>
+
+- **Friday closes up in RTH most often**: 58.1%, with a 95% interval of 54.5%–61.6%, whose lower end just touches the 54.6% for all days. It's 57.5% in 2010–2017 and 58.6% in 2018–2026, first in both halves. That's the only directional difference that holds up in both periods.
+- **Tuesday has weakened in recent years**: in 2018–2026, Tuesday closed up close to close only 49.3% of the time, the only weekday below half; but in 2010–2017 it was 56.6%, the highest of the five. The two periods disagree, so it looks like a feature of recent years rather than a rule.
+- **Monday has the highest close-to-close up share (57.9%)**, but that includes the weekend gap; in Monday's RTH session alone, 55.7% close up, about normal.
+- **"Thursdays sell off" doesn't show up in ES**: Thursday closes up close to close 54.3% of the time, about the same as 55.2% for all days.
+
+## Al Brooks on week-end and month-end buying
+
+In a March 2024 live session, Al Brooks talked about quarter-end "window dressing": institutions have to file quarterly reports and want those reports to show they own the stocks that did well, so they buy into the end of the quarter, and the market tends to rally into month end. The idea is often extended to every Friday and every month end: fund managers want the accounts they manage to look good at each reporting point, so everyone leans toward buying; the more people buy, the more prices tend to rise, and rising prices draw in more buyers. So weeks, months and quarters should close up a little more often.
+
+Checking that against ES data:
+
+| | Days | RTH up | Up close to close |
+|---|---:|---:|---:|
+| All days | 3,924 | 54.6% | 55.2% |
+| Friday | 737 | **58.1%** | 55.7% |
+| Month end | 187 | **47.6%** | **45.4%** |
+| Quarter end | 64 | 51.6% | 54.7% |
+
+<p class="table-note">Month end: the last stock market trading day of each month; quarter end: the month end in March, June, September and December. Months where that day was removed in cleaning don't count.</p>
+
+- **Friday fits**: 58.1% of Fridays close up in RTH, the highest of the week, in both halves of the data.
+- **The last day of the month is actually more likely to fall**: only 47.6% close up in RTH, and 45.4% close to close. The close-to-close 95% interval is 38.4%–52.6%, entirely below the usual 55.2%, so it doesn't look like luck.
+- **Quarter end shows no difference**: only 64 days, about the same as normal, with a wide interval.
+
+So in ES, "end of the week leans bullish" holds up, but "end of the month leans bullish" doesn't, at least not on the last trading day. One possible reason (not tested): Al was describing the general tendency in the last week or two before quarter end, not the very last day; and on the last day of the month, big money rebalances, selling some stock after a run-up, which could offset the buying or even reverse it. In the same live session, Al himself said calendar patterns are never very strong and you won't make much money trading them.
+
+## Mean and median aren't the same
+
+The second chart shows both the mean and the median change, and on some weekdays they differ quite a bit. For example, close to close, Monday's mean is only +0.04%, but its median is +0.08%, higher than Tuesday's or Thursday's.
+
+The reason is that a few big down days pull the mean lower: of the 5 biggest close-to-close drops in 16 years, 3 were Mondays (2020-03-16 −10.45%, 2020-03-09 −7.25%, 2011-08-08 −7.16%), all after big weekend news that hit all at once on Monday.
+
+So for a "typical day", look at the median; the mean is easily skewed by a few extreme days.
+
+## Range: smallest on Monday, largest on Thursday
+
+| Weekday | All | 2010–2017 | 2018–2026 |
+|---|---:|---:|---:|
+| Monday | **0.83%** | 0.75% | 0.88% |
+| Tuesday | 0.89% | 0.84% | 0.94% |
+| Wednesday | 0.93% | 0.85% | 0.98% |
+| Thursday | **0.96%** | 0.89% | 1.04% |
+| Friday | 0.89% | 0.79% | 1.00% |
+
+<p class="table-note">The numbers are the median intraday range: (RTH high − RTH low) ÷ open.</p>
+
+- Both halves have Monday smallest and Thursday largest. Thursday's range is about 16% wider than Monday's: at 6,000 points, a typical Monday RTH session moves about 50 points and a typical Thursday about 58.
+- Possible reasons (not tested): much of Monday's news has already been absorbed in the Sunday-evening overnight session, so RTH has less new information; every Thursday has initial jobless claims at 8:30 a.m., and many major data releases and central bank meetings also tend to fall on Wednesdays and Thursdays.
+
+## Definition and how to reproduce it
+
+<ResearchCard title="Day-of-week effect" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09, 3,924 trading days. See [how I cleaned it](/en/posts/data-cleaning/).
+- **RTH**: 09:30–16:15 US Eastern. The open is the open of the 09:30 1-minute bar, and the close is the close of the 16:14 bar.
+- **RTH up day**: RTH close > RTH open.
+- **Close to close**: (today's close − yesterday's close) ÷ yesterday's close. Yesterday = the previous stock market trading day, with the same rules as the [prior-day breakout](/en/posts/prior-day-high-low/) post; if yesterday was removed in cleaning, or the two days are on different contracts, the day doesn't count.
+- **Intraday range**: (RTH high − RTH low) ÷ open, the same as in the [intraday range](/en/posts/intraday-range/) post.
+- **Weekday**: by calendar. In a week with a Monday holiday, Tuesday is still Tuesday.
+- **Month end / quarter end**: month end is the last stock market trading day of each month (by the NYSE calendar), and months where that day was removed don't count; quarter end is the month end in March, June, September and December.
+- **95% interval**: calculated with the Wilson method; it means "given this many days, the true rate most likely falls in this range".
+
+</ResearchCard>
+
+## Limitations
+
+- **The directional differences are all small**: apart from Friday, every weekday is within the margin of error of the average, and 16 years of data can't say more.
+- **Mondays and Fridays have smaller samples**: Martin Luther King Jr. Day, Presidents' Day, Memorial Day and Labor Day fall on Mondays, Good Friday is a Friday, and the half-day Friday after Thanksgiving was removed; at each quarterly contract roll, cleaning also removed the expiration Friday and the following Monday. So there are only 698 Mondays and 737 Fridays, versus more than 810 each for Tuesday through Thursday.
+- **News days aren't separated**: FOMC, CPI and jobs-report days are mixed in with ordinary days; the range differences may come mostly from which weekdays those events fall on.
+- **RTH only**: part of Monday's difference happens in the Sunday-evening overnight session, which isn't looked at separately here.

@@ -9,6 +9,9 @@ lang: en
 ---
 
 import RangeExplorer from "@/components/RangeExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./range.en.py?raw";
 
 > **Bottom line**: on a typical ES day, the RTH high and low are **0.90%** apart. Half of all days fall between **0.62% and 1.34%**.
 >
@@ -53,11 +56,17 @@ The biggest days:
 
 The high-volatility years line up with the market backdrop: the 2011 European debt crisis, COVID in 2020, rate hikes and the bear market in 2022, and tariffs in 2025.
 
-## Definitions
+## Definition and how to reproduce it
+
+<ResearchCard title="Intraday range distribution" prompt={prompt} code={code}>
 
 - **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09, 3,924 trading days. See [how I cleaned it](/en/posts/data-cleaning/). Half-day sessions were already removed during cleaning.
+- **RTH**: 09:30–16:15 US Eastern, i.e. 1-minute bars from 09:30 to 16:14.
 - **Open**: the open of the 09:30 1-minute bar.
 - **Range**: (RTH high − RTH low) ÷ open.
+- **Percentile**: for example, the 90th percentile is 1.99%, meaning 90% of days have a range of 1.99% or less.
+
+</ResearchCard>
 
 ## Limitations
 

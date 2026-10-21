@@ -47,7 +47,7 @@ const y1 = ys[ys.length - 1];
   import { renderBreakout, type ByYear, type BreakoutStrings, type Ref } from "@/utils/breakoutView";
 
   function setup() {
-    document.querySelectorAll<HTMLElement>(".bx").forEach(root => {
+    document.querySelectorAll<HTMLElement>(".bx[data-ref]").forEach(root => {
       if (root.dataset.ready) return;
       root.dataset.ready = "1";
       const { data, s }: { data: ByYear; s: BreakoutStrings } = JSON.parse(

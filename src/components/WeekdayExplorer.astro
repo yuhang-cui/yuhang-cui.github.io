@@ -1,0 +1,83 @@
+---
+// 星期几效应：口径（日盘 / 收盘对收盘）、年份都可以切换；鼠标移到某一天（手机上点一下）看这一天的全部数字。
+import data from "@/data/weekday.json";
+import { renderWeekday, years, type WeekdayData } from "@/utils/weekdayView";
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+const t = useTranslations(Astro.currentLocale);
+const s = t.weekday;
+const b = t.breakout;
+const d = data as WeekdayData;
+const ys = years(d);
+const y0 = ys[0];
+const y1 = ys[ys.length - 1];
+const c = { yearRange: b.yearRange, singleYear: b.singleYear, thousands: b.thousands };
+---
+
+<section class="bx zx wdx" data-y0={y0} data-y1={y1} aria-label={s.label}>
+  <div class="bx-controls">
+    <div class="bx-switch" role="group" aria-label={s.basisGroup} data-k="basis">
+      <button type="button" data-v="r" aria-pressed="true">{s.basisR}</button>
+      <button type="button" data-v="c" aria-pressed="false">{s.basisC}</button>
+    </div>
+    <label class="bx-range">
+      <select class="bx-y0" aria-label={b.fromYear}>
+        {ys.map(y => <option value={y} selected={y === y0}>{y}</option>)}
+      </select>
+      <span>–</span>
+      <select class="bx-y1" aria-label={b.toYear}>
+        {ys.map(y => <option value={y} selected={y === y1}>{y}</option>)}
+      </select>
+    </label>
+    <button type="button" class="bx-reset">{b.allYears}</button>
+  </div>
+
+  <div class="wdx-view" set:html={renderWeekday(d, s, c, tplStr(b.yearRange, { a: y0, b: y1 }), "r", y0, y1, 640)} />
+
+  <script type="application/json" class="wdx-data" set:html={JSON.stringify({ data: d, s, c })} />
+</section>
+
+<script>
+  import { mount, bindHover, placeTip, svgX, rangeLabel } from "@/utils/chartKit";
+  import { renderWeekday, pool, tipHtml, band, cx, B, DAYS, type WeekdayData, type WeekdayStrings, type WeekdayText } from "@/utils/weekdayView";
+
+  type Payload = { data: WeekdayData; s: WeekdayStrings; c: WeekdayText };
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".wdx").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const { data, s, c }: Payload = JSON.parse(root.querySelector(".wdx-data")!.textContent!);
+      const view = root.querySelector<HTMLElement>(".wdx-view")!;
+
+      mount(root, view, ({ y0, y1, opt }, w) => {
+        view.innerHTML = renderWeekday(data, s, c, rangeLabel(c, y0, y1), opt.basis, y0, y1, w);
+        const st = pool(data, y0, y1);
+
+        // 三张图一样：指针在哪一列，就显示那一天的全部数字
+        view.querySelectorAll<HTMLElement>(".wd-box").forEach(box => {
+          const svg = box.querySelector("svg")!;
+          const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+          const cols = svg.querySelectorAll<SVGRectElement>(".wd-col");
+          bindHover(
+            box,
+            e => {
+              const i = Math.floor((svgX(svg, w, e) - B.l) / band(w));
+              if (i < 0 || i >= DAYS) return false;
+              cols.forEach(r => r.classList.toggle("is-hover", +r.dataset.i! === i));
+              tip.innerHTML = tipHtml(st, i, s, c, opt.basis);
+              placeTip(tip, svg, cx(i, w), w, e);
+            },
+            () => {
+              tip.hidden = true;
+              cols.forEach(r => r.classList.remove("is-hover"));
+            }
+          );
+        });
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>

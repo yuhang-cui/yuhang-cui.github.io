@@ -1,0 +1,98 @@
+---
+title: "How Many of Yesterday's Ranges Does Today Travel? A Full 1× Only 22.8% of the Time, Half a Range 48.4%"
+description: "Using yesterday's RTH range as a ruler, measured up from yesterday's high and down from yesterday's low: ES travels at least 1× on one side only 22.8% of the time, and 0.5× 48.4% of the time. The farther out you go, the more the downside wins; on days that open below yesterday's low, 48.9% travel a full 1× down."
+stat: "22.8%"
+statLabel: "travel at least 1× yesterday's range on one side"
+pubDatetime: 2026-10-21T10:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import MmExplorer from "@/components/MmExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./mm.en.py?raw";
+
+> **Bottom line**: using yesterday's RTH range as a ruler, measured up from yesterday's high and down from yesterday's low, today travels a full **1×** on at least one side only **22.8%** of the time, and **0.5×** (half a range) **48.4%** of the time.
+>
+> Where today opens is the best clue: open above yesterday's high, and 67.4% of days travel 0.5× up; open below yesterday's low, and 74.0% travel 0.5× down and 48.9% a full 1×.
+>
+> <span class="takeaway">How I use it: a level one range beyond yesterday's range rarely gets reached the same day, only about 11–12% of the time on a given side. The exception is a day that opens below yesterday's low: nearly half of those travel a full 1× down.</span>
+
+This study came out of two things I was curious about.
+
+The first is stops. Al Brooks often puts his stop one range-height away from some range, then picks the actual stop level as the chart develops; and that range is sometimes yesterday's trading range. So within a single day, does price actually get one full range beyond yesterday's range?
+
+The second is chasing breakouts. When I traded breakouts and saw a string of strong bull bars at the open, I often couldn't resist getting in, only to end up trapped at the high of the day. What's going on there? How far can today really go, and where is it likely to run out?
+
+So I treat yesterday's RTH range (high − low) as a ruler: measure up from yesterday's high and down from yesterday's low, and see how many multiples today reaches at most. The [prior-day breakout](/en/posts/prior-day-high-low/) post already showed that 90% of days break at least one side; this post asks the next question: after the break, how far does price go? And do yesterday's close and today's open change that?
+
+<MmExplorer />
+
+## The farther out, the rarer
+
+| Reached yesterday's range × | Above | Below | Either side |
+|---|---:|---:|---:|
+| 0× (breaks yesterday's high or low) | 55.7% | 43.7% | 89.6% |
+| 0.5× | 26.7% | 23.1% | **48.4%** |
+| 1× | 11.1% | 11.8% | **22.8%** |
+| 2× | 1.7% | 3.0% | 4.6% |
+
+- The first row is the same as in the [prior-day breakout](/en/posts/prior-day-high-low/) post (same sample, same rules): 90% of days break at least one side.
+- But how far price goes after the break drops off quickly: half of days reach half a range, and only a little over 20% reach a full range.
+- **Past about 0.85×, the downside wins**: for a simple break of yesterday's high or low, upside is more common (55.7% vs 43.7%); at 0.8× the two are about even (15.4% vs 15.3%); beyond that, below stays ahead of above, and at 2× below (3.0%) is almost twice above (1.7%). Another way to see it: on days that break below, 27.1% go on to a full 1×; on days that break above, only 19.9%.
+
+<span class="takeaway">My read: small breakouts are more often to the upside, but the days that travel really far are more often to the downside. When panic selling hits, the market is more likely to run several of yesterday's ranges in one go. In other words, in a panic, big drops tend to be bigger than big rallies.</span>
+
+So days that travel a whole range beyond yesterday's are uncommon, only a little over 20%; days that travel half a range are about half.
+
+## Yesterday's bar: it sets the direction
+
+In the two tables below, ↑0.5 means reaching 0.5× above, ↓1 means a full 1× below, and so on.
+
+| Condition | ↑0.5 | ↓0.5 | ↑1 | ↓1 |
+|---|---:|---:|---:|---:|
+| All (3,816 days) | 26.7% | 23.1% | 11.1% | 11.8% |
+| Yesterday up (2,080 days) | 34.6% | 16.2% | 14.2% | 7.8% |
+| Yesterday down (1,709 days) | 16.8% | 31.4% | 7.3% | 16.7% |
+| Closed top third (1,685 days) | 37.0% | 13.6% | 14.9% | 6.2% |
+| Closed middle (1,082 days) | 24.9% | 26.2% | 11.4% | 14.3% |
+| Closed bottom third (1,049 days) | 11.9% | 35.2% | 4.6% | 18.3% |
+
+- **Direction follows yesterday**: when yesterday closed up (or in its top third), today reaches 0.5× above more than twice as often as 0.5× below; when yesterday closed down, it's the reverse.
+- **But it doesn't go farther**: however yesterday closed, "reaches 0.5× on at least one side" stays between 46% and 50%. Yesterday's bar helps you pick a direction, but it doesn't tell you whether today will be a big day.
+- Where yesterday closed (top / middle / bottom third) works about as well as whether it was an up or down bar, and closes near either end show it a little more clearly.
+
+## Where today opens: the biggest effect
+
+| Today opened | ↑0.5 | ↓0.5 | ↑1 | ↓1 |
+|---|---:|---:|---:|---:|
+| Above yesterday's high (947 days) | **67.4%** | 5.1% | **32.8%** | 1.7% |
+| Top third of the range (885 days) | 25.9% | 10.5% | 7.1% | 4.2% |
+| Middle third (771 days) | 11.9% | 14.7% | 3.6% | 6.1% |
+| Bottom third (647 days) | 5.6% | 32.1% | 1.9% | 11.6% |
+| Below yesterday's low (566 days) | 3.9% | **74.0%** | 1.4% | **48.9%** |
+
+- **Lower opens travel farther than higher opens**: <span class="takeaway">both open outside yesterday's range, but on days that open below the low, 74.0% travel 0.5× down and 48.9% a full 1×; on days that open above the high, only 67.4% and 32.8% go up. Days that fall out of yesterday's range tend to fall faster and farther.</span>
+- **Only opens outside yesterday's range have a real chance at 1×**: open above the high, and a third of days travel a full 1× up; open below the low, and nearly half travel a full 1× down.
+- **Open in the middle, and today is probably a small day**: on either side, only 26.1% reach 0.5× and 9.7% a full 1×; even breaking yesterday's high or low happens only 73.3% of the time, the lowest of any opening location.
+
+## Definition and how to reproduce it
+
+<ResearchCard title="How many of yesterday's ranges today travels" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09. See [how I cleaned it](/en/posts/data-cleaning/).
+- **RTH**: 09:30–16:15 US Eastern, no overnight session. Both today and yesterday use RTH only.
+- **Which day is yesterday**: the previous stock market trading day; if yesterday was removed in cleaning, or the two days are on different contracts, today is skipped. Exactly the same as the [prior-day breakout](/en/posts/prior-day-high-low/) post, 3,816 days in total.
+- **Yesterday's range**: R = yesterday's high − yesterday's low.
+- **Reaching k×**: above means today's high ≥ yesterday's high + k × R; below means today's low ≤ yesterday's low − k × R. 0× must be a strict break (at least 1 tick), consistent with the breakout post.
+- **Where yesterday closed**: (close − low) ÷ R; ≥ 2/3 is the top third, ≤ 1/3 the bottom third. This ratio is also called IBS (Internal Bar Strength).
+- **Where today opened**: (today's open − yesterday's low) ÷ R; above 1 means above yesterday's high, below 0 means below yesterday's low, and the range in between is split into thirds.
+
+</ResearchCard>
+
+## Limitations
+
+- **It only checks whether price got there, not which side came first**: on days that reach 0.5× on both sides, which way price went first, and whether it hit a stop along the way, isn't measured.
+- **Timing isn't measured**: whether a multiple is reached in the morning or right before the close matters a lot for day trading; this only looks at the whole day.
+- **Days that open outside the range have already traveled part of the way at the open**: when today opens above yesterday's high, the open is already some distance past the high, so "reaching 0.5×" requires less movement than it looks.

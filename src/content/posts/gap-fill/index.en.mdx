@@ -1,0 +1,103 @@
+---
+title: "Gap Fill: Last Week's Close Gets Touched Again 79.2% of the Time"
+description: "Using cleaned ES data from 2010 to 2026: when there's a gap between this week's open and last week's close, 79.2% of weeks trade back to last week's close that same week, more than half on the first day, and smaller gaps fill more often. Daily version: yesterday's close gets touched again today 61.6% of the time."
+stat: "79.2%"
+statLabel: "weekly gaps filled the same week"
+pubDatetime: 2026-10-21T15:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import GapExplorer from "@/components/GapExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./gap.en.py?raw";
+
+> **Bottom line**: when there's a gap between this week's open and last week's close, **79.2%** of weeks trade back to last week's close within the same week, and more than half (54.4%) do it on the first day.
+>
+> The smaller the gap, the more likely it fills: gaps under 10% of the average weekly range fill the same week 95% of the time; gaps over 30% fill only a little more than half the time.
+>
+> <span class="takeaway">How I use it: when Monday opens not far from last week's close, last week's close is one of the most reliable targets for the week. If it hasn't been touched by the close of the third trading day (usually Wednesday), it probably won't be touched that week.</span>
+
+ES often opens on Monday not far from Friday's close, leaving a gap in between. Does last week's close get touched again this week? How long does it take? I ran the numbers on cleaned ES RTH data from 2010 to 2026, and added a daily version: does yesterday's close get touched again today?
+
+<GapExplorer />
+
+## Weeks with a gap: about 80% fill
+
+- Over 16 years there were 768 weekly gaps (420 up, 348 down). Only 10 weeks opened exactly at last week's close, with no gap.
+- **79.2%** traded back to last week's close the same week.
+- Of the ones that filled, 68.8% filled on the first day and 84.7% within the first two days.
+
+So **in weeks with a gap, about 80% return to last week's close within the week**, and most do it quickly.
+
+## The bigger the gap, the less likely it fills
+
+I measure gap size against the average weekly range over the last 8 weeks, so 2010 and 2026 prices can be compared directly.
+
+| Gap size | Gaps | Filled same week |
+|---|---:|---:|
+| 0–5% | 149 | 94.0% |
+| 5–10% | 162 | 95.7% |
+| 10–15% | 121 | 77.7% |
+| 15–20% | 89 | 76.4% |
+| 20–30% | 121 | 67.8% |
+| 30–50% | 91 | 57.1% |
+| 50–100% | 24 | 54.2% |
+| 100% and up | 11 | 36.4% |
+
+- **10% is a dividing line**: gaps under 10% almost always fill (95%); above 10%, the rate drops straight to about 77%.
+- **Past 30%, it's only a little better than a coin flip**: last week's close is too far away to treat as a "very likely" target.
+- The last two buckets are tiny (24 and 11 gaps), so read those rates loosely.
+
+## When gaps fill: mostly on day 1
+
+- **54.4% of gaps fill on the first day**, which is 68.8% of all fills. 12.6% fill on the very first 5-minute bar, and 36.7% within the first hour.
+- By the close of day 3, 74.2% have filled, which is 93.8% of all fills.
+- Of the gaps still open after day 3 (25.8%), only about one in five fills on Thursday or Friday.
+
+So last week's close "pulls" mainly in the first two or three days of the week. **If it hasn't been touched by the close of the third trading day, don't count on it anymore.**
+
+## Gaps down fill more often
+
+Gaps down (lower opens) fill the same week **83.6%** of the time; gaps up only **75.5%**.
+
+One likely reason is that ES rose for most of these 16 years: lower opens tend to get bought back, while higher opens sometimes just keep going and never look back.
+
+## Daily version: yesterday's close
+
+Switch to "Daily" and the rules stay the same, with "week" replaced by "day": when there's a gap between today's open and yesterday's close, does today's RTH session trade back to yesterday's close?
+
+- Of 3,774 gaps, **61.6%** fill the same day, well below the weekly rate.
+- 16.2% fill on the first 5-minute bar, 41.3% within the first hour, and 49.3% by 11:30. After that, fills come more and more slowly.
+- Again, smaller gaps fill more often: gaps under 10% of the average daily range fill the same day 95% of the time; gaps of 50–100% only 34.5%; gaps bigger than a whole day's range only 11.7%.
+- Gaps down fill 64.2% of the time and gaps up 59.5%, the same direction as the weekly result.
+
+The daily fill rate is lower mainly because overnight gaps tend to be big relative to a day's range: 1,865 gaps (almost half) are over 30% of the average daily range, versus only 126 (16%) on the weekly chart.
+
+## By year
+
+Each year has only about 48 weekly gaps, so the yearly numbers jump around a lot: the lowest was 2020 at 59.6% and the highest 2023 at 91.7%. Keep the small sample in mind when looking at a single year.
+
+## Definition and how to reproduce it
+
+<ResearchCard title="Gap fill" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09. See [how I cleaned it](/en/posts/data-cleaning/).
+- **RTH**: 09:30–16:15 US Eastern, i.e. 1-minute bars from 09:30 to 16:14. No overnight session: if the overnight session were included, part of the gap would already be filled when trading reopens on Sunday evening, and weekly gaps would be much smaller.
+- **This week's open**: the 09:30 open of the week's first trading day (Tuesday if Monday is a holiday). **Last week's close**: the RTH close of last week's last trading day.
+- **Gap**: this week's open − last week's close. Gaps of exactly 0 are skipped (10 weeks).
+- **Filled**: from this week's open on, some bar's high and low straddle last week's close. For a gap up, check whether the low reaches last week's close; for a gap down, the high.
+- **Gap size**: |gap| ÷ the average weekly range (each week's RTH high − low) over the last 8 weeks.
+- **Skipped**: pairs of weeks on different contracts (the week of a contract roll).
+- **Daily version**: yesterday = the previous stock market trading day, with the same rules as the [prior-day breakout](/en/posts/prior-day-high-low/) post; the average range uses the last 8 days; "filled right away" becomes "filled in the first hour" (09:30–10:30).
+
+</ResearchCard>
+
+## Limitations
+
+- **It only checks whether price got there, not what happened next**: touching last week's close doesn't mean price reverses there; it can just as easily run straight through.
+- **The weekly sample is small**: only 768 gaps, fewer still once split by year or by size.
+- **Half-day sessions were removed**: cleaning removed half days like the Friday after Thanksgiving, so for that week "last week's close" is Wednesday's close rather than Friday's half-day close.
+- **Roll weeks are skipped**: the continuous contract isn't back-adjusted, so prices don't line up across a roll, and one week per quarter is dropped.
+- **Holidays aren't separated**: gaps after a long weekend might behave differently from ordinary weekends; I didn't split them out.

@@ -1,0 +1,7 @@
+I have a CSV of cleaned 1-minute ES futures bars (Databento's ES.c.0 continuous contract, with columns ts_event, open, high, low; timestamps in UTC; half-day sessions already removed). Please write Python code that measures how far ES moves during RTH each day. Rules:
+1. Convert timestamps to US Eastern time (US/Eastern), handling daylight saving time automatically. RTH = 09:30–16:15, meaning 1-minute bars from 09:30 to 16:14 (405 bars).
+2. Each day's open = the open of the 09:30 1-minute bar; the RTH high / low = the highest high / lowest low of those 405 bars.
+3. Intraday range = (RTH high − RTH low) ÷ open × 100, in %.
+4. Print the sample size, the mean, the median, and the 10th, 25th, 75th and 90th percentiles; then print the share of days with a range under 1%, under 1.5%, over 2% and over 3%.
+5. Make a table by year: the number of days, median, 25th and 75th percentiles, 90th percentile and maximum. Finally, list the 5 days with the biggest range.
+Please add comments to every step explaining why it's done that way.

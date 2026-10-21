@@ -1,0 +1,71 @@
+---
+title: "What Happens After a Few Up Days in a Row? On the ES Daily Chart, It's Basically a Coin Flip"
+description: "Using ES data from 2010 to 2026, I measured the odds the next bar closes up after N bull (bear) bars in a row. After up streaks, the next day closes up about as often as usual (54.6% vs 55.0%). After down streaks it bounces slightly more often (57.4%), but the gap is small and 16 years of data aren't enough to say it's real."
+stat: "57.4%"
+statLabel: "up the day after 2+ down days"
+pubDatetime: 2026-10-21T13:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import StreakExplorer from "@/components/StreakExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./streaks.en.py?raw";
+
+> **Bottom line**: on the ES RTH daily chart, the next day closes up **55.0%** of the time after any day; after 2+ up days in a row it's **54.6%**, almost the same. "Up days lead to more up days" doesn't hold on the daily chart.
+>
+> After 2+ down days in a row, the next day closes up **57.4%** of the time, 2.4 points above normal. There's a slight tendency to bounce, but the gap is within the margin of error, so I can't say it's really there.
+>
+> <span class="takeaway">How I use it: I don't assume tomorrow will continue, or reverse, just because the market has gone up or down a few days in a row. Looking only at streaks, both the daily and weekly charts are close to a coin flip, just tilted bullish overall (because ES has risen over the long run).</span>
+
+After three up days in a row, a lot of people think "it's due for a pullback"; after three down days, "it's due for a bounce". Others think the opposite: up days lead to more up days.
+
+Using ES data from 2010 to 2026, I asked a purely statistical question: after N bull (bear) bars in a row, what are the odds the next bar closes up? No indicators, no context, just the color of the bars. I looked at both daily and weekly bars, and at two kinds of bars: RTH and full day (24-hour).
+
+<StreakExplorer />
+
+## After up streaks: about the same as usual
+
+RTH daily bars, 3,787 cases:
+
+- After any day, the next day closes up **55.0%** of the time. That's the "base rate": ES rose for most of these 16 years, so up days were already more common than down days.
+- After 1 up day it's 53.2%, after 2 up days 55.5%, 3 days 53.6%, 4 days 53.2%, 5 days 58.0%… all hovering around 55%.
+
+**Takeaway: on the daily chart, "it's already been up for a few days" tells you nothing about tomorrow.**
+
+## After down streaks: a slightly better chance of a bounce, but not significant
+
+- After 1 down day, the next day closes up 55.7% of the time; after 2 down days 58.6%, after 3 days 58.3%.
+- After 2+ down days combined: 57.4% of 712 cases closed up, 2.4 points above the 55.0% base rate.
+- But the 95% interval for those 712 cases is roughly 53.8%–61.0%, which includes 55%. In other words, 16 years of data can't rule out that the gap is just luck.
+- After 4+ down days the samples get smaller (67 cases at 4 days, 32 at 5), and the rate actually drops to around 50%, with long intervals on the chart.
+
+So "down streaks tend to bounce" shows up faintly in the data, but not convincingly. Most of these 16 years were a bull market (the base rate is already 55%), and getting bought back after a few down days is common anyway. Confirming it would take a longer history, ideally one that includes a bear market like 2000–2010.
+
+## Full-day bars and weekly bars
+
+- **Full-day bars** (18:00 the evening before to 17:00): base rate 55.7%, 55.7% after 2+ up days, 58.3% after 2+ down days. Same conclusion as RTH.
+- **Weekly (RTH)**: after any week, the next week closes up 58.9% of the time. After 2+ down weeks it's 63.8%, after 2+ up weeks 59.7%. After 3 down weeks it's 69.7%, but that's only 33 cases, with a wide interval (about 53%–83%).
+- The weekly chart has only 845 cases, and most streaks of 4+ weeks have fewer than 20 cases, so they're drawn faded on the chart and should only be read loosely.
+
+## Definition and how to reproduce it
+
+<ResearchCard title="After consecutive bull / bear bars" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute ES bars, 2010-06 to 2026-09. See [how I cleaned it](/en/posts/data-cleaning/).
+- **RTH bars**: open at 09:30, close at 16:15. **Full-day bars**: open at 18:00 the evening before, close at 17:00, like the ES1! daily bars on TradingView.
+- **Weekly bars**: from the open of the first day of the week (Monday to Friday) to the close of the last day.
+- **Bull / bear bars**: close > open is a bull bar, close < open is a bear bar; equal is a doji (only 29 RTH daily bars in 16 years).
+- **Streak count**: bull bars count +1, +2, +3, …; bear bars −1, −2, −3, …; a change in direction restarts at ±1, and a doji resets to 0.
+- **Stats**: after each "N in a row", the share of next bars that close up; cases where the next bar is a doji are skipped. 8 or more in a row are grouped together.
+- **Missing days**: cleaning removed half-day sessions and the days around contract rolls. On the daily chart, "in a row" follows stock market trading days: if the previous trading day was removed, counting starts over and that pair isn't counted.
+- **95% interval**: calculated with the Wilson method; it means "given this many cases, the true rate most likely falls in this range".
+
+</ResearchCard>
+
+## Limitations
+
+- **It only looks at whether bars close up or down, not by how much**: a small bull bar after three down days still counts as a "bounce".
+- **The samples aren't big enough**: streaks of 4+ bars have only a few dozen cases on the daily chart, and single digits to the teens on the weekly chart, so the rates swing a lot.
+- **Most of these 16 years were a bull market**: the 55% base rate is already tilted bullish. In a bear market like 2000–2010, the results might be different.

@@ -1258,6 +1258,44 @@ a.tag-pill:hover {
 .rg-q { cursor: crosshair; }
 .rg .bx-sub { margin-top: 28px !important; }
 
+/* ===== K 线收线提醒（BarAlarm），外框沿用 .bx ===== */
+.ba-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.ba-clock { margin-top: 2px !important; font-size: 40px; font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; color: var(--foreground); }
+.ba-run { padding: 10px 18px; border: 0; border-radius: 10px; background: var(--accent); font-size: 15px; font-weight: 600; color: #fff; cursor: pointer; }
+.ba.is-running .ba-run { background: var(--muted); color: var(--foreground); }
+.ba-status { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); }
+.ba-state { font-size: 15px; font-weight: 600; color: var(--foreground); }
+.ba-next { margin-top: 2px !important; font-size: 13px; color: var(--summary); }
+.ba-bar { height: 6px; margin-top: 10px; border-radius: 3px; background: var(--muted); overflow: hidden; }
+.ba-bar span { display: block; height: 100%; background: var(--accent); }
+.ba-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.ba-quick button,
+.ba-list button { padding: 5px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); font-size: 13.5px; color: var(--foreground); cursor: pointer; }
+.ba-quick button:hover,
+.ba-list button:hover { border-color: var(--muted-foreground); }
+.ba kbd { margin-left: 4px; padding: 0 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; color: var(--faint); }
+.ba-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.ba-list li { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto 56px; align-items: center; gap: 10px; padding: 4px 6px; border-radius: 6px; font-size: 13.5px; color: var(--prose); font-variant-numeric: tabular-nums; }
+.ba-list li:first-child { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.ba-list li.is-off { color: var(--faint); }
+.ba-list li.is-off .ba-at { text-decoration: line-through; }
+.ba-list button[aria-pressed="true"] { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, white); }
+.ba-day { margin-right: 6px; font-size: 12px; color: var(--faint); }
+.ba-at { color: var(--summary); }
+.ba-settings { margin-top: 18px; font-size: 14px; }
+.ba-settings summary { font-weight: 600; color: var(--foreground); cursor: pointer; }
+.ba-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 12px 0; }
+.ba-grid label { display: grid; gap: 4px; font-size: 13px; color: var(--summary); }
+.ba-grid select,
+.ba-grid input[type="time"] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); font-size: 14px; color: var(--foreground); }
+.ba-grid .ba-check { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 560px) {
+  .ba-clock { font-size: 34px; }
+  .ba-list li { grid-template-columns: 56px minmax(0, 1fr) 52px; }
+  .ba-list .ba-at { display: none; }
+  .ba-grid { grid-template-columns: 1fr; }
+}
+
 /* ===== 研究卡片：定义 / Prompt / Python 三个标签页（ResearchCard） ===== */
 .app-prose .rc {
   margin: 1.75rem 0;
@@ -1474,3 +1512,135 @@ mark.search-hit {
     transparent 88%
   );
 }
+
+/* ===== 缺口回补、20 均线等几张可交互图，外框和年份选择沿用 .bx，坐标轴和提示框沿用 .fn-* ===== */
+.zx .bx-sub { margin-top: 28px !important; }
+.zx .bx-hero + .bx-sub { margin-top: 22px !important; }
+.zx .fn-legend { margin-top: 6px; }
+.zx .bx-switch button { white-space: nowrap; }
+@media (max-width: 480px) {
+  .zx .bx-switch button { padding: 6px 9px; }
+  .ox-table { font-size: 12.5px; }
+  .ox-table th,
+  .ox-table td { padding: 6px 4px; }
+  .ox-table td span { display: block; margin-left: 0; }
+}
+.fn-chart text.zx-t { fill: var(--summary); font-size: 11.5px; }
+
+/* 缺口回补（GapExplorer） */
+.gx-first { fill: var(--accent); }
+.gx-later { fill: color-mix(in srgb, var(--accent) 30%, white); }
+.gx-col { transition: opacity 0.15s ease; }
+.gx-col.is-thin { opacity: 0.45; }
+.gx-col.is-hover { opacity: 1; }
+.gx-col.is-hover .gx-later { fill: color-mix(in srgb, var(--accent) 45%, white); }
+.fn-chart text.gx-val { fill: var(--summary); font-size: 11.5px; }
+.gx-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.fn-chart text.gx-end { fill: var(--accent); font-size: 12px; font-weight: 600; }
+.fn-dot.gx-dot { fill: var(--accent); }
+.fn-legend i.gx-key-first,
+.fn-tip-r i.gx-key-first { background: var(--accent); }
+.fn-legend i.gx-key-later,
+.fn-tip-r i.gx-key-later { background: color-mix(in srgb, var(--accent) 30%, white); }
+.fn-tip-r i.gx-key-open { background: #cfcac2; }
+.fn-tip-h.gx-thin { margin: 4px 0 0 !important; }
+
+/* 20 均线（EmaExplorer） */
+.ex-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.ex-mark { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.fn-dot.ex-dot { fill: var(--accent); }
+.ex-up,
+.ex-dn { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.ex-up { stroke: var(--bull); }
+.ex-dn { stroke: var(--bear); }
+.fn-dot.ex-up-dot { fill: var(--bull); }
+.fn-dot.ex-dn-dot { fill: var(--bear); }
+.fn-legend i.ex-key-up,
+.fn-tip-r i.ex-key-up { background: var(--bull); }
+.fn-legend i.ex-key-dn,
+.fn-tip-r i.ex-key-dn { background: var(--bear); }
+
+/* 连续阳线 / 阴线之后（StreakExplorer） */
+.sx-col { fill: transparent; }
+.sx-col.is-hover { fill: rgb(0 0 0 / 0.035); }
+.sx-u .sx-ci { stroke: color-mix(in srgb, var(--bull) 55%, white); stroke-width: 2.5; stroke-linecap: round; }
+.sx-b .sx-ci { stroke: color-mix(in srgb, var(--bear) 55%, white); stroke-width: 2.5; stroke-linecap: round; }
+.sx-u .sx-pt { fill: var(--bull); }
+.sx-b .sx-pt { fill: var(--bear); }
+.sx-u.is-thin,
+.sx-b.is-thin { opacity: 0.35; }
+.fn-legend i.sx-key-u,
+.fn-tip-r i.sx-key-u { background: var(--bull); border-radius: 50%; }
+.fn-legend i.sx-key-b,
+.fn-tip-r i.sx-key-b { background: var(--bear); border-radius: 50%; }
+.fn-tip-r.sx-tip-ci { margin: 0 0 3px 15px; font-size: 11.5px; color: var(--faint); }
+
+/* 开盘就是最高 / 最低价（ShavedExplorer） */
+.ox-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.fn-chart text.ox-end { fill: var(--accent); font-size: 12px; font-weight: 600; }
+.fn-dot.ox-dot { fill: var(--accent); }
+.ox-table { width: 100%; margin: 4px 0 0; border-collapse: collapse; table-layout: fixed; font-size: 13.5px; }
+.ox-table th:first-child { width: 22%; }
+.ox-table th,
+.ox-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); text-align: right; }
+.ox-table th { font-size: 12.5px; font-weight: 500; color: var(--faint); white-space: normal; vertical-align: bottom; }
+.ox-table th:first-child,
+.ox-table td:first-child { text-align: left; }
+.ox-table td span { margin-left: 6px; font-size: 12px; color: var(--faint); }
+.ox-table tr.is-on td { font-weight: 600; color: var(--foreground); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+
+/* 开盘连续同色 K 线（OpenBarsExplorer） */
+.cx-pt { stroke-width: 2; }
+
+/* 昨日区间的等距目标（MmExplorer） */
+.mx-up,
+.mx-dn,
+.mx-either { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.mx-up { stroke: var(--bull); }
+.mx-dn { stroke: var(--bear); }
+.mx-either { stroke: var(--accent); stroke-dasharray: 5 3; }
+.fn-dot.mx-up-dot { fill: var(--bull); }
+.fn-dot.mx-dn-dot { fill: var(--bear); }
+.fn-dot.mx-either-dot { fill: var(--accent); }
+.fn-legend i.mx-key-up,
+.fn-tip-r i.mx-key-up { background: var(--bull); }
+.fn-legend i.mx-key-dn,
+.fn-tip-r i.mx-key-dn { background: var(--bear); }
+.fn-legend i.mx-key-either,
+.fn-tip-r i.mx-key-either { background: var(--accent); }
+.mx .bx-range:has(.mx-cond) { max-width: 100%; min-width: 0; }
+.mx-cond { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
+
+/* 夜盘区间宽度和突破（EthWidthExplorer），横条和颜色沿用突破统计的 .bx-bar */
+.wx-rows { display: grid; gap: 2px; }
+.wx-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--prose);
+  cursor: crosshair;
+}
+.wx-row.is-hover { background: rgb(0 0 0 / 0.04); }
+.wx-row .bx-bar { height: 16px; }
+.wx-k { white-space: nowrap; }
+
+/* 星期几效应（WeekdayExplorer） */
+.wdx .bx-hero-k { margin-bottom: 4px !important; }
+.wd-col { fill: transparent; }
+.wd-col.is-hover { fill: rgb(0 0 0 / 0.035); }
+.wd-ci { stroke: color-mix(in srgb, var(--accent) 40%, white); stroke-width: 3; stroke-linecap: round; pointer-events: none; }
+.wd-pt,
+.wd-mean { fill: var(--accent); pointer-events: none; }
+.wd-med { fill: var(--card); stroke: var(--accent); stroke-width: 2; pointer-events: none; }
+.wd-bar { fill: color-mix(in srgb, var(--accent) 35%, white); pointer-events: none; }
+.wdx .fn-chart text { pointer-events: none; }
+.fn-legend i.wd-key-mean { background: var(--accent); border-radius: 50%; }
+.fn-legend i.wd-key-med { background: var(--card); border: 2px solid var(--accent); border-radius: 50%; width: 7px; height: 7px; }
+.fn-tip-r.wd-tip-ci { margin: -2px 0 3px; font-size: 11.5px; color: var(--faint); }
+
+/* 英文页面的表头可以在空格处换行：英文表头比中文长，不换行会在手机上把页面撑宽（中文表头仍然不换行） */
+html[lang="en"] .app-prose th { white-space: normal; }
