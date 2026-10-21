@@ -1263,6 +1263,11 @@ a.tag-pill:hover {
 .ba-clock { margin-top: 2px !important; font-size: 40px; font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; color: var(--foreground); }
 .ba-run { padding: 10px 18px; border: 0; border-radius: 10px; background: var(--accent); font-size: 15px; font-weight: 600; color: #fff; cursor: pointer; }
 .ba.is-running .ba-run { background: var(--muted); color: var(--foreground); }
+/* 设置：开始按钮左边一个齿轮，点开后面板出现在时钟下面 */
+.ba-actions { display: flex; align-items: stretch; gap: 8px; }
+.ba-gear { display: grid; place-items: center; width: 48px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--muted-foreground); cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.ba-gear:hover { border-color: var(--muted-foreground); color: var(--foreground); }
+.ba-gear[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
 .ba-status { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); }
 .ba-state { font-size: 15px; font-weight: 600; color: var(--foreground); }
 .ba-next { margin-top: 2px !important; font-size: 13px; color: var(--summary); }
@@ -1296,9 +1301,8 @@ a.tag-pill:hover {
 .ba-tile.is-past { opacity: 0.4; cursor: default; }
 .ba-tile.is-past:hover { border-color: var(--border); }
 .ba-tile.is-now { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); opacity: 1; }
-.ba-settings { margin-top: 18px; font-size: 14px; }
-.ba-settings summary { font-weight: 600; color: var(--foreground); cursor: pointer; }
-.ba-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 12px 0; }
+.ba-settings { margin-top: 16px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); font-size: 14px; }
+.ba-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0 0 12px; }
 .ba-grid label { display: grid; gap: 4px; font-size: 13px; color: var(--summary); }
 .ba-grid select,
 .ba-grid input[type="time"] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); font-size: 14px; color: var(--foreground); }
