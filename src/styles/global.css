@@ -1413,17 +1413,14 @@ a.tag-pill:hover {
   color: var(--faint);
 }
 
-/* ===== 结论里最重要的一句：加粗 + 字底下一道浅蓝荧光笔线 ===== */
+/* ===== 结论里最重要的一句：加粗 + 字底下一道浅蓝下划线 ===== */
 .app-prose .takeaway {
   font-weight: 600;
   color: var(--foreground);
-  /* 只画在字的下半部分：中文字体的行框比字形高，线要停在字底附近，不能贴着行框底边 */
-  background: linear-gradient(
-    transparent 52%,
-    color-mix(in srgb, var(--accent) 30%, transparent) 52%,
-    color-mix(in srgb, var(--accent) 30%, transparent) 88%,
-    transparent 88%
-  );
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 5px;
 }
 
 /* ===== 站内搜索：页头的胶囊搜索框 + 搜索页 ===== */
