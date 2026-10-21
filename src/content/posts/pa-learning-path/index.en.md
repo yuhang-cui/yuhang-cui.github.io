@@ -1,7 +1,7 @@
 ---
 title: "A Beginner's Day Trading Notes | The Lowest-Cost Path to Learning Price Action"
 description: "After finishing Tefi's and Ross's courses, I put together the cheapest, lowest-cost self-study path for price action: four steps in order, with the last step studying Al Brooks and Louie (方方土) side by side. Good for complete beginners."
-pubDatetime: 2025-09-02T20:00:00+08:00
+pubDatetime: 2026-09-12T20:00:00+08:00
 tags: [Thinking]
 featured: true
 lang: en
@@ -74,4 +74,4 @@ The learning order in this post is based on "Trading Chat 14" (交易小酌14, 2
 
 Special thanks to everyone who shares their knowledge for free. It gave me the chance to learn, and to pass it on.
 
-(First published on Xiaohongshu on 2025-09-02. Updated in October 2026: changed Al Brooks and Louie into a side-by-side study, and added the order for Louie's playlists and links to each channel.)
+(First published on September 12, 2026. Updated on October 18: changed Al Brooks and Louie into a side-by-side study, and added the order for Louie's playlists and links to each channel.)

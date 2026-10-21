@@ -3,7 +3,7 @@ title: "16 Years of 1-Minute ES Data: Where I Got It and How I Cleaned It"
 description: "The data comes from Databento's official CME market data feed. The prices themselves are clean. The real trouble is which days you can't use: contract rolls, holidays, half days and data gaps. After dropping about 2% of full trading days, 3,924 days are left that I can trust."
 stat: "3924"
 statLabel: "usable trading days after cleaning"
-pubDatetime: 2026-04-14T20:00:00+08:00
+pubDatetime: 2026-09-18T20:00:00+08:00
 tags: [Tools]
 featured: true
 lang: en
@@ -180,4 +180,4 @@ Every study on this site is built on this cleaned data, and I won't repeat the d
 Please add comments to every step explaining why it's done that way.</pre>
 </div>
 
-(Note: in October 2026 I downloaded the April–September 2026 data as well. The date range and numbers in this post reflect the merged data.)
+(First published on September 18, 2026. Updated on October 5: downloaded the April–September 2026 data as well; the date range and numbers in this post reflect the merged data.)

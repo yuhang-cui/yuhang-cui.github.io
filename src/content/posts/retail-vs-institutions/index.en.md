@@ -1,7 +1,7 @@
 ---
 title: "Do Institutions Target Retail Traders? Doing the Math on Apple's First Two Hours"
 description: "A lot of retail traders feel institutions are harvesting them every day. Small caps really do get manipulated, but in a mega cap like Apple, the math of targeting retail just doesn't work. The ones trading against retail every day are market makers, and they make their money on the spread."
-pubDatetime: 2025-09-12T20:00:00+08:00
+pubDatetime: 2026-09-15T20:00:00+08:00
 tags: [Thinking]
 lang: en
 ---
@@ -113,4 +113,4 @@ The feeling that "my stop always gets hunted" can be understood the same way. Pr
 - Market makers paying more than $4.9 billion a year for order flow (May 2025): [Global Trading](https://www.globaltrading.net/payment-for-us-retail-flow-reaches-record-high-led-by-citadel-securities-imc/)
 - The 25–30% share for the first two hours is an assumption based on the U-shaped intraday volume pattern in US stocks, not the actual figure for that day.
 
-(First published on Xiaohongshu. Revised in October 2026: fixed calculation errors and added the sections on market makers and what this means for trading ES.)
+(First published on September 15, 2026. Revised on October 18: fixed calculation errors and added the sections on market makers and what this means for trading ES.)
