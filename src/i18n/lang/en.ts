@@ -191,6 +191,7 @@ export default {
     start: "Start alarms",
     stop: "Pause",
     stopped: "Paused: nothing rings until you click Start (browsers need a click before they can play sound)",
+    resumeHint: "Alarms are still on, but the browser paused the sound: tap anywhere on the page to resume",
     quick: "Quick actions",
     skip1: "Skip next bar",
     skip2: "Skip next 2",

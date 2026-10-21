@@ -61,7 +61,7 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
 <script>
   type S = Record<string, string>;
   type Settings = { tf: number; lead: number; from: string; to: string; vol: number; notify: boolean };
-  type Saved = { settings: Settings; skipped: number[]; muteUntil: number };
+  type Saved = { settings: Settings; skipped: number[]; muteUntil: number; running: boolean };
 
   const KEY = "bar-alarm-v1";
   const DEFAULTS: Settings = { tf: 5, lead: 60, from: "09:30", to: "16:15", vol: 0.6, notify: false };
@@ -70,9 +70,9 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
   function load(): Saved {
     try {
       const v = JSON.parse(localStorage.getItem(KEY) || "null");
-      if (v) return { settings: { ...DEFAULTS, ...v.settings }, skipped: v.skipped || [], muteUntil: v.muteUntil || 0 };
+      if (v) return { settings: { ...DEFAULTS, ...v.settings }, skipped: v.skipped || [], muteUntil: v.muteUntil || 0, running: !!v.running };
     } catch {}
-    return { settings: { ...DEFAULTS }, skipped: [], muteUntil: 0 };
+    return { settings: { ...DEFAULTS }, skipped: [], muteUntil: 0, running: false };
   }
   function save(v: Saved) {
     try {
@@ -139,8 +139,9 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       const s: S = JSON.parse(root.dataset.s!);
       const $ = <T extends Element>(q: string) => root.querySelector<T>(q)!;
       const state = load();
-      let running = false;
-      let ctx: AudioContext | null = null;
+      // 刷新或切回页面时沿用上次的开关：开着就接着开，声音等用户点一下页面再恢复（浏览器规定）
+      let running = state.running;
+      let ctx: AudioContext | null = running ? new AudioContext() : null;
       let scheduled: { at: number; nodes: AudioScheduledSourceNode[] } | null = null;
       let lastTick = Date.now();
 
@@ -191,7 +192,8 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       }
       // 把下一次要响的提醒按音频时钟排好；目标变了就重排
       function reschedule(next: Bar | undefined) {
-        if (!running || !ctx || !next) return unschedule();
+        // 声音被浏览器挂起时音频时钟是停的，排了也不准：先撤掉，恢复后再排
+        if (!running || !ctx || ctx.state !== "running" || !next) return unschedule();
         if (scheduled?.at === next.alarm) return;
         if (scheduled && scheduled.at <= Date.now()) scheduled = null; // 上一次已经在响了：让它响完，不掐断
         unschedule();
@@ -310,6 +312,8 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
         }
         $(".ba-next").textContent = !running
           ? s.stopped
+          : ctx?.state !== "running"
+            ? s.resumeHint
           : next
             ? s.nextAlarm
                 .replace("{{t}}", at(next.alarm))
@@ -349,6 +353,8 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       }
       async function toggleRun() {
         running = !running;
+        state.running = running;
+        persist();
         if (running) {
           ctx ??= new AudioContext();
           await ctx.resume();
@@ -405,6 +411,13 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
         if (e.key === "n" || e.key === "N") skipNext(1);
         if (e.key === "r" || e.key === "R") restoreAll();
       });
+
+      // 提醒开着但声音被挂起（刚刷新、手机切回来）：点页面任何地方、按任何键都恢复
+      const wake = () => {
+        if (document.body.contains(root) && running && ctx && ctx.state !== "running") ctx.resume();
+      };
+      document.addEventListener("pointerdown", wake);
+      document.addEventListener("keydown", wake);
 
       render();
       const timer = window.setInterval(() => {

@@ -182,6 +182,7 @@ export interface UIStrings {
     start: string;
     stop: string;
     stopped: string;
+    resumeHint: string;
     quick: string;
     skip1: string;
     skip2: string;
