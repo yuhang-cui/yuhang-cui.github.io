@@ -7,8 +7,9 @@ type Props = {
   title: string;
   prompt: string;
   code: string;
+  codeLabel?: string; // 代码标签页的名字，工具类文章用 "HTML"
 };
-const { title, prompt, code } = Astro.props;
+const { title, prompt, code, codeLabel = "Python" } = Astro.props;
 const t = useTranslations(Astro.currentLocale);
 const id = `rc-${Math.random().toString(36).slice(2, 8)}`;
 ---
@@ -19,7 +20,7 @@ const id = `rc-${Math.random().toString(36).slice(2, 8)}`;
     <div class="rc-tabs" role="tablist">
       <button type="button" role="tab" id={`${id}-t0`} aria-controls={`${id}-p0`} aria-selected="true">{t.research.definition}</button>
       <button type="button" role="tab" id={`${id}-t1`} aria-controls={`${id}-p1`} aria-selected="false" tabindex="-1">Prompt</button>
-      <button type="button" role="tab" id={`${id}-t2`} aria-controls={`${id}-p2`} aria-selected="false" tabindex="-1">Python</button>
+      <button type="button" role="tab" id={`${id}-t2`} aria-controls={`${id}-p2`} aria-selected="false" tabindex="-1">{codeLabel}</button>
     </div>
   </div>
 

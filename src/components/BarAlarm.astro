@@ -31,8 +31,8 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
     <button type="button" data-restore>{s.restore} <kbd>R</kbd></button>
   </div>
 
-  <p class="bx-sub">{s.upcoming}<span>{s.upcomingHint}</span></p>
-  <ul class="ba-list"></ul>
+  <p class="bx-sub"><b class="ba-listday">{s.upcoming}</b><span>{s.upcomingHint}</span></p>
+  <div class="ba-list"></div>
 
   <details class="ba-settings">
     <summary>{s.settings}</summary>
@@ -107,7 +107,8 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
     return `${pad(p.h)}:${pad(p.mi)}${sec ? ":" + pad(p.s) : ""}`;
   };
 
-  type Bar = { n: number; open: number; close: number; alarm: number; day: string };
+  type Bar = { n: number; open: number; close: number; alarm: number; day: string; ymd: [number, number, number] };
+  const GROUP_MIN = 120; // 每 2 小时一组：5 分钟图正好是第 1–24、25–48、49–72 根，剩下的归最后一组
 
   // 从 now 开始往后的 count 根 K 线（只算周一到周五的日盘；不含交易所假日）
   function upcoming(st: Settings, now: number, count: number): Bar[] {
@@ -125,7 +126,7 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       for (let i = 1; i <= n && out.length < count; i++) {
         const close = etToMs(y, mo, d, a + i * st.tf);
         if (close <= now) continue;
-        out.push({ n: i, open: close - st.tf * 60000, close, alarm: close - st.lead * 1000, day: `${mo}/${d}` });
+        out.push({ n: i, open: close - st.tf * 60000, close, alarm: close - st.lead * 1000, day: `${mo}/${d}`, ymd: [y, mo, d] });
       }
     }
     return out;
@@ -142,7 +143,6 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       let ctx: AudioContext | null = null;
       let scheduled: { at: number; nodes: AudioScheduledSourceNode[] } | null = null;
       let lastTick = Date.now();
-      let listHtml = "";
 
       // 设置面板 ← 存储
       const form = $<HTMLDetailsElement>(".ba-settings");
@@ -193,6 +193,7 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       function reschedule(next: Bar | undefined) {
         if (!running || !ctx || !next) return unschedule();
         if (scheduled?.at === next.alarm) return;
+        if (scheduled && scheduled.at <= Date.now()) scheduled = null; // 上一次已经在响了：让它响完，不掐断
         unschedule();
         const when = ctx.currentTime + Math.max(0, (next.alarm - Date.now()) / 1000);
         scheduled = { at: next.alarm, nodes: beepAt(when) };
@@ -209,7 +210,78 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       }
 
       // —— 画面 ——
-      const list = $<HTMLUListElement>(".ba-list");
+      const list = $<HTMLElement>(".ba-list");
+      const groupNames = s.groups as unknown as string[];
+      let listKey = "";
+      let activeGroup = -1;
+
+      // 列表：这一天（今天，或收盘后 / 周末时的下一个交易日）的全部 K 线，按时段分组，只展开当前时段
+      function renderDay(head: Bar, now: number, at: (ms: number) => string) {
+        const st = state.settings;
+        const [y, mo, d] = head.ymd;
+        const perDay = Math.floor((hm(st.to) - hm(st.from)) / st.tf);
+        const bars = upcoming(st, etToMs(y, mo, d, 0), perDay);
+        const groupOf = (b: Bar) =>
+          Math.min(groupNames.length - 1, Math.floor((b.open - bars[0].open) / (GROUP_MIN * 60000)));
+
+        // 换了一天或改了设置才重建分组，平时只更新每格的状态，展开 / 收起不会被打断
+        const key = `${y}-${mo}-${d}|${st.tf}|${st.from}|${st.to}|${st.lead}`;
+        if (key !== listKey) {
+          listKey = key;
+          activeGroup = -1;
+          const groups = groupNames.map(() => [] as Bar[]);
+          bars.forEach(b => groups[groupOf(b)].push(b));
+          list.innerHTML = groups
+            .map((g, i) => {
+              if (!g.length) return "";
+              const meta = `${s.range.replace("{{a}}", String(g[0].n)).replace("{{b}}", String(g[g.length - 1].n))} · ${clock(g[0].open)}–${clock(g[g.length - 1].close)}`;
+              const tiles = g
+                .map(b => `<button type="button" class="ba-tile is-new" data-close="${b.close}" title="${s.ringAt.replace("{{t}}", at(b.alarm))}">
+                  <span class="ba-n">${s.bar.replace("{{n}}", String(b.n))}</span><span class="ba-tag"></span>
+                  <span class="ba-win">${clock(b.open)}–${clock(b.close)}</span>
+                </button>`)
+                .join("");
+              return `<details class="ba-group" data-g="${i}">
+                <summary><span class="ba-gname">${groupNames[i]}</span><span class="ba-gmeta">${meta}${i === groupNames.length - 1 ? ` · ${s.lastHint}` : ""}</span><span class="ba-gcount"></span></summary>
+                <div class="ba-tiles">${tiles}</div>
+              </details>`;
+            })
+            .join("");
+        }
+
+        // 到了新的时段：只展开这一段，其他收起
+        const g = groupOf(head);
+        if (g !== activeGroup) {
+          activeGroup = g;
+          list.querySelectorAll<HTMLDetailsElement>(".ba-group").forEach(el => {
+            el.open = +el.dataset.g! === g;
+            el.classList.toggle("is-active", el.open);
+          });
+        }
+
+        const byClose = new Map(bars.map(b => [b.close, b]));
+        list.querySelectorAll<HTMLButtonElement>(".ba-tile").forEach(btn => {
+          const b = byClose.get(+btn.dataset.close!)!;
+          const past = b.alarm <= now;
+          const off = !past && isSkipped(b);
+          const cls = `ba-tile${past ? " is-past" : off ? " is-off" : ""}${b.open <= now && now < b.close ? " is-now" : ""}`;
+          if (btn.className === cls) return;
+          btn.className = cls;
+          btn.disabled = past;
+          btn.setAttribute("aria-pressed", String(!past && !off));
+          btn.querySelector(".ba-tag")!.textContent = past ? "" : off ? s.off : s.on;
+        });
+        list.querySelectorAll<HTMLElement>(".ba-group").forEach(el => {
+          const n = el.querySelectorAll(".ba-tile.is-off").length;
+          const txt = n ? s.offCount.replace("{{n}}", String(n)) : "";
+          const c = el.querySelector(".ba-gcount")!;
+          if (c.textContent !== txt) c.textContent = txt;
+        });
+
+        const today = etParts(now);
+        $(".ba-listday").textContent = head.day === `${today.mo}/${today.d}` ? s.upcoming : s.upcomingDay.replace("{{d}}", head.day);
+      }
+
       function render() {
         const now = Date.now();
         // 提前量不是整分钟（比如 30 秒）时，提醒时间要带秒
@@ -247,22 +319,8 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
         if (state.muteUntil > now)
           $(".ba-next").textContent += " · " + s.mutedUntil.replace("{{t}}", clock(state.muteUntil));
 
-        const html = future
-          .slice(0, 12)
-          .map(b => {
-            const off = isSkipped(b);
-            const today = etParts(now);
-            const dayTag = b.day === `${today.mo}/${today.d}` ? "" : `<span class="ba-day">${b.day}</span>`;
-            return `<li class="${off ? "is-off" : ""}">
-              <span class="ba-n">${s.bar.replace("{{n}}", String(b.n))}</span>
-              <span class="ba-win">${dayTag}${clock(b.open)}–${clock(b.close)}</span>
-              <span class="ba-at">${s.ringAt.replace("{{t}}", at(b.alarm))}</span>
-              <button type="button" data-close="${b.close}" aria-pressed="${!off}">${off ? s.off : s.on}</button>
-            </li>`;
-          })
-          .join("");
-        // 内容变了才重画列表，免得点按钮时列表刚好被替换掉
-        if (html !== listHtml) list.innerHTML = listHtml = html;
+        const head = upcoming(state.settings, now, 1)[0];
+        if (head) renderDay(head, now, at);
 
         reschedule(next);
         // 系统通知跟着计时器走：上一次检查到现在之间到点的提醒都发（声音已经排在音频时钟上）

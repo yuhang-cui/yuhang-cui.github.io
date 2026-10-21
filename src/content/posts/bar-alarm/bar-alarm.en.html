@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- Bar close alarm: two beeps LEAD seconds before each bar closes (US Eastern, RTH Monday to Friday) -->
+<!-- How to use: save as an .html file, open it in a browser, click "Start alarms" and keep the page open -->
+<meta charset="utf-8">
+<title>Bar close alarm</title>
+<button id="run">Start alarms</button>
+<button id="skip">Skip next bar</button>
+<p id="now"></p>
+<p id="next"></p>
+<script>
+  const TF = 5;              // bar size (minutes)
+  const LEAD = 60;           // seconds before the close to ring
+  const FROM = 9 * 60 + 30;  // RTH start 09:30 (US Eastern, in minutes)
+  const TO = 16 * 60 + 15;   // RTH end 16:15
+
+  // US Eastern time: converted with Intl, so DST is handled and the computer's own time zone doesn't matter
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+  function et(ms) {
+    const p = Object.fromEntries(fmt.formatToParts(new Date(ms)).map(x => [x.type, +x.value]));
+    return { y: p.year, mo: p.month, d: p.day, h: p.hour, mi: p.minute, s: p.second };
+  }
+  // the real moment of minute `minutes` on a US Eastern day: guess it as UTC, then subtract the gap between the guess and what Eastern time shows
+  function etToMs(y, mo, d, minutes) {
+    const guess = Date.UTC(y, mo - 1, d, 0, minutes);
+    const p = et(guess);
+    return guess - (Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi) - guess);
+  }
+  const pad = n => String(n).padStart(2, "0");
+  const clock = ms => { const p = et(ms); return `${pad(p.h)}:${pad(p.mi)}:${pad(p.s)}`; };
+
+  // the next bar whose alarm is still ahead: search from today on, skipping Saturdays and Sundays (not exchange holidays)
+  function nextBar(after) {
+    const t = et(after);
+    for (let step = 0; step < 7; step++) {
+      const day = new Date(Date.UTC(t.y, t.mo - 1, t.d + step));
+      if (day.getUTCDay() === 0 || day.getUTCDay() === 6) continue;
+      for (let i = 1; FROM + i * TF <= TO; i++) {
+        const close = etToMs(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate(), FROM + i * TF);
+        if (close - LEAD * 1000 > after) return { n: i, close, alarm: close - LEAD * 1000 };
+      }
+    }
+  }
+
+  let ctx = null;        // browsers only allow sound after a click, so it's created on "Start"
+  let planned = null;    // the alarm already scheduled { at, nodes }
+  let skipUntil = 0;     // alarms up to this moment are skipped
+
+  // two short beeps, scheduled on the audio clock: timers slow down in background tabs, the audio clock doesn't
+  function beepAt(when) {
+    return [[0, 880], [0.22, 1175]].map(([offset, freq]) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, when + offset);
+      g.gain.linearRampToValueAtTime(0.6, when + offset + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + offset + 0.18);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(when + offset);
+      osc.stop(when + offset + 0.2);
+      return osc;
+    });
+  }
+
+  function tick() {
+    const now = Date.now();
+    const bar = nextBar(Math.max(now, skipUntil));
+    document.getElementById("now").textContent = "US Eastern " + clock(now);
+    document.getElementById("next").textContent = ctx
+      ? `Next alarm ${clock(bar.alarm)} (before bar ${bar.n} closes)`
+      : "Not started";
+    // the bar to ring has changed (its time came, or "skip" was clicked): cancel the old one and schedule again
+    if (ctx && planned?.at !== bar.alarm) {
+      if (planned?.at > now) planned.nodes.forEach(n => n.stop());  // don't cut off one that's already playing
+      planned = { at: bar.alarm, nodes: beepAt(ctx.currentTime + (bar.alarm - now) / 1000) };
+    }
+  }
+
+  document.getElementById("run").onclick = () => { ctx ??= new AudioContext(); ctx.resume(); tick(); };
+  document.getElementById("skip").onclick = () => { skipUntil = nextBar(Math.max(Date.now(), skipUntil)).alarm; tick(); };
+  setInterval(tick, 250);
+  tick();
+</script>

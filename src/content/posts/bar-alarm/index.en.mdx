@@ -7,6 +7,9 @@ lang: en
 ---
 
 import BarAlarm from "@/components/BarAlarm.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./bar-alarm.en.html?raw";
 
 > **What it does**: it beeps 1 minute before each bar closes, to remind me to get back to the chart and watch how the bar closes.
 >
@@ -26,7 +29,7 @@ So I needed an alarm that goes off right before each 5-minute bar closes. For ex
    - "Skip next bar" (or press N on the keyboard) skips only the next alarm;
    - "Skip next 2" and "Skip next 3" work the same way;
    - "Mute 15 min / 30 min" is handy for the slow midday stretch;
-   - every bar in the list has a switch on the right, so you can turn off single bars, for example if you only want an alarm before bar 18 closes.
+   - the list is grouped into morning, midday, afternoon and the last bars, and the current session opens automatically; click any bar to turn it off on its own, for example if you only want an alarm before bar 18 closes.
 4. **If you change something by mistake**: hit "Restore all" (or press R).
 
 ## Settings
@@ -42,3 +45,17 @@ So I needed an alarm that goes off right before each 5-minute bar closes. For ex
 - **It only rings Monday through Friday**. It doesn't skip exchange holidays (like Thanksgiving) automatically, so just hit "Pause" on those days.
 - **It rings on time even in a background tab**: browsers slow down timers in background tabs, so the sounds are scheduled ahead of time on the browser's audio clock instead of relying on timers.
 - **Settings and skipped bars are stored only in this computer's browser** and aren't uploaded anywhere.
+
+## Definition and how to reproduce it
+
+<ResearchCard title="Bar close alarm" prompt={prompt} code={code} codeLabel="HTML">
+
+- **Time**: US Eastern (America/New_York), converted with the browser's built-in Intl, so daylight saving time is handled automatically.
+- **Bars**: counted from the RTH open. Bar 1 is 09:30–09:35, bar 2 is 09:35–09:40, and so on up to the RTH close (16:15 by default): 81 bars a day on the 5-minute chart.
+- **Alarm time**: bar close − lead time. The default is 1 minute before the close, so bar 1 rings at 09:34.
+- **Trading days**: Monday to Friday; exchange holidays aren't skipped.
+- **Sound**: two short beeps (880 Hz and 1175 Hz), scheduled ahead of time on the browser's audio clock so they ring on time even in a background tab.
+- **Skipping**: only the bars you pick are skipped; muting for 15 / 30 minutes silences every alarm in that window.
+- **Prompt and code**: a simplified version that keeps only the timed alarm and "Skip next bar". Save it as an .html file and open it in a browser. The grouped list, muting and system notifications are left out.
+
+</ResearchCard>

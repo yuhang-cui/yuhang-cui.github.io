@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- K 线收线提醒：每根 K 线收线前 LEAD 秒响两声（美东时间，周一到周五日盘） -->
+<!-- 用法：存成 .html 文件，用浏览器打开，点“开始提醒”，页面一直开着 -->
+<meta charset="utf-8">
+<title>K 线收线提醒</title>
+<button id="run">开始提醒</button>
+<button id="skip">下一根不响</button>
+<p id="now"></p>
+<p id="next"></p>
+<script>
+  const TF = 5;              // K 线周期（分钟）
+  const LEAD = 60;           // 收线前多少秒响
+  const FROM = 9 * 60 + 30;  // 日盘开始 09:30（美东，换成分钟）
+  const TO = 16 * 60 + 15;   // 日盘结束 16:15
+
+  // 美东时间：用 Intl 换算，夏令时自动处理，本机是北京时间也没关系
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+  function et(ms) {
+    const p = Object.fromEntries(fmt.formatToParts(new Date(ms)).map(x => [x.type, +x.value]));
+    return { y: p.year, mo: p.month, d: p.day, h: p.hour, mi: p.minute, s: p.second };
+  }
+  // 美东某天第 minutes 分钟对应的真实时刻：先按 UTC 猜一个，再减去猜的和美东显示之间的差
+  function etToMs(y, mo, d, minutes) {
+    const guess = Date.UTC(y, mo - 1, d, 0, minutes);
+    const p = et(guess);
+    return guess - (Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi) - guess);
+  }
+  const pad = n => String(n).padStart(2, "0");
+  const clock = ms => { const p = et(ms); return `${pad(p.h)}:${pad(p.mi)}:${pad(p.s)}`; };
+
+  // 下一根还没到提醒时刻的 K 线：从今天开始往后找，跳过周六周日（交易所假日不跳）
+  function nextBar(after) {
+    const t = et(after);
+    for (let step = 0; step < 7; step++) {
+      const day = new Date(Date.UTC(t.y, t.mo - 1, t.d + step));
+      if (day.getUTCDay() === 0 || day.getUTCDay() === 6) continue;
+      for (let i = 1; FROM + i * TF <= TO; i++) {
+        const close = etToMs(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate(), FROM + i * TF);
+        if (close - LEAD * 1000 > after) return { n: i, close, alarm: close - LEAD * 1000 };
+      }
+    }
+  }
+
+  let ctx = null;        // 浏览器要求先点一下页面才能出声，所以点“开始”时才建
+  let planned = null;    // 已经排好的那一次提醒 { at, nodes }
+  let skipUntil = 0;     // 这个时刻之前的提醒都不响
+
+  // 两声短促的“嘀”，排在音频时钟上：后台标签页的计时器会被放慢，音频时钟不会
+  function beepAt(when) {
+    return [[0, 880], [0.22, 1175]].map(([offset, freq]) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, when + offset);
+      g.gain.linearRampToValueAtTime(0.6, when + offset + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + offset + 0.18);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(when + offset);
+      osc.stop(when + offset + 0.2);
+      return osc;
+    });
+  }
+
+  function tick() {
+    const now = Date.now();
+    const bar = nextBar(Math.max(now, skipUntil));
+    document.getElementById("now").textContent = "美东时间 " + clock(now);
+    document.getElementById("next").textContent = ctx
+      ? `下一次提醒 ${clock(bar.alarm)}（第 ${bar.n} 根收线前）`
+      : "还没开始";
+    // 要响的那一根变了（时间到了，或者按了“不响”），就撤掉旧的，重新排
+    if (ctx && planned?.at !== bar.alarm) {
+      if (planned?.at > now) planned.nodes.forEach(n => n.stop());  // 已经在响的不掐断
+      planned = { at: bar.alarm, nodes: beepAt(ctx.currentTime + (bar.alarm - now) / 1000) };
+    }
+  }
+
+  document.getElementById("run").onclick = () => { ctx ??= new AudioContext(); ctx.resume(); tick(); };
+  document.getElementById("skip").onclick = () => { skipUntil = nextBar(Math.max(Date.now(), skipUntil)).alarm; tick(); };
+  setInterval(tick, 250);
+  tick();
+</script>

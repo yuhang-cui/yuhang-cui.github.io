@@ -1,0 +1,9 @@
+Please write a single HTML file (no libraries) that works when opened in a browser: it beeps shortly before each bar closes, to remind me to get back to the chart. The rules:
+1. Times are US Eastern (America/New_York), with daylight saving time handled automatically; my computer runs on Beijing time, and it still has to be right. Use the browser's built-in Intl.DateTimeFormat for the conversion; don't hard-code the offset.
+2. Only Monday to Friday, RTH 09:30–16:15. Bars are 5 minutes: bar 1 is 09:30–09:35, bar 2 is 09:35–09:40, and so on. No need to skip exchange holidays.
+3. Beep 60 seconds before each bar closes: bar 1 at 09:34, bar 2 at 09:39. Put the bar size, the lead time and the RTH start and end times in constants at the top of the file, so I can change them.
+4. Generate the sound with Web Audio: two short beeps (880 Hz and 1175 Hz, about 0.2 seconds each). Browsers only allow sound after a click on the page, so add a "Start alarms" button and create the AudioContext only when it's clicked.
+5. Browsers slow down timers in background tabs, so don't wait for a timer to fire before making the sound: work out how many seconds until the next alarm and schedule the sound ahead of time on the AudioContext's audio clock. When the next bar to ring changes (the last alarm has rung, or I clicked "skip"), cancel the alarm that hasn't rung yet and schedule again; don't cut off one that's already playing.
+6. Add a "Skip next bar" button: it skips the next alarm; clicking it twice skips two bars.
+7. Show the current US Eastern time (hh:mm:ss) and the time of the next alarm with its bar number; refresh every 0.25 seconds.
+Please comment every step in English, explaining why it's done that way.

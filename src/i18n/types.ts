@@ -190,7 +190,12 @@ export interface UIStrings {
     mute30: string;
     restore: string;
     upcoming: string;
+    upcomingDay: string;
     upcomingHint: string;
+    groups: string[];
+    lastHint: string;
+    range: string;
+    offCount: string;
     settings: string;
     tf: string;
     min: string;
