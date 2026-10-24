@@ -115,6 +115,11 @@ export default {
     copy: "复制",
     copied: "已复制",
   },
+  tableCard: {
+    pin: "置顶表格",
+    unpin: "取消置顶",
+    pinHint: "置顶：往下读结论时，这张表固定在页面上方",
+  },
   promptCard: {
     copyLabel: "复制这段 prompt",
     copied: "已复制",

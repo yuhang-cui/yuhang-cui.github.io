@@ -115,6 +115,11 @@ export default {
     copy: "Copy",
     copied: "Copied",
   },
+  tableCard: {
+    pin: "Pin table",
+    unpin: "Unpin table",
+    pinHint: "Pin: keep this table at the top of the page while you read the conclusions",
+  },
   promptCard: {
     copyLabel: "Copy this prompt",
     copied: "Copied",

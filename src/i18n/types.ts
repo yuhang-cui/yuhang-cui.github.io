@@ -106,6 +106,11 @@ export interface UIStrings {
     copy: string;
     copied: string;
   };
+  tableCard: {
+    pin: string;
+    unpin: string;
+    pinHint: string;
+  };
   promptCard: {
     copyLabel: string;
     copied: string;

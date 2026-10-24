@@ -1,0 +1,436 @@
+---
+title: "Wedge Experiment 01: Testing a Fixed 2R Target"
+description: "I replayed 30 wedge trades on the MES 5-minute chart: stop beyond the signal bar, a fixed 2R target, and no stop moves along the way. Win rate 40%, +0.33R per trade on average: probably positive, but not yet stable. Broken down: all 7 weak signal bars were stopped out; a 1.5R target did best overall (+0.48R); with a 2R target, moving the stop to breakeven at 1R helped. It ends with 5 execution rules."
+stat: "+0.33R"
+statLabel: "Average per trade"
+pubDatetime: 2026-10-24T20:00:00+08:00
+tags: [Strategies]
+lang: en
+---
+
+import TableTabs from "@/components/TableTabs.astro";
+
+> **Hypothesis**: with the stop beyond the signal bar (= 1R) and a mechanical, fixed 2R target, the expectancy is positive.
+>
+> **Result**: of 30 trades, 12 hit the 2R target, 14 hit the initial stop and 4 were closed at the end of the day. Win rate 40%, above the 33.3% breakeven rate; **+0.33R** per trade on average.
+>
+> <span class="takeaway">In one sentence: a mechanical fixed 2R target has positive expectancy; but with 30 trades the expectancy has an error of about ±0.25R, so it is only "probably positive", not yet stable.</span>
+
+## 📊 Experiment overview
+
+<p class="table-title">Experiment 01 · Fixed 2R</p>
+
+<div class="exp-table">
+
+| Item | Result |
+|:---|:---|
+| Method | TradingView Replay, MES 5-minute chart |
+| Rules | Stop beyond the signal bar (1R), target 2R, no stop moves; if neither is hit, close at the end of the day |
+| Sample | 30 trades · 21 trading days (2026-09-02 to 2026-10-12) |
+| 2R target / initial stop / closed at end of day | 12 / 14 / 4 |
+| Win rate (2R target) | 40% (breakeven 33.3%) |
+| Expectancy | +0.33R / trade |
+| Total | +9.97R |
+
+</div>
+
+Below I break the 30 trades down from four angles: signal bar, entry bar, target and breakeven, and setup. Where an angle has a definition, it comes first, followed by the statistics and the conclusions.
+
+## 1. 🕯️ Signal bar
+
+### Definition
+
+<p class="table-title">Signal bar definitions (for a long; reverse for a short)</p>
+
+<div class="exp-table">
+
+| Grade | What counts |
+|:---|:---|
+| strong trend bar | a. Strong body, not too small (1–2 points doesn't count)<br/>b. Short upper tail |
+| strong pin bar | a. Long lower tail, closes near the high<br/>b. If the body is a large share of the bar: a small upper tail is fine<br/>c. If the body is a small share: the lower tail can't be too long, and there is almost no upper tail |
+| weak pin bar | a. Small body, but a very long lower tail<br/>b. Or a somewhat long upper tail |
+| weak trend bar | a. Doesn't meet the strong trend bar conditions (smallish body or longer upper tail) |
+
+</div>
+
+### Statistics
+
+<TableTabs title="Signal bar statistics" tabs={["Results", "Entry bar mix", "Targets"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Signal bar | Trades | 2R target | Hit 1R | Hit 1.5R | Hit 3R | Back to entry after 1R | Average |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 11 | 64%<span class="wl">7 trades</span> | 91%<span class="wl">10 trades</span> | 91%<span class="wl">10 trades</span> | 45%<span class="wl">5 trades</span> | 40%<span class="wl">4 trades</span> | **+0.97R** |
+| strong trend bar | 12 | 42%<span class="wl">5 trades</span> | 67%<span class="wl">8 trades</span> | 50%<span class="wl">6 trades</span> | 33%<span class="wl">4 trades</span> | 38%<span class="wl">3 trades</span> | +0.53R |
+| weak pin bar | 6 | 0%<span class="wl">0 trades</span> | 17%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 100%<span class="wl">1 trade</span> | −1.00R |
+| weak trend bar | 1 | 0%<span class="wl">0 trades</span> | 100%<span class="wl">1 trade</span> | 100%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 100%<span class="wl">1 trade</span> | −1.00R |
+
+</div>
+
+<p class="table-note">Percentages are a share of the trades in that row; "back to entry after 1R" is a share of the trades that reached 1R.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Signal bar | Good trend bar | Acceptable follow-through | Doji | Mild counter bar | Strong counter bar |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 18%<span class="wl">2 trades</span> | 45%<span class="wl">5 trades</span> | 18%<span class="wl">2 trades</span> | 0%<span class="wl">0 trades</span> | 18%<span class="wl">2 trades</span> |
+| strong trend bar | 17%<span class="wl">2 trades</span> | 42%<span class="wl">5 trades</span> | 25%<span class="wl">3 trades</span> | 17%<span class="wl">2 trades</span> | 0%<span class="wl">0 trades</span> |
+| weak pin bar | 17%<span class="wl">1 trade</span> | 17%<span class="wl">1 trade</span> | 50%<span class="wl">3 trades</span> | 0%<span class="wl">0 trades</span> | 17%<span class="wl">1 trade</span> |
+| weak trend bar | 100%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Signal bar | 1R | 1.5R | 2R (actual) | 3R | Breakeven at 1R (target 2R) |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | +0.82 | **+1.27** | +0.97 | +1.06 | +1.00 |
+| strong trend bar | +0.38 | +0.42 | +0.53 | **+0.70** | +0.54 |
+| weak pin bar | **−0.67** | −1.00 | −1.00 | −1.00 | −0.83 |
+| weak trend bar (1 trade) | +1.00 | **+1.50** | −1.00 | −1.00 | 0.00 |
+
+</div>
+
+<p class="table-note">Values are average R per trade; bold = best in the row. 1R and 1.5R: if price touched the target it counts as the target, otherwise the actual result. 2R is the actual replay result. 3R can't be tested without moving the stop, because the replay took profit at 2R and only recorded whether price reached 3R or came back to entry first; so 3R is counted as "stop moved to breakeven after 2R", and <strong>the result is optimistic</strong>. Signal bar labels were all re-checked against the definitions, without looking at the results.</p>
+
+</div>
+</TableTabs>
+
+### Conclusions
+
+1. **Strong signal bars clearly beat weak ones**: the 23 strong trades made +17R in total; all 7 weak ones were stopped out.
+2. **strong pin bars look much better than strong trend bars**: about 22 points higher for the 2R target (64% vs 42%), about 12 points higher for 3R (45% vs 33%), about 24 points higher for 1R (91% vs 67%), and 41 points higher for 1.5R (91% vs 50%). Average +0.97R vs +0.53R: 0.44R more per trade, about 1.8×. Limitations:
+   1. Each group has only 11–12 trades, so the gap isn't statistically significant yet;
+   2. The two show up in different places: 7 of the 12 trend bars were in wedge flags, mostly inside trading ranges; pin bars were more often at the edge of a range or at an overshoot. Part of the gap may come from location, not the bar shape.
+3. **weak pin bars rarely reach 2R**: 6 in the experiment plus 5 live, and none of the 11 reached 2R; but 3 of the live ones reached 1R. If you take them, keep the target close (1R–1.5R). Only 11 trades, so treat it as a hint.
+4. **After a strong pin bar, the entry bar's follow-through matters too**: of 7 live trades, the 3 with a good trend bar or acceptable follow-through as the entry bar all won, and the 4 with a counter bar all lost (price got no further than 0.17–0.31R). In the experiment, the 2 strong pin bars followed by a strong counter bar went 1 win, 1 loss.
+5. **Each signal bar has a different best target**: for strong pin bars it's 1.5R (+1.27R, above +0.97R at 2R); for strong trend bars it's 3R (+0.70R), and the closer the target the worse; weak pin bars are negative at every target. Limitations:
+   1. 3R often means holding for half a day or more, and there are often deep pullbacks after 2R, so the simulation is optimistic and hard to execute;
+   2. 1.5R's edge comes from turning 3 stop-outs into wins, and in those 3 trades 1.5R happened to sit near the top of a range or the start of the rally;
+   3. A better approach may be to set the target from structure (range edges, the start of the rally, prior highs and lows) and the stop size rather than a fixed multiple. That is a candidate hypothesis for Experiment 02.
+
+<p class="table-note">Live data comes from 20 separate live wedge trades of mine (discretionary exits) and is only supplementary; for those I compare how far price went in R (MFE ÷ initial risk).</p>
+
+## 2. 🚦 Entry bar
+
+### Definition
+
+<p class="table-title">Entry bar definitions (for a long; reverse for a short)</p>
+
+<div class="exp-table">
+
+| Grade | What counts |
+|:---|:---|
+| Good trend bar | a. Bull bar with a relatively large body for that moment<br/>b. Short or no upper tail<br/>c. A long lower tail is fine (buying pressure)<br/>d. Closes well beyond the previous bar's close |
+| Acceptable follow-through | a. Bull bar with a medium-to-small body<br/>b. Bull bar with a large body but a long upper tail (broke out, still closed fairly high) → one grade below "good trend bar" |
+| Doji | a. Very small body, bull or bear<br/>b. Small body, upper and lower tails about the same<br/>c. Small body, long lower tail, short upper tail<br/>d. Bull bar, but with a small body compared with the big bull bars around it<br/>e. Small bull bar with a longer upper tail → one grade below "acceptable follow-through" |
+| Mild counter bar | a. Bear bar with a modest body<br/>b. Small body but a longer upper tail, clear selling pressure → one grade below Doji<br/>c. Bear bar with a medium body and a longer lower tail → still a mild counter bar |
+| Strong counter bar | a. Bear bar with a relatively large body for that moment<br/>b. A strong pin bar in the opposite direction (long upper tail, closes near the low) |
+
+</div>
+
+<p class="table-note">Body size is judged against the bars around it at the time, not a fixed number of points. For a long, the upper tail = selling pressure = the counter-trend tail; the lower tail = buying pressure.</p>
+
+### Statistics
+
+<TableTabs title="Entry bar statistics" tabs={["Results", "Targets reached", "Targets"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Entry bar | Trades | 2R target | Hit 1R | Hit 1.5R | Hit 3R | Back to entry after 1R | Average |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Good trend bar | 6 | 50%<span class="wl">3 trades</span> | 100%<span class="wl">6 trades</span> | 83%<span class="wl">5 trades</span> | 33%<span class="wl">2 trades</span> | 50%<span class="wl">3 trades</span> | +0.72R |
+| Acceptable follow-through | 11 | 45%<span class="wl">5 trades</span> | 73%<span class="wl">8 trades</span> | 64%<span class="wl">7 trades</span> | 36%<span class="wl">4 trades</span> | 50%<span class="wl">4 trades</span> | +0.47R |
+| Doji | 8 | 25%<span class="wl">2 trades</span> | 38%<span class="wl">3 trades</span> | 38%<span class="wl">3 trades</span> | 25%<span class="wl">2 trades</span> | 33%<span class="wl">1 trade</span> | −0.25R |
+| Mild counter bar | 2 | 50%<span class="wl">1 trade</span> | 100%<span class="wl">2 trades</span> | 50%<span class="wl">1 trade</span> | 50%<span class="wl">1 trade</span> | 50%<span class="wl">1 trade</span> | **+1.25R** |
+| Strong counter bar | 3 | 33%<span class="wl">1 trade</span> | 33%<span class="wl">1 trade</span> | 33%<span class="wl">1 trade</span> | 33%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 0.00R |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Entry bar | Hit 1R | Hit 1.5R | 2R target | Hit 3R | Average |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| Good trend bar (6) | 100% | 83% | 50% | 33% | +0.72R |
+| Acceptable follow-through (11) | 73% | 64% | 45% | 36% | +0.47R |
+| Doji (8) | 38% | 38% | 25% | 25% | −0.25R |
+| **Gap (good − Doji)** | **62%** | **45%** | **25%** | **8%** | **+0.97R** |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Entry bar | 1R | 1.5R | 2R (actual) | 3R | Breakeven at 1R (target 2R) |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| Good trend bar | +1.00 | **+1.08** | +0.72 | +0.72 | +1.00 |
+| Acceptable follow-through | +0.50 | +0.64 | +0.47 | **+0.65** | +0.50 |
+| Doji | −0.25 | −0.06 | −0.25 | **0.00** | −0.12 |
+
+</div>
+
+<p class="table-note">Values are average R per trade; bold = best in the row. Same method as in the signal bar section; 3R is optimistic.</p>
+
+</div>
+</TableTabs>
+
+### Conclusions
+
+1. **The entry bar predicts the early follow-through best, not how far the trade goes in the end**: the gap between a good trend bar and a Doji shrinks as the target gets farther: 62 points at 1R, 45 at 1.5R, 25 for the 2R target, and only 8 at 3R. One reason is that a good trend bar often carries price close to 1R by itself.
+2. **Each entry bar has a different best target**: all 6 good trend bars reached 1R, so 1R and 1.5R both beat 2R, and moving to breakeven at 1R costs nothing; acceptable follow-through is about the same at every target, with 1.5R and 3R slightly better; Doji is around zero or negative at every target.
+3. **Doji results are polarised**: 5 of 8 never even reached 1R, but of the 3 that did, 2 went on to 3R. A Doji isn't necessarily bad; it just hasn't given an answer yet, so watch whether the next one or two bars follow through.
+4. **Doji does poorly mainly because it often follows a weak signal bar**: 5 strong signal bars followed by a Doji averaged +0.20R; all 3 weak signal bars followed by a Doji were stopped out.
+5. **The counter side (mild and strong counter bars) has only 5 trades**: too rare to draw conclusions yet.
+
+## 3. 🎯 How far to set the target, and whether to move to breakeven
+
+### Statistics
+
+<TableTabs title="Targets and breakeven" tabs={["Expectancy by target", "1.5R vs 2R", "1R vs 2R", "Mechanical vs discretionary"]}>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Signal bar | Trades | Target 1R | Target 1.5R | Target 2R | Target 3R |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 11 | +0.82 | **+1.27** | +0.97 | +1.06 |
+| strong trend bar | 12 | +0.38 | +0.42 | +0.53 | **+0.70** |
+| weak pin bar | 6 | **−0.67** | −1.00 | −1.00 | −1.00 |
+| weak trend bar | 1 | +1.00 | **+1.50** | −1.00 | −1.00 |
+
+</div>
+
+<p class="table-note">By signal bar, no breakeven stop; values are average R per trade, bold = best in the row.</p>
+
+</div>
+<div class="tt-panel">
+
+<p class="table-title">No breakeven stop</p>
+
+<div class="exp-table lead-2 split-last">
+
+| Date | Signal bar | Target 2R | Target 1.5R | Difference |
+|:---|:---|:---:|:---:|:---:|
+| **1.5R makes more (5 trades)** | | | | **+10.53R** |
+| 9/15 ② | weak trend bar | Initial stop −1.00R | +1.50R | +2.50R |
+| 9/25 | strong pin bar | Initial stop −1.00R | +1.50R | +2.50R |
+| 9/30 | strong pin bar | Initial stop −1.00R | +1.50R | +2.50R |
+| 9/11 | strong pin bar | End of day −0.38R | +1.50R | +1.88R |
+| 9/10 | strong trend bar | End of day +0.35R | +1.50R | +1.15R |
+| **1.5R makes less (12 trades)** | | | | **−6.00R** |
+| 9/2, 9/3 ②, 9/14 ①②, 9/22, 10/1, 10/8 | strong pin bar (7 trades) | 2R target +2.00R | +1.50R | −0.50R each |
+| 9/3 ③, 9/9 ①, 9/16, 9/24 ①, 10/3 | strong trend bar (5 trades) | 2R target +2.00R | +1.50R | −0.50R each |
+| **Total** | | | | **+4.53R** |
+
+</div>
+
+<p class="table-note">In total, the average per trade rises from +0.33R to +0.48R. ②③ mark the day's 2nd and 3rd trade.</p>
+
+<p class="table-title">Breakeven at 1R</p>
+
+<div class="exp-table lead-2 split-last">
+
+| Date | Signal bar | Target 2R + breakeven | Target 1.5R + breakeven | Difference |
+|:---|:---|:---:|:---:|:---:|
+| **1.5R makes more (5 trades)** | | | | **+7.50R** |
+| 9/15 ②, 9/25, 9/30, 9/11, 9/10 | As above | 0R | +1.50R | +1.50R each |
+| **1.5R makes less (11 trades)** | | | | **−5.50R** |
+| 9/2, 9/3 ②, 9/14 ①②, 9/22, 10/8 | strong pin bar (6 trades) | 2R target +2.00R | +1.50R | −0.50R each |
+| 9/3 ③, 9/9 ①, 9/16, 9/24 ①, 10/3 | strong trend bar (5 trades) | 2R target +2.00R | +1.50R | −0.50R each |
+| **Total** | | | | **+2.00R** |
+
+</div>
+
+<p class="table-note">In total, the average per trade rises from +0.42R to +0.48R. 10/1 came back to entry after 1R and only then reached 1.5R, so it is 0R with either target and isn't counted.</p>
+
+</div>
+<div class="tt-panel">
+
+<p class="table-title">No breakeven stop</p>
+
+<div class="exp-table">
+
+| Signal bar | Trades | Target 1R | Target 2R |
+|:---|:---:|:---:|:---:|
+| strong pin bar | 11 | +0.82<span class="wl">W 10　BE 0　L 1</span> | **+0.97**<span class="wl">W 7　BE 0　L 4</span> |
+| strong trend bar | 12 | +0.38<span class="wl">W 8　BE 0　L 4</span> | **+0.53**<span class="wl">W 7　BE 0　L 5</span> |
+| weak pin bar | 6 | **−0.67**<span class="wl">W 1　BE 0　L 5</span> | −1.00<span class="wl">W 0　BE 0　L 6</span> |
+| weak trend bar | 1 | **+1.00**<span class="wl">W 1　BE 0　L 0</span> | −1.00<span class="wl">W 0　BE 0　L 1</span> |
+
+</div>
+
+<p class="table-title">Breakeven at 1R</p>
+
+<div class="exp-table split-last">
+
+| Signal bar | Trades | Target 1R | Target 2R + breakeven at 1R |
+|:---|:---:|:---:|:---:|
+| strong pin bar | 11 | +0.82<span class="wl">W 10　BE 0　L 1</span> | **+1.00**<span class="wl">W 6　BE 4　L 1</span> |
+| strong trend bar | 12 | +0.38<span class="wl">W 8　BE 0　L 4</span> | **+0.54**<span class="wl">W 5　BE 3　L 4</span> |
+| weak pin bar | 6 | **−0.67**<span class="wl">W 1　BE 0　L 5</span> | −0.83<span class="wl">W 0　BE 1　L 5</span> |
+| weak trend bar | 1 | **+1.00**<span class="wl">W 1　BE 0　L 0</span> | 0.00<span class="wl">W 0　BE 1　L 0</span> |
+
+</div>
+
+<p class="table-note">W / BE / L = wins / breakeven / losses.</p>
+
+</div>
+<div class="tt-panel">
+
+<p class="table-title">Target 2R</p>
+
+<div class="exp-table split-4">
+
+| Signal bar | Trades | No breakeven | Mechanical breakeven at 1R | Discretionary breakeven |
+|:---|:---:|:---:|:---:|:---:|
+| strong pin bar | 11 | +0.97<span class="wl">W 7　BE 0　L 4</span> | **+1.00**<span class="wl">W 6　BE 4　L 1</span> | **+1.00**<span class="wl">W 6　BE 4　L 1</span> |
+| strong trend bar | 12 | +0.53<span class="wl">W 7　BE 0　L 5</span> | **+0.54**<span class="wl">W 5　BE 3　L 4</span> | **+0.54**<span class="wl">W 5　BE 3　L 4</span> |
+| weak pin bar | 6 | −1.00<span class="wl">W 0　BE 0　L 6</span> | **−0.83**<span class="wl">W 0　BE 1　L 5</span> | **−0.83**<span class="wl">W 0　BE 1　L 5</span> |
+| weak trend bar | 1 | −1.00<span class="wl">W 0　BE 0　L 1</span> | **0.00**<span class="wl">W 0　BE 1　L 0</span> | **0.00**<span class="wl">W 0　BE 1　L 0</span> |
+| All | 30 | +0.33<span class="wl">W 14　BE 0　L 16</span> | **+0.42**<span class="wl">W 11　BE 9　L 10</span> | **+0.42**<span class="wl">W 11　BE 9　L 10</span> |
+
+</div>
+
+<p class="table-note">9 trades came back to entry after reaching 1R (9/9 ②, 9/10, 9/11, 9/15 ②, 9/23, 9/25, 9/29 ②, 9/30, 10/1). In my review I judged that the stop should have been moved to breakeven in every one of them; for 9/10 and 9/23, for example, I "took on risk I shouldn't have, and only made a little thanks to luck". So discretionary breakeven gives the same result as the mechanical rule.</p>
+
+</div>
+</TableTabs>
+
+### Conclusions
+
+1. **The real choice is between 1.5R and 2R, and 1.5R is the best target overall**. Across all 30 trades with no breakeven stop: 1.5R averages +0.48R, 3R +0.43R (optimistic), 1R +0.35R and 2R +0.33R. 1.5R beats 2R because it turns 5 stop-outs or end-of-day exits into wins (+10.53R in total), at the cost of 0.5R less on each of the 12 trades that hit 2R (−6.00R in total). Looking only at strong signal bars, 1R is the worst target (strong pin bar +0.82R, strong trend bar +0.38R) and not worth considering.
+2. **The farther the target, the more breakeven helps**: with a 2R target, moving to breakeven at 1R lifts the average from +0.33R to +0.42R per trade; with a 1.5R target, it makes no difference at all (+0.48R either way). The trades it saves, 9/9 ② and 9/29 ②, exactly offset the ones it stops out, 10/1 and 9/23.
+3. **3R looks better on paper but is hard to hold**: after 2R there are often deep pullbacks (9/2, 9/14 ②), and reaching 3R often takes half a day or more (9/22, 10/1, 10/8), which goes against every instinct. When the signal bar is big, 2R is already close to the whole day's range (9/3 ②, a 20.75-point stop).
+4. **strong trend bars' problem is concentrated in big stops**: splitting the 12 trades in half by stop size, the smaller half (6 points or less) averaged +1.00R and the larger half (8.5 points or more) only +0.06R. With a big stop, a fixed-multiple target gets far away too, and the chart may not have that much room.
+
+## 4. 🧩 Setup
+
+### Statistics
+
+<TableTabs title="Setup statistics" tabs={["Results", "Strong vs weak signal bars", "Strong signal bars only", "Targets"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Setup | Trades | 2R target | Hit 1R | Hit 1.5R | Hit 3R | Back to entry after 1R | Average |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| wedge reversal 1st entry | 6 | 50%<span class="wl">3 trades</span> | 67%<span class="wl">4 trades</span> | 67%<span class="wl">4 trades</span> | 33%<span class="wl">2 trades</span> | 50%<span class="wl">2 trades</span> | **+0.81R** |
+| wedge reversal 2nd entry | 7 | 43%<span class="wl">3 trades</span> | 57%<span class="wl">4 trades</span> | 43%<span class="wl">3 trades</span> | 43%<span class="wl">3 trades</span> | 25%<span class="wl">1 trade</span> | +0.29R |
+| wedge flag in trend 1st entry | 11 | 36%<span class="wl">4 trades</span> | 73%<span class="wl">8 trades</span> | 64%<span class="wl">7 trades</span> | 18%<span class="wl">2 trades</span> | 50%<span class="wl">4 trades</span> | +0.09R |
+| wedge flag in trend 2nd entry | 6 | 33%<span class="wl">2 trades</span> | 67%<span class="wl">4 trades</span> | 50%<span class="wl">3 trades</span> | 33%<span class="wl">2 trades</span> | 50%<span class="wl">2 trades</span> | +0.35R |
+
+</div>
+
+<p class="table-note">Percentages are a share of the trades in that row; "back to entry after 1R" is a share of the trades that reached 1R.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Setup | strong pin bar | strong trend bar | weak pin bar | weak trend bar | Weak share |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| wedge reversal 1st entry | 3 | 2 | 1 | 0 | 17%<span class="wl">1 / 6</span> |
+| wedge reversal 2nd entry | 2 | 3 | 2 | 0 | 29%<span class="wl">2 / 7</span> |
+| wedge flag in trend 1st entry | 5 | 2 | 3 | 1 | **36%**<span class="wl">4 / 11</span> |
+| wedge flag in trend 2nd entry | 1 | 5 | 0 | 0 | 0%<span class="wl">0 / 6</span> |
+
+</div>
+
+<p class="table-note">Numbers are trade counts. 4 of the 7 weak signal bars were in wedge flag in trend 1st entry.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Setup | Strong signal bar trades | 2R target | Average (all) | Average (strong signal bars only) |
+|:---|:---:|:---:|:---:|:---:|
+| wedge reversal 1st entry | 5 | 60%<span class="wl">3 trades</span> | +0.81R | **+1.17R** |
+| wedge reversal 2nd entry | 5 | 60%<span class="wl">3 trades</span> | +0.29R | +0.80R |
+| wedge flag in trend 1st entry | 7 | 57%<span class="wl">4 trades</span> | +0.09R | +0.71R |
+| wedge flag in trend 2nd entry | 6 | 33%<span class="wl">2 trades</span> | +0.35R | +0.35R |
+
+</div>
+
+<p class="table-note">Without the weak signal bars, the gaps between setups shrink a lot.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Setup | 1R | 1.5R | 2R (actual) | 3R | Breakeven at 1R (target 2R) |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| wedge reversal 1st entry | +0.42 | +0.75 | **+0.81** | **+0.81** | +0.42 |
+| wedge reversal 2nd entry | +0.14 | +0.07 | +0.29 | **+0.71** | +0.43 |
+| wedge flag in trend 1st entry | +0.45 | **+0.59** | +0.09 | −0.09 | +0.45 |
+| wedge flag in trend 2nd entry | +0.33 | +0.50 | +0.35 | **+0.69** | +0.33 |
+
+</div>
+
+<p class="table-note">Values are average R per trade; bold = best in the row. Same method as in the signal bar section; 3R is optimistic.</p>
+
+</div>
+</TableTabs>
+
+### Conclusions
+
+1. **Across all trades, wedge reversal 1st entry is best (+0.81R) and wedge flag in trend 1st entry is worst (+0.09R).**
+2. **But strong and weak signal bars aren't spread evenly across the setups**: 4 of the 7 weak signal bars were in wedge flag in trend 1st entry, and wedge flag in trend 2nd entry had none. So flag 1st entry looks bad largely because of its weak signal bars: with strong signal bars only, it's +0.71R, about the same as wedge reversal 2nd entry (+0.80R).
+3. **Without the weak signal bars, the setups range only from +0.35R to +1.17R**, with just 5–7 trades each, so I can't say yet which setup is better. Limitations:
+   1. Pin bars and trend bars aren't spread evenly either: 5 of the 6 wedge flag in trend 2nd entry trades had a strong trend bar, which may be part of why it's lower;
+   2. A few trades had their setup label changed during the review.
+4. **Note: once a wedge flag turns into a trading range, it probably loses much of its edge.** A wedge flag's edge comes from the trend before it; if the flag keeps overlapping and slowly becomes a tight trading range, bulls and bears are close to 50/50, and expecting 2R pushes the win rate toward the 33% breakeven line. The data shows a small hint of this: among the wedge flags (1st + 2nd entry), the 5 whose pullback lasted 10 bars or more and that weren't on a trend day all failed to reach 2R; 9/8 and 10/2 both looked "more like a tight trading range" in my review. (Limitations: only 16 trades, far too few; "how much overlap" is a subjective chart read, made after the fact, and may not be clear before entry; pullback length alone doesn't separate them either: the two 9/3 trades had pullbacks of 18 and 19 bars and still hit 2R, because that was a bull trend day.)
+
+## 🧭 Execution rules
+
+I've pulled the conclusions above into 5 rules to trade by from here. Each group has only 6–13 trades, so these are working hypotheses to keep testing with live trades.
+
+<section class="rc policy">
+<div class="rc-panel rc-def">
+
+<p class="policy-title">1. Start with the signal bar: whether to trade, and how far to aim</p>
+
+1. **strong pin bar / strong trend bar**: choose a target of 1.5R, 2R or 3R.
+2. **weak signal bar**: don't trade it in principle; if you do, keep the target close (1R–1.5R) and take profit when it's hit. All 7 weak signal bars were stopped out, and none of the 11 weak pin bars (experiment + live) reached 2R.
+
+<p class="policy-title">2. Choosing 1.5R, 2R or 3R: read the structure and the market cycle</p>
+
+1. **1.5R**: the 2R level is blocked by a range edge, the start of the rally, or a prior high or low, or the day is range-bound.
+2. **2R**: the structure gives enough room with no obvious obstacle; this is the default.
+3. **3R**: a trend day, a small stop (signal bar not too big), and you can accept holding for half a day or more.
+
+<p class="policy-title">3. Target of 2R or more: move to breakeven at 1R</p>
+
+1. With a 2R target, moving to breakeven at 1R lifts the average from +0.33R to +0.42R per trade, and full stop-outs (−1R) drop from 14 to 9.
+2. With a 1.5R target, breakeven makes no difference (+0.48R either way), so go with your habit.
+
+<p class="policy-title">4. Setup: prefer wedge reversals, be stricter with wedge flags</p>
+
+1. **wedge reversal**: 13 trades averaging +0.53R; +0.98R with strong signal bars only.
+2. **wedge flag**: 17 trades averaging +0.18R; +0.55R with strong signal bars only; flag 1st entry alone is 11 trades at just +0.09R.
+3. So take a wedge flag only when everything lines up: a strong signal bar, a good location, and a pullback that hasn't turned into a trading range. If it isn't an especially good setup, skip it.
+
+<p class="policy-title">5. Execution discipline</p>
+
+1. If the signal bar fails to trigger twice in a row, cancel the order.
+2. No new trades after bar 72.
+3. Don't enter in the middle of a range: short near the top of the range, buy near the bottom.
+
+</div>
+</section>

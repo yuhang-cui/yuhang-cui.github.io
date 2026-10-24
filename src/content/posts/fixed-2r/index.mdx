@@ -1,0 +1,433 @@
+---
+title: "Wedge 实验 01：固定 2R 止盈探究"
+description: "在 MES 5 分钟图上回放 30 笔 wedge 交易：止损放在信号K外侧，止盈固定 2R，中途不动止损。胜率 40%，平均每笔 +0.33R，大概率为正但还不稳定。拆开看：7 笔弱信号K全部止损；目标放 1.5R 整体最好（+0.48R）；目标 2R 时到 1R 移保本更好。最后整理成 5 条执行方针。"
+stat: "+0.33R"
+statLabel: "平均每笔"
+pubDatetime: 2026-10-24T20:00:00+08:00
+tags: [Strategies]
+---
+
+import TableTabs from "@/components/TableTabs.astro";
+
+> **假设**：止损放在信号K外侧（= 1R），无脑固定 2R 止盈，期望值大于 0。
+>
+> **结果**：30 笔里 12 笔 2R 止盈、14 笔初始止损、4 笔收盘平仓。胜率 40%，高于 33.3% 的打平线，平均每笔 **+0.33R**。
+>
+> <span class="takeaway">一句话结论：无脑固定 2R 是正期望的；但 30 笔的期望值误差约 ±0.25R，只能说"大概率为正"，还不算稳定。</span>
+
+## 📊 实验概况
+
+<p class="table-title">实验 01 · 固定 2R</p>
+
+<div class="exp-table">
+
+| 项目 | 结果 |
+|:---|:---|
+| 方法 | TradingView Replay 回放，MES 5 分钟图 |
+| 规则 | 止损在信号K外侧（1R），止盈 2R，中途不动止损，收盘前没碰到就收盘平仓 |
+| 样本 | 30 笔 · 21 个交易日（2026-09-02 至 2026-10-12） |
+| 2R 止盈 / 初始止损 / 收盘平仓 | 12 / 14 / 4 |
+| 胜率（2R 止盈） | 40%（打平线 33.3%） |
+| 期望值 | +0.33R / 笔 |
+| 累计 | +9.97R |
+
+</div>
+
+下面从四个角度把这 30 笔拆开看：信号K、入场K、目标与移保本、Setup。有定义的角度先写定义，然后是统计和结论。
+
+## 1. 🕯️ 信号K
+
+### 定义
+
+<p class="table-title">信号K定义（以做多为例，做空反过来）</p>
+
+<div class="exp-table">
+
+| 等级 | 包含的情况 |
+|:---|:---|
+| strong trend bar | a. 实体强，实体不能太小（1–2 点不算）<br/>b. 上影线短 |
+| strong pin bar | a. 下影线长，收在高位<br/>b. 实体占比较大时：可以有一点上影线<br/>c. 实体占比较小时：下影线不能过长，且几乎没有上影线 |
+| weak pin bar | a. 实体占比较小，但下影线特别长<br/>b. 或上影线有点长 |
+| weak trend bar | a. 不满足 strong trend bar 的条件（实体偏小或上影线较长） |
+
+</div>
+
+### 统计
+
+<TableTabs title="信号K统计" tabs={["结果统计", "入场K分布", "不同目标"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| 信号K | 笔数 | 2R 止盈 | 到 1R | 到 1.5R | 到 3R | 1R 后回成本 | 平均 |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 11 | 64%<span class="wl">7 笔</span> | 91%<span class="wl">10 笔</span> | 91%<span class="wl">10 笔</span> | 45%<span class="wl">5 笔</span> | 40%<span class="wl">4 笔</span> | **+0.97R** |
+| strong trend bar | 12 | 42%<span class="wl">5 笔</span> | 67%<span class="wl">8 笔</span> | 50%<span class="wl">6 笔</span> | 33%<span class="wl">4 笔</span> | 38%<span class="wl">3 笔</span> | +0.53R |
+| weak pin bar | 6 | 0%<span class="wl">0 笔</span> | 17%<span class="wl">1 笔</span> | 0%<span class="wl">0 笔</span> | 0%<span class="wl">0 笔</span> | 100%<span class="wl">1 笔</span> | −1.00R |
+| weak trend bar | 1 | 0%<span class="wl">0 笔</span> | 100%<span class="wl">1 笔</span> | 100%<span class="wl">1 笔</span> | 0%<span class="wl">0 笔</span> | 100%<span class="wl">1 笔</span> | −1.00R |
+
+</div>
+
+<p class="table-note">百分比是占该类笔数的比例；"1R 后回成本"是占到过 1R 的笔数的比例。</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| 信号K | 好的趋势K | 可接受的跟随 | Doji | 一般逆势K | 强逆势K |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 18%<span class="wl">2 笔</span> | 45%<span class="wl">5 笔</span> | 18%<span class="wl">2 笔</span> | 0%<span class="wl">0 笔</span> | 18%<span class="wl">2 笔</span> |
+| strong trend bar | 17%<span class="wl">2 笔</span> | 42%<span class="wl">5 笔</span> | 25%<span class="wl">3 笔</span> | 17%<span class="wl">2 笔</span> | 0%<span class="wl">0 笔</span> |
+| weak pin bar | 17%<span class="wl">1 笔</span> | 17%<span class="wl">1 笔</span> | 50%<span class="wl">3 笔</span> | 0%<span class="wl">0 笔</span> | 17%<span class="wl">1 笔</span> |
+| weak trend bar | 100%<span class="wl">1 笔</span> | 0%<span class="wl">0 笔</span> | 0%<span class="wl">0 笔</span> | 0%<span class="wl">0 笔</span> | 0%<span class="wl">0 笔</span> |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| 信号K | 1R | 1.5R | 2R（实际） | 3R | 1R 后移保本（目标 2R） |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | +0.82 | **+1.27** | +0.97 | +1.06 | +1.00 |
+| strong trend bar | +0.38 | +0.42 | +0.53 | **+0.70** | +0.54 |
+| weak pin bar | **−0.67** | −1.00 | −1.00 | −1.00 | −0.83 |
+| weak trend bar（1 笔） | +1.00 | **+1.50** | −1.00 | −1.00 | 0.00 |
+
+</div>
+
+<p class="table-note">数值是平均每笔 R，加粗 = 该行最佳。1R、1.5R：价格碰到过就按目标计，否则按实际结果；2R 是实际回放结果。3R 没法做到"不移保本"，因为回放在 2R 就止盈了，之后只记录了先到 3R 还是先回成本，所以按"到 2R 后移保本"计，<strong>结果偏乐观</strong>。信号K标签已按定义统一重新核对，核对时没有看结果。</p>
+
+</div>
+</TableTabs>
+
+### 结论
+
+1. **强信号K明显好于弱信号K**：23 笔 strong 合计 +17R，7 笔 weak 全部止损。
+2. **strong pin bar 似乎比 strong trend bar 好很多**：2R 止盈高约 22%（64% vs 42%），到 3R 高约 12%（45% vs 33%），到 1R 高约 24%（91% vs 67%），到 1.5R 高 41%（91% vs 50%）；平均 +0.97R vs +0.53R，每笔多 0.44R，约 1.8 倍。局限：
+   1. 两类各只有 11–12 笔，差距在统计上还不显著；
+   2. 两类出现的场景不同：trend bar 有 7/12 用在 wedge flag，且多在震荡区间；pin bar 更多出现在区间边缘或过冲位置。差距可能部分来自位置，而不只是K线形态。
+3. **weak pin bar 很难走到 2R**：实验 6 笔加实盘 5 笔，没有一笔到过 2R；但实盘有 3 笔到过 1R。要做的话，目标放近一点（1R–1.5R）。样本只有 11 笔，仅供参考。
+4. **strong pin bar 之后，入场K的跟随也很重要**：实盘 7 笔中，入场K为好的趋势K / 可接受的跟随的 3 笔全赢，为逆势K的 4 笔全亏（价格最远只走到 0.17–0.31R）；实验中 strong pin bar 接强逆势K的 2 笔为 1 赢 1 亏。
+5. **不同信号K的最佳目标不同**：strong pin bar 是 1.5R（+1.27R，高于 2R 的 +0.97R）；strong trend bar 是 3R（+0.70R），目标越近越差；weak pin bar 各目标都为负。局限：
+   1. 3R 往往需要持仓半天以上，2R 之后常有深回撤，模拟结果偏乐观，实际执行难度大；
+   2. 1.5R 的优势来自把 3 笔止损变成了止盈，而这 3 笔的 1.5R 恰好接近区间顶部或起涨点；
+   3. 更合理的方向可能是按结构（区间边缘、起涨点、前高前低）和止损大小来定目标，而不是固定倍数。这可以作为实验 02 的候选假设。
+
+<p class="table-note">实盘数据来自我另外 20 笔 wedge 实盘（主观离场），只作补充；比较时看的是价格最远走到几 R（MFE ÷ 初始止损）。</p>
+
+## 2. 🚦 入场K
+
+### 定义
+
+<p class="table-title">入场K定义（以做多为例，做空反过来）</p>
+
+<div class="exp-table">
+
+| 等级 | 包含的情况 |
+|:---|:---|
+| 好的趋势K | a. 阳线，实体在当时相对较大<br/>b. 上影线短或没有<br/>c. 下影线长不影响（买压）<br/>d. 收盘相对上一根K线收盘走得比较远 |
+| 可接受的跟随 | a. 阳线，实体中等偏小<br/>b. 阳线实体大，但上影线很长（曾突破、收盘仍偏高）→ 从"好的趋势K"降一档 |
+| Doji | a. 实体非常小，阴阳都算<br/>b. 实体小，上下影线差不多长<br/>c. 实体小，下影线长、上影线短<br/>d. 阳线，但与前后大阳线相比实体很小<br/>e. 小阳线，但上影线较长 → 从"可接受的跟随"降一档 |
+| 一般逆势K | a. 阴线，实体不大<br/>b. 实体小，但上影线较长、卖压明显 → 从 Doji 降一档<br/>c. 阴线实体中等，下影线较长 → 仍算一般逆势K |
+| 强逆势K | a. 阴线，实体在当时相对较大<br/>b. 逆势方向的强 pin bar（上影线很长，收在低位） |
+
+</div>
+
+<p class="table-note">实体大小以当时前后几根K线为参照，不用固定点数。做多时上影线 = 卖压 = 逆势影线；下影线 = 买压。</p>
+
+### 统计
+
+<TableTabs title="入场K统计" tabs={["结果统计", "到达各目标", "不同目标"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| 入场K | 笔数 | 2R 止盈 | 到 1R | 到 1.5R | 到 3R | 1R 后回成本 | 平均 |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 好的趋势K | 6 | 50%<span class="wl">3 笔</span> | 100%<span class="wl">6 笔</span> | 83%<span class="wl">5 笔</span> | 33%<span class="wl">2 笔</span> | 50%<span class="wl">3 笔</span> | +0.72R |
+| 可接受的跟随 | 11 | 45%<span class="wl">5 笔</span> | 73%<span class="wl">8 笔</span> | 64%<span class="wl">7 笔</span> | 36%<span class="wl">4 笔</span> | 50%<span class="wl">4 笔</span> | +0.47R |
+| Doji | 8 | 25%<span class="wl">2 笔</span> | 38%<span class="wl">3 笔</span> | 38%<span class="wl">3 笔</span> | 25%<span class="wl">2 笔</span> | 33%<span class="wl">1 笔</span> | −0.25R |
+| 一般逆势K | 2 | 50%<span class="wl">1 笔</span> | 100%<span class="wl">2 笔</span> | 50%<span class="wl">1 笔</span> | 50%<span class="wl">1 笔</span> | 50%<span class="wl">1 笔</span> | **+1.25R** |
+| 强逆势K | 3 | 33%<span class="wl">1 笔</span> | 33%<span class="wl">1 笔</span> | 33%<span class="wl">1 笔</span> | 33%<span class="wl">1 笔</span> | 0%<span class="wl">0 笔</span> | 0.00R |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| 入场K | 到 1R | 到 1.5R | 2R 止盈 | 到 3R | 平均 |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| 好的趋势K（6） | 100% | 83% | 50% | 33% | +0.72R |
+| 可接受的跟随（11） | 73% | 64% | 45% | 36% | +0.47R |
+| Doji（8） | 38% | 38% | 25% | 25% | −0.25R |
+| **差距（好 − Doji）** | **62%** | **45%** | **25%** | **8%** | **+0.97R** |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| 入场K | 1R | 1.5R | 2R（实际） | 3R | 1R 后移保本（目标 2R） |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| 好的趋势K | +1.00 | **+1.08** | +0.72 | +0.72 | +1.00 |
+| 可接受的跟随 | +0.50 | +0.64 | +0.47 | **+0.65** | +0.50 |
+| Doji | −0.25 | −0.06 | −0.25 | **0.00** | −0.12 |
+
+</div>
+
+<p class="table-note">数值是平均每笔 R，加粗 = 该行最佳；算法同信号K一节，3R 偏乐观。</p>
+
+</div>
+</TableTabs>
+
+### 结论
+
+1. **入场K最能预测的是开头的跟随，而不是最后能走多远**：好的趋势K与 Doji 的差距随目标变远而缩小，到 1R 差 62%，到 1.5R 差 45%，2R 止盈差 25%，到 3R 只差 8%。原因之一是好的趋势K本身往往就把价格推到了 1R 附近。
+2. **不同入场K的最佳目标不同**：好的趋势K 6/6 到过 1R，1R、1.5R 都比 2R 好，1R 后移保本也不吃亏；可接受的跟随各目标差不多，1.5R 和 3R 稍好；Doji 各目标都在 0 附近或为负。
+3. **Doji 的结果很两极**：8 笔中 5 笔连 1R 都没到，但到了 1R 的 3 笔里有 2 笔走到了 3R。Doji 不是一定不好，而是还没给出答案，要看之后一两根K线有没有跟随。
+4. **Doji 差，主要是因为它常接在弱信号K后面**：strong 信号K + Doji 5 笔平均 +0.20R；weak 信号K + Doji 3 笔全部止损。
+5. **逆势一侧（一般逆势K、强逆势K）只有 5 笔**，出现频率太低，暂不下结论。
+
+## 3. 🎯 目标放多远，要不要移保本
+
+### 统计
+
+<TableTabs title="目标与移保本" tabs={["各目标期望值", "1.5R 对比 2R", "1R 对比 2R", "无脑对比主观"]}>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| 信号K | 笔数 | 目标 1R | 目标 1.5R | 目标 2R | 目标 3R |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 11 | +0.82 | **+1.27** | +0.97 | +1.06 |
+| strong trend bar | 12 | +0.38 | +0.42 | +0.53 | **+0.70** |
+| weak pin bar | 6 | **−0.67** | −1.00 | −1.00 | −1.00 |
+| weak trend bar | 1 | +1.00 | **+1.50** | −1.00 | −1.00 |
+
+</div>
+
+<p class="table-note">按信号K，不移保本；数值是平均每笔 R，加粗 = 该行最佳。</p>
+
+</div>
+<div class="tt-panel">
+
+<p class="table-title">不移保本</p>
+
+<div class="exp-table lead-2 split-last">
+
+| 日期 | 信号K | 目标 2R | 目标 1.5R | 差值 |
+|:---|:---|:---:|:---:|:---:|
+| **1.5R 多赚（5 笔）** | | | | **+10.53R** |
+| 9/15 ② | weak trend bar | 初始止损 −1.00R | +1.50R | +2.50R |
+| 9/25 | strong pin bar | 初始止损 −1.00R | +1.50R | +2.50R |
+| 9/30 | strong pin bar | 初始止损 −1.00R | +1.50R | +2.50R |
+| 9/11 | strong pin bar | 收盘平仓 −0.38R | +1.50R | +1.88R |
+| 9/10 | strong trend bar | 收盘平仓 +0.35R | +1.50R | +1.15R |
+| **1.5R 少赚（12 笔）** | | | | **−6.00R** |
+| 9/2、9/3 ②、9/14 ①②、9/22、10/1、10/8 | strong pin bar（7 笔） | 2R 止盈 +2.00R | +1.50R | 每笔 −0.50R |
+| 9/3 ③、9/9 ①、9/16、9/24 ①、10/3 | strong trend bar（5 笔） | 2R 止盈 +2.00R | +1.50R | 每笔 −0.50R |
+| **合计** | | | | **+4.53R** |
+
+</div>
+
+<p class="table-note">合计后平均每笔从 +0.33R 提高到 +0.48R。②③ 表示当天第几笔。</p>
+
+<p class="table-title">到 1R 移保本</p>
+
+<div class="exp-table lead-2 split-last">
+
+| 日期 | 信号K | 目标 2R + 移保本 | 目标 1.5R + 移保本 | 差值 |
+|:---|:---|:---:|:---:|:---:|
+| **1.5R 多赚（5 笔）** | | | | **+7.50R** |
+| 9/15 ②、9/25、9/30、9/11、9/10 | 同上表 | 0R | +1.50R | 每笔 +1.50R |
+| **1.5R 少赚（11 笔）** | | | | **−5.50R** |
+| 9/2、9/3 ②、9/14 ①②、9/22、10/8 | strong pin bar（6 笔） | 2R 止盈 +2.00R | +1.50R | 每笔 −0.50R |
+| 9/3 ③、9/9 ①、9/16、9/24 ①、10/3 | strong trend bar（5 笔） | 2R 止盈 +2.00R | +1.50R | 每笔 −0.50R |
+| **合计** | | | | **+2.00R** |
+
+</div>
+
+<p class="table-note">合计后平均每笔从 +0.42R 提高到 +0.48R。10/1 到 1R 后先回到入场价、之后才到 1.5R，两种目标下都是 0R，不计入。</p>
+
+</div>
+<div class="tt-panel">
+
+<p class="table-title">不移保本</p>
+
+<div class="exp-table">
+
+| 信号K | 笔数 | 目标 1R | 目标 2R |
+|:---|:---:|:---:|:---:|
+| strong pin bar | 11 | +0.82<span class="wl">胜 10　平 0　负 1</span> | **+0.97**<span class="wl">胜 7　平 0　负 4</span> |
+| strong trend bar | 12 | +0.38<span class="wl">胜 8　平 0　负 4</span> | **+0.53**<span class="wl">胜 7　平 0　负 5</span> |
+| weak pin bar | 6 | **−0.67**<span class="wl">胜 1　平 0　负 5</span> | −1.00<span class="wl">胜 0　平 0　负 6</span> |
+| weak trend bar | 1 | **+1.00**<span class="wl">胜 1　平 0　负 0</span> | −1.00<span class="wl">胜 0　平 0　负 1</span> |
+
+</div>
+
+<p class="table-title">到 1R 移保本</p>
+
+<div class="exp-table split-last">
+
+| 信号K | 笔数 | 目标 1R | 目标 2R + 到 1R 移保本 |
+|:---|:---:|:---:|:---:|
+| strong pin bar | 11 | +0.82<span class="wl">胜 10　平 0　负 1</span> | **+1.00**<span class="wl">胜 6　平 4　负 1</span> |
+| strong trend bar | 12 | +0.38<span class="wl">胜 8　平 0　负 4</span> | **+0.54**<span class="wl">胜 5　平 3　负 4</span> |
+| weak pin bar | 6 | **−0.67**<span class="wl">胜 1　平 0　负 5</span> | −0.83<span class="wl">胜 0　平 1　负 5</span> |
+| weak trend bar | 1 | **+1.00**<span class="wl">胜 1　平 0　负 0</span> | 0.00<span class="wl">胜 0　平 1　负 0</span> |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<p class="table-title">目标 2R</p>
+
+<div class="exp-table split-4">
+
+| 信号K | 笔数 | 不移保本 | 到 1R 无脑移保本 | 主观移保本 |
+|:---|:---:|:---:|:---:|:---:|
+| strong pin bar | 11 | +0.97<span class="wl">胜 7　平 0　负 4</span> | **+1.00**<span class="wl">胜 6　平 4　负 1</span> | **+1.00**<span class="wl">胜 6　平 4　负 1</span> |
+| strong trend bar | 12 | +0.53<span class="wl">胜 7　平 0　负 5</span> | **+0.54**<span class="wl">胜 5　平 3　负 4</span> | **+0.54**<span class="wl">胜 5　平 3　负 4</span> |
+| weak pin bar | 6 | −1.00<span class="wl">胜 0　平 0　负 6</span> | **−0.83**<span class="wl">胜 0　平 1　负 5</span> | **−0.83**<span class="wl">胜 0　平 1　负 5</span> |
+| weak trend bar | 1 | −1.00<span class="wl">胜 0　平 0　负 1</span> | **0.00**<span class="wl">胜 0　平 1　负 0</span> | **0.00**<span class="wl">胜 0　平 1　负 0</span> |
+| 全部 | 30 | +0.33<span class="wl">胜 14　平 0　负 16</span> | **+0.42**<span class="wl">胜 11　平 9　负 10</span> | **+0.42**<span class="wl">胜 11　平 9　负 10</span> |
+
+</div>
+
+<p class="table-note">有 9 笔到 1R 后回到了入场价（9/9 ②、9/10、9/11、9/15 ②、9/23、9/25、9/29 ②、9/30、10/1）。复盘时我把它们全部判断为应该移保本，比如 9/10、9/23 是"承受了不该承受的实际风险，靠运气才小赚"，所以主观移保本和无脑移保本结果一样。</p>
+
+</div>
+</TableTabs>
+
+### 结论
+
+1. **重点是 1.5R 和 2R：1.5R 是整体最好的目标**。全部 30 笔不移保本，1.5R 平均 +0.48R，3R +0.43R（偏乐观），1R +0.35R，2R +0.33R。1.5R 胜过 2R，是因为它把 5 笔止损或收盘平仓变成了止盈（合计 +10.53R），代价是 12 笔 2R 止盈每笔少赚 0.5R（合计 −6.00R）。1R 只看强信号K是最差的目标（strong pin bar +0.82R，strong trend bar +0.38R），不值得考虑。
+2. **目标越远，移保本的作用越大**：目标 2R 时，到 1R 移保本把平均每笔从 +0.33R 提高到 +0.42R；目标 1.5R 时，移不移保本结果完全相同（都是 +0.48R）。移保本救回的 9/9 ②、9/29 ②，正好抵消了被扫掉的 10/1、9/23。
+3. **3R 纸面上更好，但很难拿住**：到 2R 之后常有深回撤（9/2、9/14 ②），走到 3R 往往要持仓半天以上（9/22、10/1、10/8），很反人性。信号K很大时，2R 已经接近当天的全部波动（9/3 ②，止损 20.75 点）。
+4. **strong trend bar 的问题集中在大止损**：12 笔按止损大小分成两半，较小的一半（6 点以内）平均 +1.00R，较大的一半（8.5 点以上）只有 +0.06R。止损一大，固定倍数的目标就跟着变远，图上不一定有这个空间。
+
+## 4. 🧩 Setup
+
+### 统计
+
+<TableTabs title="Setup 统计" tabs={["结果统计", "强弱信号K分布", "只看强信号K", "不同目标"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Setup | 笔数 | 2R 止盈 | 到 1R | 到 1.5R | 到 3R | 1R 后回成本 | 平均 |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| wedge reversal 1st entry | 6 | 50%<span class="wl">3 笔</span> | 67%<span class="wl">4 笔</span> | 67%<span class="wl">4 笔</span> | 33%<span class="wl">2 笔</span> | 50%<span class="wl">2 笔</span> | **+0.81R** |
+| wedge reversal 2nd entry | 7 | 43%<span class="wl">3 笔</span> | 57%<span class="wl">4 笔</span> | 43%<span class="wl">3 笔</span> | 43%<span class="wl">3 笔</span> | 25%<span class="wl">1 笔</span> | +0.29R |
+| wedge flag in trend 1st entry | 11 | 36%<span class="wl">4 笔</span> | 73%<span class="wl">8 笔</span> | 64%<span class="wl">7 笔</span> | 18%<span class="wl">2 笔</span> | 50%<span class="wl">4 笔</span> | +0.09R |
+| wedge flag in trend 2nd entry | 6 | 33%<span class="wl">2 笔</span> | 67%<span class="wl">4 笔</span> | 50%<span class="wl">3 笔</span> | 33%<span class="wl">2 笔</span> | 50%<span class="wl">2 笔</span> | +0.35R |
+
+</div>
+
+<p class="table-note">百分比是占该类笔数的比例；"1R 后回成本"是占到过 1R 的笔数的比例。</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Setup | strong pin bar | strong trend bar | weak pin bar | weak trend bar | 弱信号K占比 |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| wedge reversal 1st entry | 3 | 2 | 1 | 0 | 17%<span class="wl">1 / 6</span> |
+| wedge reversal 2nd entry | 2 | 3 | 2 | 0 | 29%<span class="wl">2 / 7</span> |
+| wedge flag in trend 1st entry | 5 | 2 | 3 | 1 | **36%**<span class="wl">4 / 11</span> |
+| wedge flag in trend 2nd entry | 1 | 5 | 0 | 0 | 0%<span class="wl">0 / 6</span> |
+
+</div>
+
+<p class="table-note">数字是笔数。7 笔弱信号K里有 4 笔在 wedge flag in trend 1st entry。</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Setup | 强信号K笔数 | 2R 止盈 | 平均（全部） | 平均（只看强信号K） |
+|:---|:---:|:---:|:---:|:---:|
+| wedge reversal 1st entry | 5 | 60%<span class="wl">3 笔</span> | +0.81R | **+1.17R** |
+| wedge reversal 2nd entry | 5 | 60%<span class="wl">3 笔</span> | +0.29R | +0.80R |
+| wedge flag in trend 1st entry | 7 | 57%<span class="wl">4 笔</span> | +0.09R | +0.71R |
+| wedge flag in trend 2nd entry | 6 | 33%<span class="wl">2 笔</span> | +0.35R | +0.35R |
+
+</div>
+
+<p class="table-note">去掉弱信号K之后，各 setup 之间的差距明显缩小。</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Setup | 1R | 1.5R | 2R（实际） | 3R | 1R 后移保本（目标 2R） |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| wedge reversal 1st entry | +0.42 | +0.75 | **+0.81** | **+0.81** | +0.42 |
+| wedge reversal 2nd entry | +0.14 | +0.07 | +0.29 | **+0.71** | +0.43 |
+| wedge flag in trend 1st entry | +0.45 | **+0.59** | +0.09 | −0.09 | +0.45 |
+| wedge flag in trend 2nd entry | +0.33 | +0.50 | +0.35 | **+0.69** | +0.33 |
+
+</div>
+
+<p class="table-note">数值是平均每笔 R，加粗 = 该行最佳；算法同信号K一节，3R 偏乐观。</p>
+
+</div>
+</TableTabs>
+
+### 结论
+
+1. **只看全部交易，wedge reversal 1st entry 最好（+0.81R），wedge flag in trend 1st entry 最差（+0.09R）。**
+2. **但强弱信号K在各 setup 里分布得并不平均**：7 笔弱信号K里有 4 笔在 wedge flag in trend 1st entry，而 wedge flag in trend 2nd entry 一笔都没有。所以 flag 1st entry 差，很大一部分是弱信号K拖的：只看强信号K，它是 +0.71R，和 wedge reversal 2nd entry（+0.80R）差不多。
+3. **去掉弱信号K之后，各 setup 的差距缩小到 +0.35R 至 +1.17R**，每类只有 5–7 笔，暂时不能说哪个 setup 更好。局限：
+   1. pin bar 和 trend bar 的分布也不平均：wedge flag in trend 2nd entry 6 笔里 5 笔是 strong trend bar，它偏低可能也和这个有关；
+   2. 有几笔的 setup 标签在讨论中调整过。
+4. **备注：wedge flag 一旦变成震荡区间，有效性可能就不太好了。** wedge flag 的优势来自前面的趋势；flag 如果越走越重叠、慢慢变成窄震荡区间，多空就接近五五开，这时还期待 2R，胜率会往 33% 的打平线靠。数据上有一点迹象：wedge flag（1st + 2nd entry）里，回调持续 10 根K线以上、又不在趋势日里的 5 笔，没有一笔走到 2R，其中 9/8、10/2 复盘时都觉得"更像窄震荡区间"。（局限：只有 16 笔，样本太小；"重叠多不多"是看图的主观判断，而且是事后看的，入场前不一定分得出来；单看回调长度也区分不开，9/3 两笔回调长达 18、19 根，因为当天是多头趋势日，照样拿到了 2R。）
+
+## 🧭 执行方针
+
+把上面的结论收拢成 5 条，接下来按这个执行。每一类只有 6–13 笔样本，所以先当作执行假设，用实盘继续验证。
+
+<section class="rc policy">
+<div class="rc-panel rc-def">
+
+<p class="policy-title">1. 先看信号K：能不能做，目标放多远</p>
+
+1. **strong pin bar / strong trend bar**：目标在 1.5R、2R、3R 中选择。
+2. **weak 信号K**：原则上不做；要做的话，目标放近到 1R–1.5R，到了就止盈离场。7 笔弱信号K全部止损，11 笔 weak pin bar（实验 + 实盘）没有一笔走到 2R。
+
+<p class="policy-title">2. 1.5R、2R、3R 怎么选：看结构和市场周期</p>
+
+1. **1.5R**：2R 的位置被区间边缘、起涨点、前高前低挡住，或者当天偏震荡。
+2. **2R**：结构给了足够空间、没有明显阻挡，作为默认选择。
+3. **3R**：趋势日，止损小（信号K不大），并且能接受持仓半天以上。
+
+<p class="policy-title">3. 目标在 2R 或以上：到 1R 就移保本</p>
+
+1. 目标 2R 时，到 1R 移保本让平均每笔从 +0.33R 提高到 +0.42R，满额止损（−1R）从 14 笔降到 9 笔。
+2. 目标 1.5R 时，移不移保本结果一样（都是 +0.48R），按自己的习惯即可。
+
+<p class="policy-title">4. Setup：优先 wedge reversal，wedge flag 要求更严</p>
+
+1. **wedge reversal**：13 笔平均 +0.53R，只看强信号K是 +0.98R。
+2. **wedge flag**：17 笔平均 +0.18R，只看强信号K是 +0.55R；其中 flag 1st entry 11 笔只有 +0.09R。
+3. 所以 wedge flag 只在条件都满足时才做：强信号K、好位置、回调还没变成震荡区间。不是特别好的机会，就不做。
+
+<p class="policy-title">5. 执行纪律</p>
+
+1. 信号K连续两次没被触发，就撤单。
+2. K72 之后不开新仓。
+3. 不在区间中间入场：做空在区间上沿，做多在区间下沿。
+
+</div>
+</section>

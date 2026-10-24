@@ -1436,6 +1436,87 @@ a.tag-pill:hover {
   color: var(--faint);
 }
 
+/* ===== 表格上方的标题：左边一道竖线 ===== */
+.app-prose .table-title {
+  margin: 1.75rem 0 -0.5rem;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--foreground);
+}
+
+/* ===== 单元格里的第二行小字，如“胜 7　平 0　负 4” ===== */
+.app-prose td .wl {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--summary);
+  white-space: nowrap;
+}
+
+/* ===== 实验类文章的数据表：窄屏左右滑动；数字不折行；每行最佳值用强调色 ===== */
+.app-prose .exp-table {
+  overflow-x: auto;
+}
+.app-prose .exp-table td:first-child {
+  min-width: 9.5em;
+}
+.app-prose .exp-table td[style*="center"] {
+  white-space: nowrap;
+}
+.app-prose .exp-table tr:not(:has(> td:first-child > strong)) td[style*="center"] strong {
+  color: var(--accent);
+}
+/* 竖线：标题列和数据之间一条；lead-2 = 前两列都是标题列 */
+.app-prose .exp-table :is(th, td):first-child,
+.app-prose .exp-table.lead-2 :is(th, td):nth-child(2) {
+  border-right: 1px solid var(--border);
+}
+.app-prose .exp-table.lead-2 :is(th, td):first-child {
+  border-right: 0;
+}
+/* 特殊的列（平均、移保本、差值）左边再一条：split-last = 最后一列，split-4 = 第 4 列 */
+.app-prose .exp-table.split-last :is(th, td):last-child,
+.app-prose .exp-table.split-4 :is(th, td):nth-child(4) {
+  border-left: 1px solid var(--border);
+}
+.app-prose .exp-table.split-last :is(th, td):last-child {
+  padding-left: 12px;
+}
+
+/* 分组行和合计行（第一格加粗的那一行）：浅底色 */
+.app-prose .exp-table tr:has(> td:first-child > strong) td {
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+/* ===== 表格卡片（TableTabs）：外观用 .rc，这里只调表格间距 ===== */
+.app-prose .tt:not([data-ready]) .tt-panel:not(:first-child) {
+  display: none;
+}
+.app-prose .tt-body {
+  padding-top: 4px;
+}
+.app-prose .tt-panel table {
+  margin: 0;
+}
+.app-prose .tt-panel .table-note {
+  margin: 12px 0 0;
+}
+.app-prose .tt-panel > .table-title:first-child {
+  margin-top: 0;
+}
+.app-prose .tt-panel .table-title {
+  margin-bottom: 0.5rem;
+}
+
+/* ===== 二级编号用 a. b. c. ===== */
+.app-prose ol ol {
+  list-style-type: lower-alpha;
+}
+
 /* ===== 结论里最重要的一句：加粗 + 字底下一道浅蓝下划线 ===== */
 .app-prose .takeaway {
   font-weight: 600;
@@ -1664,3 +1745,88 @@ mark.search-hit {
 
 /* 英文页面的表头可以在空格处换行：英文表头比中文长，不换行会在手机上把页面撑宽（中文表头仍然不换行） */
 html[lang="en"] .app-prose th { white-space: normal; }
+
+/* ===== 执行方针卡片：一张卡片里分 5 条，每条的小标题是一级编号，下面的列点用 a. b. c.，条与条之间一道细线 ===== */
+.app-prose .policy .rc-panel {
+  margin-top: 0;
+  border-top: 0;
+  padding: 18px 22px 20px;
+}
+.app-prose .policy-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.app-prose .policy-title:not(:first-child) {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(0 0 0 / 0.08);
+}
+.app-prose .policy ol {
+  margin: 0;
+  list-style-type: lower-alpha;
+}
+
+/* ===== 表格卡片的图钉：悬停时出现在右上角；置顶后卡片固定在页头下方，方便往下对照结论 ===== */
+.app-prose .tt-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-prose .tt-pin {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--summary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.14s ease, color 0.18s ease, background-color 0.18s ease;
+}
+.app-prose .tt:hover .tt-pin,
+.app-prose .tt-pin:focus-visible,
+.app-prose .tt-pin[aria-pressed="true"] {
+  opacity: 1;
+}
+@media (hover: none) {
+  .app-prose .tt-pin {
+    opacity: 1;
+  }
+}
+.app-prose .tt-pin:hover {
+  transform: scale(1.08);
+  color: var(--foreground);
+}
+.app-prose .tt-pin:active {
+  transform: scale(0.94);
+}
+.app-prose .tt-pin[aria-pressed="true"] {
+  background: var(--foreground);
+  border-color: var(--foreground);
+  color: var(--background);
+}
+.app-prose .tt[data-pinned="true"] {
+  position: sticky;
+  top: var(--tt-pin-top, 81px);
+  z-index: 30;
+  box-shadow: 0 12px 32px -18px rgb(0 0 0 / 0.35);
+}
+/* 置顶时卡片最多占半屏多一点，表格在卡片里滚动，不会把正文全挡住 */
+.app-prose .tt[data-pinned="true"] .tt-body {
+  max-height: 55vh;
+  overflow: auto;
+}
+@media print {
+  .app-prose .tt-pin {
+    display: none;
+  }
+  .app-prose .tt[data-pinned="true"] {
+    position: static;
+    box-shadow: none;
+  }
+}
