@@ -1,16 +1,21 @@
 ---
-// K 线收线提醒：每根 K 线收线前响一下（默认 5 分钟图、提前 1 分钟，美东时间，只在日盘响）。
+// K 线收线提醒：每根 K 线收线前响一下（默认 5 分钟图、提前 1 分钟，只在所选市场的交易时段响）。
+// 时钟上方选市场：美东 ES、北京股指期货、德国 DAX、东京日经 225、伦敦富时 100，时间和时段都按当地时间。
 // 可以单独关掉接下来某几根，或者静音一段时间。设置和“哪几根不响”存在本机浏览器里。
 // 声音用 Web Audio 按音频时钟提前排好，后台标签页里计时器被浏览器放慢也能准时响。
 import { useTranslations } from "@/i18n";
 
 const s = useTranslations(Astro.currentLocale).barAlarm;
+// 市场的顺序和 s.zones 的名字一一对应（具体时区和时段写在下面的脚本里）
+const MARKETS = ["us", "cn", "de", "jp", "uk"];
 ---
 
 <section class="bx ba" aria-label={s.label} data-s={JSON.stringify(s)}>
   <div class="ba-top">
     <div>
-      <p class="bx-hero-k ba-clock-k">{s.etNow}</p>
+      <select class="bx-hero-k ba-zone" name="market" aria-label={s.zone}>
+        {MARKETS.map((m, i) => <option value={m}>{s.zones[i]}</option>)}
+      </select>
       <p class="ba-clock" aria-live="off">--:--:--</p>
     </div>
     <div class="ba-actions">
@@ -33,8 +38,7 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
           {[15, 30, 60, 90, 120].map(v => <option value={v} selected={v === 60}>{v < 60 ? `${v} ${s.sec}` : `${v / 60} ${s.min}`}</option>)}
         </select>
       </label>
-      <label>{s.from}<input name="from" type="time" value="09:30" /></label>
-      <label>{s.to}<input name="to" type="time" value="16:15" /></label>
+      <div class="ba-sess"></div>
       <label>{s.volume}<input name="vol" type="range" min="0" max="1" step="0.05" value="0.6" /></label>
       <label class="ba-check"><input name="notify" type="checkbox" />{s.notify}</label>
     </div>
@@ -60,24 +64,41 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
   <div class="ba-list"></div>
 
 
-  <p class="fn-note">{s.note}</p>
+  <p class="fn-note"><span class="ba-mnote"></span>{s.note}</p>
 </section>
 
 <script>
-  type S = Record<string, string>;
-  type Settings = { tf: number; lead: number; from: string; to: string; vol: number; notify: boolean };
+  type S = Record<string, any>;
+  type Session = [string, string]; // 当地时间的开始、结束；结束早于开始就是跨过午夜（东京夜盘）
+  type Settings = { tf: number; lead: number; vol: number; notify: boolean; market: string; sessions: Record<string, Session[]> };
   type Saved = { settings: Settings; skipped: number[]; muteUntil: number; running: boolean };
 
+  // 每个市场：当地时区 + 默认交易时段（只算周一到周五开始的时段，不含交易所假日）
+  const MARKETS: Record<string, { tz: string; sessions: Session[] }> = {
+    us: { tz: "America/New_York", sessions: [["09:30", "16:15"]] }, // ES / MES 日盘
+    cn: { tz: "Asia/Shanghai", sessions: [["09:30", "11:30"], ["13:00", "15:00"]] }, // 中金所股指期货，中午休市
+    de: { tz: "Europe/Berlin", sessions: [["09:00", "17:30"]] }, // DAX，Xetra 开盘时段
+    jp: { tz: "Asia/Tokyo", sessions: [["08:45", "15:45"], ["17:00", "06:00"]] }, // 日经 225：日盘、夜盘
+    uk: { tz: "Europe/London", sessions: [["08:00", "16:30"]] }, // 富时 100，伦敦交易所开盘时段
+  };
+
   const KEY = "bar-alarm-v1";
-  const DEFAULTS: Settings = { tf: 5, lead: 60, from: "09:30", to: "16:15", vol: 0.6, notify: false };
+  const DEFAULTS: Settings = { tf: 5, lead: 60, vol: 0.6, notify: false, market: "us", sessions: {} };
 
   // —— 本机存储：读写失败（隐私模式等）就当没有 ——
   function load(): Saved {
     try {
       const v = JSON.parse(localStorage.getItem(KEY) || "null");
-      if (v) return { settings: { ...DEFAULTS, ...v.settings }, skipped: v.skipped || [], muteUntil: v.muteUntil || 0, running: !!v.running };
+      if (v) {
+        const { from, to, ...rest } = v.settings || {};
+        const settings: Settings = { ...DEFAULTS, ...rest, sessions: { ...rest.sessions } };
+        // 旧版只存了美东日盘的 from / to
+        if (from && to && !settings.sessions.us) settings.sessions.us = [[from, to]];
+        if (!MARKETS[settings.market]) settings.market = DEFAULTS.market;
+        return { settings, skipped: v.skipped || [], muteUntil: v.muteUntil || 0, running: !!v.running };
+      }
     } catch {}
-    return { settings: { ...DEFAULTS }, skipped: [], muteUntil: 0, running: false };
+    return { settings: { ...DEFAULTS, sessions: {} }, skipped: [], muteUntil: 0, running: false };
   }
   function save(v: Saved) {
     try {
@@ -85,20 +106,21 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
     } catch {}
   }
 
-  // —— 美东时间：用 Intl 算出此刻美东和本机的时差，夏令时自动处理 ——
-  const etFmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", weekday: "short",
-  });
-  function etParts(ms: number) {
-    const p = Object.fromEntries(etFmt.formatToParts(new Date(ms)).map(x => [x.type, x.value]));
-    return { y: +p.year, mo: +p.month, d: +p.day, h: +p.hour, mi: +p.minute, s: +p.second, wd: p.weekday };
+  // —— 当地时间：用 Intl 换算，夏令时自动处理，本机在哪个时区都没关系 ——
+  const fmts: Record<string, Intl.DateTimeFormat> = {};
+  function parts(tz: string, ms: number) {
+    fmts[tz] ??= new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+    });
+    const p = Object.fromEntries(fmts[tz].formatToParts(new Date(ms)).map(x => [x.type, x.value]));
+    return { y: +p.year, mo: +p.month, d: +p.day, h: +p.hour, mi: +p.minute, s: +p.second };
   }
-  // 美东某天某分钟对应的真实时刻（毫秒）
-  function etToMs(y: number, mo: number, d: number, minutes: number) {
+  // 当地某天第 minutes 分钟对应的真实时刻（毫秒）；minutes 超过 1440 就是第二天
+  function toMs(tz: string, y: number, mo: number, d: number, minutes: number) {
     const guess = Date.UTC(y, mo - 1, d, 0, minutes);
-    const p = etParts(guess);
+    const p = parts(tz, guess);
     const shown = Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi);
     return guess - (shown - guess);
   }
@@ -107,31 +129,44 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
     return h * 60 + m;
   };
   const pad = (n: number) => String(n).padStart(2, "0");
+  let tz = MARKETS.us.tz; // 当前市场的时区，页面上的时间都按它显示
   const clock = (ms: number, sec = false) => {
-    const p = etParts(ms);
+    const p = parts(tz, ms);
     return `${pad(p.h)}:${pad(p.mi)}${sec ? ":" + pad(p.s) : ""}`;
   };
 
-  type Bar = { n: number; open: number; close: number; alarm: number; day: string; ymd: [number, number, number] };
-  const GROUP_MIN = 120; // 每 2 小时一组：5 分钟图正好是第 1–24、25–48、49–72 根，剩下的归最后一组
+  type Bar = { n: number; sess: number; open: number; close: number; alarm: number; day: string; ymd: [number, number, number] };
+  const GROUP_MIN = 120; // 每 2 小时一组：美东 5 分钟图正好是第 1–24、25–48、49–72 根，剩下的归最后一组
 
-  // 从 now 开始往后的 count 根 K 线（只算周一到周五的日盘；不含交易所假日）
+  const sessionsOf = (st: Settings) => st.sessions[st.market] || MARKETS[st.market].sessions;
+
+  // 当地某个交易日（周一到周五）开始的全部 K 线，按时段先后排；跨午夜的时段一直算到第二天
+  function barsOn(st: Settings, y: number, mo: number, d: number): Bar[] {
+    const zone = MARKETS[st.market].tz;
+    const out: Bar[] = [];
+    sessionsOf(st).forEach(([from, to], sess) => {
+      const a = hm(from);
+      let b = hm(to);
+      if (b <= a) b += 1440;
+      const n = Math.floor((b - a) / st.tf);
+      for (let i = 1; i <= n; i++) {
+        const close = toMs(zone, y, mo, d, a + i * st.tf);
+        out.push({ n: i, sess, open: close - st.tf * 60000, close, alarm: close - st.lead * 1000, day: `${mo}/${d}`, ymd: [y, mo, d] });
+      }
+    });
+    return out;
+  }
+
+  // 从 now 开始往后的 count 根 K 线；从前一天开始找，凌晨还在昨晚的夜盘里也能算到
   function upcoming(st: Settings, now: number, count: number): Bar[] {
     const out: Bar[] = [];
-    const a = hm(st.from);
-    const b = hm(st.to);
-    const n = Math.floor((b - a) / st.tf);
-    let p = etParts(now);
-    for (let dayStep = 0; out.length < count && dayStep < 10; dayStep++) {
-      const base = Date.UTC(p.y, p.mo - 1, p.d + dayStep);
-      const day = new Date(base);
+    const p = parts(MARKETS[st.market].tz, now);
+    for (let dayStep = -1; out.length < count && dayStep < 10; dayStep++) {
+      const day = new Date(Date.UTC(p.y, p.mo - 1, p.d + dayStep));
       const wd = day.getUTCDay();
       if (wd === 0 || wd === 6) continue;
-      const [y, mo, d] = [day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate()];
-      for (let i = 1; i <= n && out.length < count; i++) {
-        const close = etToMs(y, mo, d, a + i * st.tf);
-        if (close <= now) continue;
-        out.push({ n: i, open: close - st.tf * 60000, close, alarm: close - st.lead * 1000, day: `${mo}/${d}`, ymd: [y, mo, d] });
+      for (const b of barsOn(st, day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate())) {
+        if (b.close > now && out.length < count) out.push(b);
       }
     }
     return out;
@@ -155,10 +190,27 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       const field = (name: string) => form.querySelector<HTMLInputElement>(`[name=${name}]`)!;
       field("tf").value = String(state.settings.tf);
       field("lead").value = String(state.settings.lead);
-      field("from").value = state.settings.from;
-      field("to").value = state.settings.to;
       field("vol").value = String(state.settings.vol);
       field("notify").checked = state.settings.notify;
+      const marketSel = $<HTMLSelectElement>(".ba-zone");
+
+      // 交易时段的输入框：按当前市场有几段就放几对（开始、结束）
+      const sessBox = $<HTMLElement>(".ba-sess");
+      const sessName = (i: number) => s.sessionNames[state.settings.market][i];
+      function renderSessions() {
+        sessBox.innerHTML = sessionsOf(state.settings)
+          .map(([a, b], i) => `<label>${s.sessFrom.replace("{{name}}", sessName(i))}<input name="from${i}" type="time" value="${a}" /></label>
+            <label>${s.sessTo.replace("{{name}}", sessName(i))}<input name="to${i}" type="time" value="${b}" /></label>`)
+          .join("");
+      }
+      function useMarket() {
+        marketSel.value = state.settings.market;
+        tz = MARKETS[state.settings.market].tz;
+        renderSessions();
+        // 下面的小字：先说这个市场的时段为什么长这样，再接通用说明
+        $(".ba-mnote").textContent = s.marketNotes[state.settings.market] + " ";
+      }
+      useMarket();
 
       const isSkipped = (b: Bar) => state.skipped.includes(b.close) || b.alarm < state.muteUntil;
       const persist = () => {
@@ -166,6 +218,9 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
         state.skipped = state.skipped.filter(t => t > Date.now());
         save(state);
       };
+      // 有两段以上的市场（午休、夜盘），K 线名字前面加上是哪一段
+      const barName = (b: Bar) =>
+        (sessionsOf(state.settings).length > 1 ? sessName(b.sess) + " " : "") + s.bar.replace("{{n}}", String(b.n));
 
       // —— 声音：两声短促的“嘀” ——
       function beepAt(when: number) {
@@ -209,7 +264,7 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       function notify(b: Bar) {
         if (!state.settings.notify || !("Notification" in window) || Notification.permission !== "granted") return;
         try {
-          new Notification(s.notifyTitle.replace("{{n}}", String(b.n)), {
+          new Notification(s.notifyTitle.replace("{{bar}}", barName(b)), {
             body: s.notifyBody.replace("{{t}}", clock(b.close)),
             silent: true,
           });
@@ -218,29 +273,42 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
 
       // —— 画面 ——
       const list = $<HTMLElement>(".ba-list");
-      const groupNames = s.groups as unknown as string[];
+      const groupNames = s.groups as string[];
       let listKey = "";
-      let activeGroup = -1;
+      let activeGroup = "";
 
-      // 列表：这一天（今天，或收盘后 / 周末时的下一个交易日）的全部 K 线，按时段分组，只展开当前时段
+      // 列表：这一个交易日（今天，或收盘后 / 周末时的下一个交易日）的全部 K 线，按时段分组，只展开当前时段
       function renderDay(head: Bar, now: number, at: (ms: number) => string) {
         const st = state.settings;
         const [y, mo, d] = head.ymd;
-        const perDay = Math.floor((hm(st.to) - hm(st.from)) / st.tf);
-        const bars = upcoming(st, etToMs(y, mo, d, 0), perDay);
-        const groupOf = (b: Bar) =>
-          Math.min(groupNames.length - 1, Math.floor((b.open - bars[0].open) / (GROUP_MIN * 60000)));
+        const bars = barsOn(st, y, mo, d);
+        // 美东沿用“早盘 / 午盘 / 晚盘 / 收盘前”；其他市场每段按 2 小时再分组，名字是“日盘 2”这样
+        const named = st.market === "us" && sessionsOf(st).length === 1;
+        const chunkOf = (b: Bar) => {
+          const first = bars.find(x => x.sess === b.sess)!;
+          return Math.floor((b.open - first.open) / (GROUP_MIN * 60000));
+        };
+        const groupOf = (b: Bar) => (named ? `0-${Math.min(groupNames.length - 1, chunkOf(b))}` : `${b.sess}-${chunkOf(b)}`);
 
         // 换了一天或改了设置才重建分组，平时只更新每格的状态，展开 / 收起不会被打断
-        const key = `${y}-${mo}-${d}|${st.tf}|${st.from}|${st.to}|${st.lead}`;
+        const key = `${y}-${mo}-${d}|${st.tf}|${st.lead}|${st.market}|${JSON.stringify(sessionsOf(st))}`;
         if (key !== listKey) {
           listKey = key;
-          activeGroup = -1;
-          const groups = groupNames.map(() => [] as Bar[]);
-          bars.forEach(b => groups[groupOf(b)].push(b));
-          list.innerHTML = groups
-            .map((g, i) => {
-              if (!g.length) return "";
+          activeGroup = "";
+          const groups = new Map<string, Bar[]>();
+          bars.forEach(b => {
+            const g = groupOf(b);
+            if (!groups.has(g)) groups.set(g, []);
+            groups.get(g)!.push(b);
+          });
+          const keys = [...groups.keys()];
+          list.innerHTML = keys
+            .map((k, idx) => {
+              const g = groups.get(k)!;
+              const [sess, chunk] = k.split("-").map(Number);
+              const many = keys.filter(x => x.startsWith(`${sess}-`)).length > 1;
+              const name = named ? groupNames[chunk] : sessName(sess) + (many ? ` ${chunk + 1}` : "");
+              const last = named && idx === keys.length - 1;
               const meta = `${s.range.replace("{{a}}", String(g[0].n)).replace("{{b}}", String(g[g.length - 1].n))} · ${clock(g[0].open)}–${clock(g[g.length - 1].close)}`;
               const tiles = g
                 .map(b => `<button type="button" class="ba-tile is-new" data-close="${b.close}" title="${s.ringAt.replace("{{t}}", at(b.alarm))}">
@@ -248,8 +316,8 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
                   <span class="ba-win">${clock(b.open)}–${clock(b.close)}</span>
                 </button>`)
                 .join("");
-              return `<details class="ba-group" data-g="${i}">
-                <summary><span class="ba-gname">${groupNames[i]}</span><span class="ba-gmeta">${meta}${i === groupNames.length - 1 ? ` · ${s.lastHint}` : ""}</span><span class="ba-gcount"></span></summary>
+              return `<details class="ba-group" data-g="${k}">
+                <summary><span class="ba-gname">${name}</span><span class="ba-gmeta">${meta}${last ? ` · ${s.lastHint}` : ""}</span><span class="ba-gcount"></span></summary>
                 <div class="ba-tiles">${tiles}</div>
               </details>`;
             })
@@ -261,7 +329,7 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
         if (g !== activeGroup) {
           activeGroup = g;
           list.querySelectorAll<HTMLDetailsElement>(".ba-group").forEach(el => {
-            el.open = +el.dataset.g! === g;
+            el.open = el.dataset.g === g;
             el.classList.toggle("is-active", el.open);
           });
         }
@@ -285,7 +353,7 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
           if (c.textContent !== txt) c.textContent = txt;
         });
 
-        const today = etParts(now);
+        const today = parts(tz, now);
         $(".ba-listday").textContent = head.day === `${today.mo}/${today.d}` ? s.upcoming : s.upcomingDay.replace("{{d}}", head.day);
       }
 
@@ -308,7 +376,7 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
         if (current) {
           const left = Math.ceil((current.close - now) / 1000);
           $(".ba-state").textContent = s.inBar
-            .replace("{{n}}", String(current.n))
+            .replace("{{bar}}", barName(current))
             .replace("{{left}}", `${Math.floor(left / 60)}:${pad(left % 60)}`);
           fill.style.width = `${((now - current.open) / (current.close - current.open)) * 100}%`;
         } else {
@@ -322,13 +390,14 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
           : next
             ? s.nextAlarm
                 .replace("{{t}}", at(next.alarm))
-                .replace("{{n}}", String(next.n))
+                .replace("{{bar}}", barName(next))
                 .replace("{{in}}", fmtIn(next.alarm - now))
             : s.noAlarm;
         if (state.muteUntil > now)
           $(".ba-next").textContent += " · " + s.mutedUntil.replace("{{t}}", clock(state.muteUntil));
 
-        const head = upcoming(state.settings, now, 1)[0];
+        // 列表显示的交易日：正在进行的那根所属的一天（凌晨的夜盘算前一天），否则是下一根所属的一天
+        const head = current || upcoming(state.settings, now, 1)[0];
         if (head) renderDay(head, now, at);
 
         reschedule(next);
@@ -401,16 +470,32 @@ const s = useTranslations(Astro.currentLocale).barAlarm;
       form.addEventListener("change", async e => {
         const t = e.target as HTMLInputElement;
         state.settings = {
+          ...state.settings,
           tf: +field("tf").value,
           lead: +field("lead").value,
-          from: field("from").value || DEFAULTS.from,
-          to: field("to").value || DEFAULTS.to,
           vol: +field("vol").value,
           notify: field("notify").checked,
         };
+        // 改了时段才单独存这个市场的时段；清空的格子用默认值
+        if (/^(from|to)\d$/.test(t.name))
+          state.settings.sessions[state.settings.market] = MARKETS[state.settings.market].sessions.map(([a, b], i) => [
+            field(`from${i}`).value || a,
+            field(`to${i}`).value || b,
+          ]);
         if (t.name === "notify" && t.checked && "Notification" in window && Notification.permission === "default")
           await Notification.requestPermission();
         unschedule(); // 音量、周期变了都要按新设置重排
+        persist();
+        render();
+      });
+
+      // 换市场：时区、交易时段、K 线列表都换成当地的；“不响”和静音是按时刻记的，换了市场就清掉
+      marketSel.addEventListener("change", () => {
+        state.settings.market = marketSel.value;
+        state.skipped = [];
+        state.muteUntil = 0;
+        useMarket();
+        unschedule();
         persist();
         render();
       });

@@ -183,7 +183,12 @@ export interface UIStrings {
   };
   barAlarm: {
     label: string;
-    etNow: string;
+    zone: string;
+    zones: string[];
+    sessionNames: Record<string, string[]>;
+    sessFrom: string;
+    sessTo: string;
+    marketNotes: Record<string, string>;
     start: string;
     stop: string;
     stopped: string;
@@ -207,8 +212,6 @@ export interface UIStrings {
     min: string;
     sec: string;
     lead: string;
-    from: string;
-    to: string;
     volume: string;
     notify: string;
     test: string;
