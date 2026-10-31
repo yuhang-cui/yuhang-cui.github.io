@@ -1,0 +1,367 @@
+---
+title: "Breakout Strategy Review: Rules, 187 Trades, Strengths and Weaknesses"
+description: "For a while I traded a Breakout (BO) strategy: enter with a strong trend bar, stop beyond the start of the breakout. Here are its rules, plus statistics from 167 replayed trades and 20 live ones. The replays have positive expectancy, but the profit sits in a few big trades; live, I couldn't hold those, and averaged only +1.7 points per trade. It ends with the strengths, the weaknesses, and the lessons I carried over to the Wedge strategy."
+stat: "+1.7 pts"
+statLabel: "Live average per trade"
+pubDatetime: 2026-10-26T20:00:00+08:00
+tags: [Strategies]
+lang: en
+---
+
+import TableTabs from "@/components/TableTabs.astro";
+
+> **Strategy**: on the MES 5-minute chart, enter in the direction of a strong trend bar (a breakout) that has already formed, with the stop beyond the start of the breakout, expecting at least a second leg.
+>
+> **Result**: 167 trades across 6 replay tables, every table with positive expectancy; 20 live trades with a 65% win rate but only **+1.7 points** per trade on average, and a loss once the best 3 are removed.
+>
+> <span class="takeaway">In one sentence: BO makes its money on a few big swings and the stop is very wide; at my current level I can't hold a long swing live, so without the best few trades it is a "steady loss". I've shelved the strategy for now, but it taught me how to exit.</span>
+
+## 📊 Overview
+
+<p class="table-title">BO strategy · Sample</p>
+
+<div class="exp-table">
+
+| Item | Detail |
+|:---|:---|
+| Instrument | MES 5-minute chart |
+| Method | TradingView Replay + live trading |
+| Sample | 187 trades: 167 replayed (6 tables) + 20 live |
+| Unit | Points (not R; see the note below) |
+
+</div>
+
+<div class="exp-table">
+
+| Table | Focus | Trades |
+|:---|:---|:---:|
+| March 2025 replay | Continuous evaluation (re-judge on every new bar) | 34 |
+| April 2025 replay | Left-side vs right-side profit taking | 25 |
+| Jan–Feb 2026 replay | Grading by BO grade and context grade | 28 |
+| Jan–Mar 2026 replay | Same, plus initial risk | 33 |
+| EXIT Feb 2026 | Comparing exit methods | 32 |
+| EXIT Mar 2026 | Comparing exit methods | 15 |
+| Rep20 live | 20 live trades by the rules | 20 |
+
+</div>
+
+<p class="table-note">Why points: in the tables, a winner's "Actual" risk is the maximum adverse excursion after entry, often only 0.5–2 points, so R gets inflated to 10–40R and can't be compared. The "Jan–Feb 2026" table sits in a folder named 2025, but every date inside is 2026, and it overlaps the Jan–Mar table.</p>
+
+The rules come first, then the data from four angles: where the profit comes from, whether grading helps, exit methods, and the lessons that keep coming up in the reviews. Strengths and weaknesses are at the end.
+
+## 1. 📜 Strategy rules
+
+### How I think about breakouts
+
+1. **A breakout is a trend bar**: one or a run of big bull or bear bars, with price crossing the previous bar, a prior high or low, a trend line, the EMA or the edge of a pattern.
+2. **The stronger it is, the more likely there is follow-through**: the bigger the body and the closer the close to the extreme, the more likely a second and third leg. Breakouts with real follow-through are a minority of bars; most of the time the market is in a channel or a trading range.
+3. **The follow-through bars decide whether it's real**: the next bar or few bars after the breakout should be in the same direction and close strong; if a reversal bar follows right away, the breakout will probably fail and turn into a trading range or a reversal.
+4. **Where the second leg comes from**: the counter-trend side is trapped and has to stop out, the with-trend side missed it and has to chase, and both sets of orders push out the second leg. If the counter-trend side can't produce a strong reversal within 5–10 bars of the pullback, it gives up and the trend resumes.
+
+### Quick reference
+
+<TableTabs title="BO rules" tabs={["BO grade", "Context grade", "Entry and stop", "Exit"]}>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Grade | What counts |
+|:---|:---|
+| S (strongest) | a. Small pullback trend day: tiny pullbacks, consecutive trend bars, gaps left behind<br/>b. 4–6 consecutive trend bars of decent size |
+| A (strong) | a. 3 clearly sized trend bars + a gap + little overlap + closes well beyond most of the closes of the prior 5–10 bars<br/>b. A single very large surprise bar + good follow-through + no clear counter-trend tail<br/>c. A run of with-trend bars forming a leg, the more prior bars the close exceeds the better |
+| B (caution) | a. 4–5 consecutive strong trend bars with no tails, the counter-trend side completely absent<br/>b. "3 clear trend bars + gap + little overlap" inside a trading range |
+| C (skip) | a. 3 clear trend bars, but with sizeable counter-trend tails and no gap<br/>b. A trend leg inside an obvious trading range |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Grade | Conditions |
+|:---|:---|
+| Five favourable conditions | ① Plenty of room (far from the next support / resistance)<br/>② EMA acting as support<br/>③ The higher time frame is on your side<br/>④ Today's bars so far are with-trend<br/>⑤ The counter-trend side shows disappointment |
+| S · Unstoppable | ① and ② both met, plus at least two of ③④⑤ |
+| A · Strong | ① and ② both met, fewer than two of ③④⑤ |
+| B · Caution | ① or ② missing, or both |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Item | Rule |
+|:---|:---|
+| Pre-market | a. Is the daily chart in a trend, a channel or a trading range<br/>b. Was yesterday's daily bar a trend bar or a range bar<br/>c. Check ETH for a gap up or down; mark yesterday's high and low, optionally yesterday's close and the ETH high and low |
+| Entry | a. One good signal bar + a stop order<br/>b. Good context + a reasonable signal bar |
+| Pre-entry checks | a. In the direction of the higher time frame?<br/>b. Not a climax: the last bar is not right against obvious support / resistance<br/>c. Not a vacuum test racing into resistance; if it is, wait for confirmation<br/>d. There is a "have to get in" urgency, with no hesitation while the trend bar forms |
+| Stop | Beyond the start of the breakout |
+| Expected follow-through | a. The first pullback has a strong H1 / L1 signal bar<br/>b. No two consecutive counter-trend trend bars in the pullback<br/>c. The counter-trend bars in the pullback are not good signal bars and have with-trend tails |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Item | Rule |
+|:---|:---|
+| Take profit | a. Key support / resistance<br/>b. After the first pullback reaches 50%, measure MM with the N shape and place a fixed limit<br/>c. A strong opposite engulfing bar, or one strong opposite trend bar in two consecutive bars<br/>d. A reversal pattern such as DT / DB / wedge<br/>e. 3 consecutive counter-trend bars with two closing in a good spot |
+| Trailing stop | a. A spike bar with a very long tail: move the stop beyond that bar<br/>b. A disappointing bar for the counter-trend side: the stop must be moved<br/>c. Entering a tight trading range: move the stop to one side of it, it is often the last flag of the trend<br/>d. Don't trail too tight, or you miss the big swing |
+| Re-entry | After an active exit or a stop-out, if another signal meets the rules, have the courage to re-enter; judge each one on its own, not on the last result |
+
+</div>
+
+</div>
+</TableTabs>
+
+## 2. 💰 Where the profit comes from
+
+### Statistics
+
+<TableTabs title="Profit distribution" tabs={["Top 3 share", "Average win and loss", "Live distribution"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Table | Trades | Win rate | Total points | Top 3 share of profit | Without top 3 |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| March 2025 replay | 34 | 59% | +191.8 | 62% | +73.0 |
+| April 2025 replay | 25 | 68% | +375.0 | 64% | +133.5 |
+| Jan–Feb 2026 replay | 28 | 79% | +259.4 | 34% | +171.4 |
+| Jan–Mar 2026 replay | 33 | 52% | +282.3 | 59% | +116.3 |
+| EXIT Feb 2026 | 32 | 59% | +174.8 | 77% | +40.3 |
+| EXIT Mar 2026 | 15 | 73% | +98.5 | 72% | +27.8 |
+| **Rep20 live** | 20 | 65% | +33.8 | **207%** | **−36.3** |
+
+</div>
+
+<p class="table-note">"Top 3 share of profit" = the best 3 trades combined ÷ the table total; above 100% means the rest of the trades lost money combined.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Table | Average win | Average loss | Average per trade |
+|:---|:---:|:---:|:---:|
+| March 2025 replay | +16.8 | −10.3 | +5.6 |
+| April 2025 replay | +30.3 | −17.6 | +15.0 |
+| Jan–Feb 2026 replay | +15.7 | −14.3 | +9.3 |
+| Jan–Mar 2026 replay | +21.5 | −5.6 | +8.6 |
+| EXIT Feb 2026 | +15.0 | −8.5 | +5.5 |
+| EXIT Mar 2026 | +11.0 | −5.7 | +6.6 |
+| **Rep20 live** | **+11.5** | **−16.5** | **+1.7** |
+
+</div>
+
+<p class="table-note">Unit: points.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| 20 live trades | Trades | Detail |
+|:---|:---:|:---|
+| Winners | 13 | 7 under 10 points; only 3 above 20 points |
+| Losers | 7 | 5 above 10 points, the largest −25 points |
+
+</div>
+
+</div>
+</TableTabs>
+
+### Conclusions
+
+1. **BO makes its money on a few big swings**: in most replay tables the best 3 trades contribute about 60–77% of the profit; the rest are mostly small wins and small losses.
+2. **Live, it turned into small wins and big losses**: the live average win is 11.5 points, the average loss 16.5, so losses are bigger than wins. In replay I could hold the big swing; live I couldn't, and the one-line reviews keep saying "could have taken a bigger swing".
+3. **Without the big trades it barely makes money**: live, without the best 3 trades, the total is −36.3 points.
+
+## 3. 🏷️ Does grading help
+
+### Statistics
+
+<TableTabs title="Grading statistics" tabs={["Live · grade", "Replay · context grade", "Replay · BO grade"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Grade | Trades | Wins | Total points | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| A+ | 2 | 2 | +49.5 | **+24.8** |
+| A | 12 | 10 | +56.3 | +4.7 |
+| B | 5 | 1 | −57.0 | −11.4 |
+| C | 1 | 0 | −15.0 | −15.0 |
+
+</div>
+
+<p class="table-note">Rep20 live.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Context grade | Trades | Wins | Total points | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| S | 9 | 7 | +195.3 | **+21.7** |
+| A | 17 | 8 | +83.8 | +4.9 |
+| B | 7 | 2 | +3.3 | +0.5 |
+
+</div>
+
+<p class="table-note">Jan–Mar 2026 replay.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| BO grade | March 2025 | Jan–Feb 2026 | Jan–Mar 2026 |
+|:---|:---:|:---:|:---:|
+| S | +7.8<span class="wl">10 trades</span> | **+17.8**<span class="wl">11 trades</span> | +8.0<span class="wl">4 trades</span> |
+| A (incl. A+) | +5.4<span class="wl">19 trades</span> | +7.6<span class="wl">14 trades</span> | **+11.2**<span class="wl">20 trades</span> |
+| B | +2.2<span class="wl">5 trades</span> | −14.0<span class="wl">3 trades</span> | +3.9<span class="wl">8 trades</span> |
+| C | – | – | −5.5<span class="wl">1 trade</span> |
+
+</div>
+
+<p class="table-note">Values are average points per trade.</p>
+
+</div>
+</TableTabs>
+
+### Conclusions
+
+1. **Grade B is the worst in every table**: live, the 5 B trades won once, for −57 points combined; one grade wiped out all of grade A's profit.
+2. **The context grade separates better than the BO grade**: context S averages +21.7 points per trade, context B only +0.5; whether BO grade S or A is better differs from table to table.
+3. **The grading itself is accurate; the problem is that I took the B trades anyway.**
+
+## 4. 🚪 Exit methods
+
+### Statistics
+
+<TableTabs title="Exit methods" tabs={["Feb 2026", "Mar 2026"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Exit | Trades | Wins | Total points | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| limit order (prior high / low or MM) | 5 | 5 | +116.8 | **+23.4** |
+| trailing stop | 5 | 5 | +99.8 | +20.0 |
+| outside reversal bar | 1 | 1 | +8.5 | +8.5 |
+| inside reversal bar | 5 | 4 | +12.3 | +2.5 |
+| H2 & L2 | 5 | 3 | +11.3 | +2.3 |
+| strong H1 & L1 | 7 | 1 | −24.3 | −3.5 |
+| stop out | 3 | 0 | −43.0 | −14.3 |
+| other | 1 | 0 | −6.5 | −6.5 |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Exit | Trades | Wins | Total points | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| limit order | 3 | 3 | +41.3 | **+13.8** |
+| trailing stop | 2 | 1 | +19.0 | +9.5 |
+| inside reversal bar | 1 | 1 | +8.3 | +8.3 |
+| H2 & L2 | 1 | 1 | +3.8 | +3.8 |
+| strong H1 & L1 | 7 | 5 | +43.3 | +6.2 |
+| stop out | 1 | 0 | −17.0 | −17.0 |
+
+</div>
+
+</div>
+</TableTabs>
+
+### Conclusions
+
+1. **Almost all the profit comes from limit orders and trailing stops**: in February those two methods won all 10 trades, +216.5 points combined, more than the whole month's +174.8.
+2. **Strong H1 & L1 exits are for losing less**: in February they were negative combined, but mostly they got out before a loss grew, and the notes say "avoided doubling the loss". By March this exit won 5 of 7, so the execution was improving.
+3. **Limitation**: the exit method and the result are tied together; a stop out is always a loss, and a trailing stop mostly happens on trades that have already run. So this table only shows which methods help me hold the big trades, not that "choosing this exit makes money". Each type has only 1–7 trades.
+
+## 5. 📝 Lessons that keep coming up
+
+<p class="table-title">Keywords in the review notes</p>
+
+<div class="exp-table split-last">
+
+| Keyword | Trades | Wins | Total points |
+|:---|:---:|:---:|:---:|
+| Third push | 19 | 8 | **−35.8** |
+| Trailing stop | 19 | 11 | +195.3 |
+| limit | 8 | 7 | +103.5 |
+| TR | 16 | 9 | −1.8 |
+
+</div>
+
+<p class="table-note">Keyword search across the review notes of all 187 trades. The notes were written afterwards, and one trade can hit several keywords.</p>
+
+1. **The third push is the only theme that loses money overall**: "entered on the third push" or "didn't exit at the third push" is the most repeated lesson in BO. Later I moved to Wedge, which trades exactly the reversal after a third push; you could say that lesson became a strategy.
+2. **BO inside a TR is wasted effort**: 16 trades, total close to zero.
+3. **Trailing stop and limit are the two keywords that make money**, consistent with the exit section above.
+
+## ⚖️ Strengths and weaknesses
+
+<section class="rc policy">
+<div class="rc-panel rc-def">
+
+<p class="policy-title">Strengths</p>
+
+1. **Clear direction**: only trade with a strong trend bar that has already formed, no picking tops and bottoms; the BO grade and the context grade give explicit scoring criteria.
+2. **Big profit when you catch the swing**: replay average wins are 15–30 points, and the best few trades run to dozens of points.
+3. **Decent win rate**: 52–79% in replay, 65% live.
+4. **The grading works**: grade B is the worst in every table, and context S averages +21.7 points per trade. Only taking the top grades would improve the results a lot.
+5. **It trains exits**: limit targets, trailing stops and exiting at the third push carry over to other strategies.
+
+<p class="policy-title">Weaknesses</p>
+
+1. **Wide stop**: the initial stop averages 26–29 points (about $130–145 per MES contract). My Wedge stop is now about 7–8 points.
+2. **Little profit relative to risk**: only 0.29× the initial risk per trade (Jan–Mar 2026 replay), and only 0.06× live.
+3. **Dependent on a few big trades**: live, without the best 3 trades, it loses.
+4. **Can't hold them live**: live average win 11.5 points, average loss 16.5; trailing the stop too tight and entering before the bar closed were the two core problems in the April live trades.
+5. **Entry conditions are loose**: what counts as a "strong" breakout is a judgement call, so grade B trades slip in; a loose entry means a wide stop.
+6. **Third pushes and TRs lose the most**: 19 third-push trades total −35.8 points, and BO inside a TR is wasted effort.
+
+</div>
+</section>
+
+<p class="table-note">"Average per trade ÷ average initial risk": Jan–Mar 2026 replay +8.6 ÷ 29.1 points, live +1.7 ÷ 26.3 points. The other two tables did not record initial risk.</p>
+
+## 🧭 Lessons carried over to Wedge
+
+BO's live expectancy is only +1.7 points, with a wide stop, so I've stopped using it. These lessons continue in Wedge.
+
+<section class="rc policy">
+<div class="rc-panel rc-def">
+
+<p class="policy-title">1. When a third push appears, exit or tighten the stop</p>
+
+1. Don't chase on the third push.
+2. If already in a position and the third push shows weakness, or a counter-trend signal bar comes with it, exit actively instead of waiting for the stop.
+
+<p class="policy-title">2. No entries inside a trading range</p>
+
+1. Don't chase breakouts inside a TR.
+2. When the market turns into a TR, place a limit to take profit near the top of the range.
+
+<p class="policy-title">3. When the counter-trend side gets a disappointing bar, move the stop</p>
+
+1. A surprise bar or an outside bar means the stop must be moved; make it a reflex.
+2. But don't trail too tight; leave the trend room.
+
+<p class="policy-title">4. Only grade A and above</p>
+
+1. Grade B trades lose over time; don't take them.
+
+</div>
+</section>

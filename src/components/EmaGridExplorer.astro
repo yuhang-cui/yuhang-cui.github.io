@@ -1,0 +1,183 @@
+---
+// 5 分钟 EMA × 60 分钟 EMA 的交叉表：每格是平均每笔 R，底色越蓝越赚、越橙越亏；最后一行 / 一列是单看一条 EMA。
+// 上面的开关切换"全部 / wedge reversal / wedge flag"，三张表在构建时都画好，浏览器里只是切换显示。
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+import { nTrades } from "@/utils/rep20View";
+
+type Trade = { n: number; setup: string; pts: number; r: number; kind: string; e5: string; e60: string };
+type Props = { trades: Trade[] };
+const { trades } = Astro.props;
+const s = useTranslations(Astro.currentLocale).rep20;
+
+const sys = trades.filter(t => t.kind !== "rule");
+const modes = [
+  { v: "all", label: s.all, ts: sys },
+  { v: "rev", label: "reversal", ts: sys.filter(t => t.setup.includes("reversal")) },
+  { v: "flag", label: "flag", ts: sys.filter(t => t.setup.includes("flag")) },
+];
+// 数据里的标签是中文（顺势 / 逆势 / 走平），显示时换成当前语言
+const cols = ["顺势", "逆势", "走平"];
+const rows = ["顺势", "逆势"];
+const emaText: Record<string, string> = { 顺势: s.with, 逆势: s.against, 走平: s.flat };
+
+const signedR = (v: number) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "R";
+function cell(ts: Trade[]) {
+  if (!ts.length) return { v: "—", n: nTrades(s, 0), s: "", bg: "transparent" };
+  const sum = ts.reduce((s, t) => s + t.r, 0);
+  const avg = sum / ts.length;
+  const wins = ts.filter(t => t.pts > 0).length;
+  // 发散色：0 是中性，±1R 封顶
+  const k = Math.min(1, Math.abs(avg)) * 34;
+  const bg = `color-mix(in srgb, ${avg >= 0 ? "var(--accent)" : "#c4802b"} ${k.toFixed(0)}%, transparent)`;
+  return { v: signedR(avg), n: tplStr(s.cellN, { n: ts.length, w: wins }), s: tplStr(s.cellSum, { v: signedR(sum) }), bg };
+}
+const grid = (ts: Trade[]) =>
+  [...rows, "all"].map(r =>
+    [...cols, "all"].map(c => cell(ts.filter(t => (r === "all" || t.e60 === r) && (c === "all" || t.e5 === c))))
+  );
+---
+
+<section class="bx eg" aria-label={s.egLabel}>
+  <div class="bx-controls">
+    <div class="bx-switch" role="group" aria-label="Setup">
+      {modes.map((m, i) => <button type="button" data-v={m.v} aria-pressed={i === 0 ? "true" : "false"}>{m.label} {nTrades(s, m.ts.length)}</button>)}
+    </div>
+  </div>
+
+  {
+    modes.map((m, i) => (
+      <div class="eg-view" data-v={m.v} hidden={i !== 0}>
+        <div class="eg-grid">
+          <div class="eg-corner">
+            <span>5m →</span>
+            <span>60m ↓</span>
+          </div>
+          {cols.map(c => <div class="eg-head">5m {emaText[c]}</div>)}
+          <div class="eg-head is-total">{s.only60}</div>
+          {grid(m.ts).map((row, ri) => (
+            <>
+              <div class:list={["eg-head", "is-row", ri === rows.length && "is-total"]}>{ri < rows.length ? `60m ${emaText[rows[ri]]}` : s.only5}</div>
+              {row.map((c, ci) => (
+                <div class:list={["eg-cell", (ri === rows.length || ci === cols.length) && "is-total"]} style={`background:${c.bg}`}>
+                  <p class="eg-v">{c.v}</p>
+                  <p class="eg-n">{c.n}</p>
+                  {c.s && <p class="eg-n is-sum">{c.s}</p>}
+                </div>
+              ))}
+            </>
+          ))}
+        </div>
+      </div>
+    ))
+  }
+
+  <div class="fn-legend eg-legend">
+    <span><i class="eg-key-pos"></i>{s.posKey}</span>
+    <span><i class="eg-key-neg"></i>{s.negKey}</span>
+    <span>{s.depthKey}</span>
+  </div>
+  <p class="fn-note">{s.egNote}</p>
+</section>
+
+<script>
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".eg").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const sw = root.querySelector<HTMLElement>(".bx-switch")!;
+      sw.addEventListener("click", e => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-v]");
+        if (!btn) return;
+        sw.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+        root.querySelectorAll<HTMLElement>(".eg-view").forEach(v => (v.hidden = v.dataset.v !== btn.dataset.v));
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style>
+  .eg .bx-switch button {
+    white-space: nowrap;
+  }
+  .eg-grid {
+    display: grid;
+    grid-template-columns: minmax(64px, auto) repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .eg-corner,
+  .eg-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 4px;
+    font-size: 12.5px;
+    color: var(--summary);
+    text-align: center;
+  }
+  .eg-corner {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11.5px;
+    color: var(--faint);
+  }
+  .eg-head.is-row {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .eg-head.is-total {
+    font-weight: 600;
+  }
+  .eg-cell {
+    padding: 10px 8px;
+    border: 1px solid rgb(0 0 0 / 0.06);
+    border-radius: 10px;
+    text-align: center;
+  }
+  .eg-cell.is-total {
+    border-style: dashed;
+  }
+  .eg-v {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .eg-n {
+    margin-top: 2px !important;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--summary);
+  }
+  .eg-legend {
+    margin-top: 14px;
+  }
+  .eg-legend i.eg-key-pos {
+    background: color-mix(in srgb, var(--accent) 34%, white);
+  }
+  .eg-legend i.eg-key-neg {
+    background: color-mix(in srgb, #c4802b 34%, white);
+  }
+  @media (max-width: 520px) {
+    .eg-grid {
+      grid-template-columns: 52px repeat(4, minmax(0, 1fr));
+      gap: 3px;
+    }
+    .eg-cell {
+      padding: 8px 2px;
+    }
+    .eg-v {
+      font-size: 14px;
+    }
+    .eg-n {
+      font-size: 10.5px;
+    }
+    .eg-head {
+      font-size: 11px;
+    }
+    .eg-n.is-sum {
+      display: none;
+    }
+  }
+</style>

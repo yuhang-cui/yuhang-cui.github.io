@@ -1,0 +1,975 @@
+---
+title: "Wedge Rep20 Live Review: Reflections on 20 Trades"
+description: "20 live Wedge trades on the MES 5-minute chart: 50% win rate, and the 19 in-system trades averaged +0.23R. The biggest leak is rushed entries: the 5 rushed trades total −4.0R, and without them the average is +0.60R. The decision order was backwards: I wanted a direction first, then went looking for a wedge on the chart. It also looks at when during the day the 20 entries were made."
+stat: "+0.23R"
+statLabel: "Average per trade"
+pubDatetime: 2026-10-30T20:00:00+08:00
+tags: [Strategies]
+lang: en
+---
+
+import TableTabs from "@/components/TableTabs.astro";
+import EntryTimeChart from "@/components/EntryTimeChart.astro";
+import Rep20Overview from "@/components/Rep20Overview.astro";
+import EntryWindowExplorer from "@/components/EntryWindowExplorer.astro";
+import EmaGridExplorer from "@/components/EmaGridExplorer.astro";
+import MfeRowsChart from "@/components/MfeRowsChart.astro";
+import ScatterRChart from "@/components/ScatterRChart.astro";
+import DirectionChart from "@/components/DirectionChart.astro";
+import trades from "./trades.json";
+
+export const system = trades.filter(t => t.kind !== "rule");
+export const beOrWin = system.filter(t => t.pts > 0 || t.n === 14);
+export const locType = t => (/tight|spike/i.test(t.loc) ? "tight" : /ttr/i.test(t.loc) ? "ttr" : "broad");
+export const ebarText = { "好的趋势K": "Good trend bar", "可接受的跟随": "Acceptable follow-through", "Doji": "Doji", "一般逆势K": "Mild counter bar", "强逆势K": "Strong counter bar" };
+
+> **Sample**: 2026-09-14 to 10-27, 15 trading days, 20 live wedge trades on the MES 5-minute chart, with discretionary exits.
+>
+> **Result**: 19 in-system trades, 53% win rate (10 won, 9 lost), +4.33R total, +32 points (+$160), **+0.23R** per trade on average.
+>
+> <span class="takeaway">In one sentence: my biggest problem is that I sometimes get FOMO and rush, which leads to poorly chosen entries; the exits are reasonable, and the system as a whole has positive expectancy.</span>
+
+## 📊 Overview
+
+<Rep20Overview trades={trades} />
+
+## 1. 🏃 The biggest leak: rushed entries
+
+In the reviews I wrote "rushed, hasty, impatient, should have waited" on 5 trades, totalling **−4.0R**. Without those 5, the remaining 14 total +8.4R, **+0.60R** per trade, 2.6 times the average of all in-system trades (+0.23R).
+
+<TableTabs title="The 5 rushed entries" tabs={["How the rushing shows up", "Trade by trade"]}>
+<div class="tt-panel">
+
+**When you hold a hammer, everything looks like a nail**
+
+When I see a bull breakout or a bull channel, some trending market, I instinctively want to join in, assume the trend will continue, and ignore the chance of a reversal or a trading range. So some pullbacks that don't really look like wedges get read as wedges and used as an excuse to enter.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Trade | Result | What happened | What went wrong |
+|:---|:---:|:---|:---|
+| #7 · 10/6 | −1.00R | A very climactic rally that day, with a very strong bull leg. I badly wanted to go long, a bit of FOMO, and entered on the third buy signal bar. | The imperfect pattern is secondary; the main issue is location: after such a climactic rally, a trading range is likely; on a day that swings this much, the gaps will probably be filled. I should have waited patiently for a pullback to the EMA. |
+| #11 · 10/15 | −1.00R | The first push of the wedge was inside the bull leg, which a computer wouldn't recognise; it would treat the second and third pushes as the first and second and still be waiting for a third. I read a high 2 as a high 3, and it was a tight trading range at the time. | Hammer and nail again. Waiting a little longer for a new wedge to form would have been a successful trade. |
+| #12 · 10/20 | +0.06R | Saw the earlier bear breakout and wanted to follow the trend, to get in quickly. | Hammer and nail again: the location wasn't great, the signal bar wasn't great; the wedge was only visible on the 3-minute chart, not on the 5-minute. |
+| #16 · 10/22 | −1.08R | The wedge I saw was bars 57, 61 and 63, not very symmetrical, and the entry was a bit hasty. Only 17 minutes after the previous trade in the same direction (#15) was stopped out. | I think this one was relatively OK, and I wasn't aware of wanting to win the last one back, but it may have been there subconsciously. The really good entry was bar 67. |
+| #18 · 10/26 | −1.00R | A bull breakout day; the pullback formed a wedge bottom, and I entered on the second buy signal bar. | The direction was slightly off, the reasoning a bit of a stretch, though not without merit. The review at the time said: the wedge bottom wasn't a clean pattern, should have waited longer. |
+
+</div>
+
+</div>
+</TableTabs>
+
+### Reflection
+
+Before every entry, ask three questions; one "no" and I don't take the trade.
+
+<section class="rc policy">
+<div class="rc-panel rc-def">
+
+<p class="policy-title">1. Pattern: is this wedge obvious enough?</p>
+
+1. Without drawing lines on the 5-minute chart, can I count three pushes at a glance?
+2. Are the three pushes symmetrical?
+3. Is there a clear pullback between each push? The first push can be inside the trend, but it has to be obvious: for example, in a bull trend, a clear bear-bar pullback, then a new high, then another pullback, which together with the first pullback make up the three pushes.
+4. After each new high, is the pullback deep? If the pullbacks are very shallow, it may instead be a small pullback trend and the trend is strong; if every new high is followed by a deep pullback and each new high is only slightly higher, the wedge works better.
+5. Did the third push overshoot the trend channel line drawn from the first two pushes (or clearly exceed the prior high), and then come straight back? A failed overshoot often reverses more forcefully.
+6. Are the three pushes converging? The upper and lower edges getting closer, wedge-shaped, rather than a parallel channel. A parallel channel is more likely trend continuation.
+
+<p class="policy-title">2. Location: is it good?</p>
+
+1. Right after a very strong trend leg (say 7–10 consecutive bars, almost all bull bars), price is usually far from the EMA: has the pullback reached the EMA yet? If it is only a two-legged pullback still far from the EMA, the entry has a low win rate. Better to wait for a third pullback and a good signal near the EMA before going long.
+2. In a trading range: am I buying in the bottom third and selling in the top third?
+
+<p class="policy-title">3. State of mind: did I "see an opportunity", or do I "want an opportunity"?</p>
+
+1. Just opened the chart: did I spot an opportunity at a glance and want to place the order before analysing it properly?
+2. Just finished a game: is my attention really back on the chart?
+3. Just took a loss: my state of mind may already be affected without my noticing. Be more careful on the next one.
+4. Just missed a move: am I trying to chase it back?
+
+</div>
+</section>
+
+## 2. 🕒 Entry time distribution
+
+<EntryTimeChart trades={trades} />
+
+<TableTabs title="Entry time statistics" tabs={["By time of day", "Without rushed entries", "How far it went"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Entry time (ET) | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Before 10:30 (first hour) | 4 | 4 | +4.96R | **+1.24R** |
+| 10:30–12:00 | 4 | 2 | +1.54R | +0.38R |
+| After 12:00 | 11 | 4 | −2.17R | −0.20R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">In-system 19 trades only. #12 made only 0.5 points and still counts as a winner.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Entry time (ET) | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Before 10:30 (first hour) | 4 | 4 | +4.96R | **+1.24R** |
+| 10:30–12:00 | 3 | 2 | +2.54R | +0.85R |
+| After 12:00 | 7 | 3 | +0.85R | +0.12R |
+| **All (without rushed entries)** | **14** | **9** | **+8.35R** | **+0.60R** |
+
+</div>
+
+<p class="table-note">The 19 in-system trades minus the 5 rushed entries. The afternoon is still clearly worse than the morning, so the afternoon's weakness isn't just the rushing.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Entry time (ET) | Trades | Reached 1R | Reached 2R |
+|:---|:---:|:---:|:---:|
+| Before 10:30 (first hour) | 4 | 3 | 2 |
+| 10:30–12:00 | 4 | 2 | 1 |
+| After 12:00 | 11 | 4 | **0** |
+| **All (in-system)** | **19** | **9** | **3** |
+
+</div>
+
+<p class="table-note">"Reached 1R / 2R" is how far price went in my favour after entry (MFE), regardless of how the trade was exited. Of the 11 trades after 12:00, not one reached 2R.</p>
+
+</div>
+</TableTabs>
+
+### Is entry time related to the result?
+
+<TableTabs title="Entry time vs result" tabs={["Conclusion", "Is there a relationship", "Is it stable", "Other explanations", "Limitations"]}>
+<div class="tt-panel">
+
+**The later the entry, the worse the result, but it can't be called a conclusion yet.**
+
+1. Across the 19 trades, entry time and result have a moderate negative correlation: on average, each hour later costs about 0.36R per trade.
+2. Seven different tests all point the same way; dropping any single trade doesn't change the conclusion.
+3. The cause looks more like the market than me: the signal bars after 12:00 aren't worse, but price doesn't go far; none of the 11 reached 2R. This is a separate problem from "rushed entries".
+4. The sample is too small, and "12:00" was chosen after looking at the data, so for now it is only a hypothesis to test over the next 20 trades.
+
+<p class="table-note">Separately, hold time and result are unrelated (ρ = −0.11, p = 0.65).</p>
+
+</div>
+<div class="tt-panel">
+
+**First, the p-value**: suppose entry time and result are actually unrelated; how likely is it that luck alone produces a trend this clear? p = 0.03 means about 3%. By convention, below 5% counts as "doesn't look like luck".
+
+<div class="exp-table">
+
+| Test | Result | p |
+|:---|:---|:---:|
+| ① Spearman rank correlation | ρ = −0.49 | 0.03 |
+| ② Linear regression | 0.36R less per trade for each hour later | 0.05 |
+| ③ Bootstrap resampling | 95% interval of the slope: −0.58 to −0.11 | — |
+| ④ Wins vs losses only (Mann–Whitney U) | Median entry time 11:30 for winners, 12:35 for losers | 0.055 |
+
+</div>
+
+1. **Spearman rank correlation**: rank the 19 trades by entry time and by result, and check whether the two rankings move together. ρ runs from −1 to +1: 0 is no relationship, −1 is a perfect "later is worse". −0.49 is moderate. It only looks at ranks, so one big winner (such as #10 at +2.85R) can't skew it. The p-value comes from permutation: shuffle the 19 results at random 100,000 times, and only about 3% of shuffles produce a relationship this strong.
+2. **Linear regression**: draw the best-fitting straight line through the scatter plot; the slope is "how many R per hour later, on average". −0.36R per hour means a 10:00 entry and a 14:00 entry differ by about 1.4R on average. With a small sample the observed effect tends to be overstated, so the real gap is probably smaller.
+3. **Bootstrap resampling**: draw 19 trades from these 19 with replacement, recompute the slope, repeat 10,000 times. 95% of the results fall between −0.58 and −0.11, all below zero: as long as it's this batch of trades, the "later is worse" direction is very stable. But it can't answer whether future trades will behave the same.
+4. **Wins vs losses only**: ignore how much was won or lost, and only compare whether winners or losers entered earlier. Winners are earlier overall, p = 0.055, right on the 5% line.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Test | Result | p |
+|:---|:---|:---:|
+| ① Drop any one trade | ρ between −0.57 and −0.40 | — |
+| ② Cap wins at +1R | ρ = −0.42 | 0.07 |
+| ③ One value per day | Average per day: ρ = −0.48 | 0.07 |
+| ④ Cut-point correction | Best cut-point is 11:36 | 0.14 |
+
+</div>
+
+1. **Drop any one trade**: remove one trade at a time and recompute, 19 times. Weakest −0.40, strongest −0.57. The conclusion doesn't rest on a single trade, such as #10 or #20.
+2. **Cap wins at +1R**: treat every result above +1R as +1R, to check whether a few big winners are driving it. The relationship is still there but somewhat weaker: part of the morning's edge comes from a few big winners.
+3. **One value per day**: two trades on the same day face the same market, so they aren't two independent samples. Averaging each day's trades gives 15 points for 15 days, p = 0.07; taking only the first trade of each day, p = 0.16. Fewer samples, weaker evidence.
+4. **Cut-point correction**: "12:00" was picked after looking at the data. If you try every possible cut-point and keep the best, pure luck can easily produce one that looks very significant. The correction: shuffle the results 20,000 times, pick the best cut-point each time, and count how often it beats the real data. The answer is 14%. So the specific rule "no entries after a certain time" has no statistical support yet.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Possible cause | Test result |
+|:---|:---|
+| ① Worse state later in the series | Controlling for entry time, trade number has an effect ≈ 0; controlling for trade number, entry time still has −0.41 (p = 0.08) |
+| ② Rushed entries | Rushing and entry time are almost unrelated; controlling for rushing, entry time still has −0.51 (p = 0.03) |
+| ③ Good or bad day | Only 4 same-day early/late pairs: the later one was better twice, worse once, equal once |
+| ④ Afternoon moves don't go far | Reached 2R: 3 of 8 before 12:00, 0 of 11 after 12:00 (p ≈ 0.06) |
+
+</div>
+
+1. **Worse state later in the series**: the later trades happen to fall mostly in the afternoon (correlation 0.61), so either one on its own looks related. A partial correlation is "how much relationship is left after removing the other factor's influence". Controlling for entry time, trade number's effect drops to zero; the other way round, entry time's effect remains. So it looks more like an "afternoon" problem than a "worse later in the series" problem.
+2. **Rushed entries**: 4 of the 5 rushed trades were after 12:00, but overall rushing and entry time are barely related (ρ = 0.15). Controlling for rushing, entry time's effect is actually clearer. These are two independent problems: a rushed trade costs about −1.25R on average, each hour later about −0.3R.
+3. **Good or bad day**: if it were just "some days are easy, some are hard", the early and late trades on the same day should do about equally well. Unfortunately there are only 4 pairs, not enough to tell.
+4. **Afternoon moves don't go far**: the signal bars after 12:00 aren't worse (strong signal bars 8 of 11, versus 5 of 8 in the morning), but price doesn't go far: the median MFE after entry is 1.37R in the morning and 0.61R in the afternoon; there are also more TR days in the afternoon. This matches the usual pattern of lower midday volume and volatility in US stocks. The p-value is from Fisher's exact test, made for comparing two proportions in small samples.
+
+</div>
+<div class="tt-panel">
+
+1. **Small sample**: only 19 trades. The 95% interval for ρ is −0.77 to −0.05; the true relationship could be very strong or almost nothing.
+2. **Too many dimensions examined**: this review looked at entry time, hold time, weekday, setup, trade number of the day, five or six dimensions. The more you look at, the more likely you stumble on a "significant" one by chance. With the most conservative Bonferroni correction, the threshold drops from 0.05 to about 0.01, and 0.03 doesn't pass.
+3. **The cut-point was chosen after the fact**: see item 4 under "Is it stable"; corrected p = 0.14.
+4. **Several factors are tangled together**: the later trades are mostly in the afternoon, and the rushed trades are mostly in the afternoon too. Partial correlation removes some of it, but 19 trades can't be separated cleanly.
+5. **How many trades to confirm it**: if the true relationship really is as strong as −0.49, about 30 trades would give an 80% chance of confirming it; if it's only −0.25 (small samples usually overstate the effect, so this is more realistic), about 120 trades are needed.
+
+</div>
+</TableTabs>
+
+### Hypothesis: only enter during a certain window
+
+Following the method Xiaolang posted, I wrote "entry time" as a rule that can be executed mechanically and re-ran it over the 19 trades. You can change the start and end times yourself.
+
+<EntryWindowExplorer trades={trades} />
+
+1. **No entries after 12:00**: 8 trades totalling +6.50R, +0.81R per trade. All 19 trades are +4.33R, +0.23R per trade.
+2. **The earlier the end time, the higher the average per trade, but there is no clear turning point in total R**: stopping at 12:00, 13:30 or 14:30 all give a total around +6.4R. There is no sign that "past a certain point you should stop", which is consistent with the cut-point correction p = 0.14.
+3. **The 2 trades in the last half hour (#16, #19) both lost about 1R**: with no entries after 14:30 the total still reaches +6.41R, and only 2 trades are skipped.
+
+### Next step
+
+Make "entry time" the only hypothesis to test over the next 20 trades. Rather than banning the afternoon outright, change it to "after 12:00, only take trades that pass all three questions", and compare morning and afternoon after 20 trades.
+
+## 3. 📈 5-minute and 60-minute EMA
+
+For every trade I recorded the direction of two EMAs at entry: on the 5-minute chart and on the 60-minute chart. "With" means the trade is in the same direction as that EMA, "against" the opposite, "flat" means the EMA is roughly flat. Everything below counts the 19 in-system trades only.
+
+<EmaGridExplorer trades={trades} />
+
+<TableTabs title="EMA statistics" tabs={["How far it went", "Number of EMAs with", "Morning vs afternoon"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| 5m / 60m | Trades | Reached 1R | Reached 2R | MFE (median) |
+|:---|:---:|:---:|:---:|:---:|
+| With / with | 5 | 2 | 1 | 0.61R |
+| Against / with | 5 | 3 | 1 | **1.67R** |
+| With / against | 3 | 2 | 1 | 1.06R |
+| Against / against | 5 | 1 | **0** | 0.80R |
+| Flat / against | 1 | 1 | 0 | 1.09R |
+| **All (in-system)** | **19** | **9** | **3** | **0.94R** |
+
+</div>
+
+<p class="table-note">"MFE" is how far price went in my favour after entry, regardless of how the trade was exited. Of the 5 trades against both EMAs, only 1 reached 1R.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| EMAs with the trade | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| 0 | 6 | 2 | −1.58R | −0.26R |
+| 1 | 8 | 5 | +4.86R | **+0.61R** |
+| 2 | 5 | 3 | +1.05R | +0.21R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">0 includes #2 (5m flat, 60m against). More "with" isn't better: both EMAs with the trade did worse than just one.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Entry time · EMA | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Before 12:00 · against both | 1 | 1 | +0.67R | +0.67R |
+| Before 12:00 · other | 7 | 5 | +5.83R | +0.83R |
+| After 12:00 · against both | 4 | 0 | −2.42R | −0.60R |
+| After 12:00 · other | 7 | 4 | +0.25R | +0.04R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">4 of the 5 trades against both EMAs were after 12:00, and all lost. So "against both is bad" and "the afternoon is bad" are tangled together and can't be separated.</p>
+
+</div>
+</TableTabs>
+
+### Is the EMA related to the result?
+
+<TableTabs title="EMA vs result" tabs={["Conclusion", "Is there a relationship", "Other explanations", "Limitations"]}>
+<div class="tt-panel">
+
+**There's a hint, but the evidence is weaker than for entry time.**
+
+1. The worst is against both the 5m and the 60m: 5 trades, 1 winner, −1.75R total.
+2. But more "with" isn't better: the 5 trades with both EMAs averaged only +0.21R; the best is "one with, one against", about +0.6R on average. For example 5m against and 60m with is like the end of a pullback in a higher time frame trend, with price returning to the direction of the bigger trend.
+3. For wedge reversals the 60m matters more: with the 60m averages +0.67R, against −0.07R. For wedge flags the 60m direction makes almost no difference.
+4. Every test has p above 0.1, and the trades against both EMAs were mostly in the afternoon, inseparable from entry time. A hint, not a rule.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Test | Result | p |
+|:---|:---|:---:|
+| ① Against both vs the rest (permutation test) | −0.35R vs +0.43R per trade, a gap of 0.78R | 0.21 |
+| ② Win rate when against both (Fisher's exact test) | 1 of 5 vs 9 of 14 | 0.14 |
+| ③ Four combinations together (Kruskal–Wallis) | The four groups' result distributions differ little | 0.58 |
+| ④ Is more "with" better (Spearman) | ρ = 0.21 | 0.39 |
+
+</div>
+
+1. **Permutation test**: shuffle the 19 results 50,000 times and count how often "pick any 5 as against both" produces a gap of 0.78R or more. About 21%, one time in five, easy to get by pure luck.
+2. **Fisher's exact test**: made for comparing two proportions in small samples. 1/5 and 9/14 look very different, but 5 trades is too few, p = 0.14.
+3. **Kruskal–Wallis test**: compares several groups at once to see whether they come from the same distribution. It only looks at ranks, so big winners don't distort it. p = 0.58, no systematic difference between the four combinations.
+4. **Spearman rank correlation**: checks whether "number of EMAs with the trade" (0, 1, 2) rises and falls with the result. ρ = 0.21 is very weak, and the middle group is the best, so it isn't a straight line. Looking at the 5m alone (p = 0.68) or the 60m alone (p = 0.52), neither shows a significant difference either. Within reversals, 60m with vs against differ by 0.74R, p = 0.33.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Possible cause | Test result |
+|:---|:---|
+| ① Entry time | 4 of the 5 against-both trades were after 12:00; controlling for entry time, the against-both effect drops from −0.78R to −0.45R (p = 0.46) |
+| ② Rushed entries | #16 was both a rushed entry and against both; also controlling for rushing, the against-both effect is −0.65R (p = 0.22) |
+| ③ Setup | Against both: 3 reversals and 2 flags; both flags lost |
+| ④ Moves don't go far | Median MFE of against-both trades is only 0.80R, and only 1 of 5 reached 1R |
+
+</div>
+
+1. **Entry time**: put entry time and against-both into one regression to see how much effect each keeps. Controlling for time, the against-both effect shrinks by almost half, with a large p-value. In other words, part of "against both is bad" may just be "the afternoon is bad".
+2. **Rushed entries**: a rushed trade costs about −1.3R on average, a far bigger effect than the EMA. With all three factors in the model, only "rushed" is significant (p = 0.015).
+3. **Setup**: a flag is supposed to be "a pullback in the direction of the trend"; taking a flag with both EMAs against it means the "trend" I saw was opposite to what the EMAs showed. Both trades (#15, #16) lost.
+4. **Moves don't go far**: the problem with against-both isn't "just short of the target" but "never got going", much like the afternoon.
+
+</div>
+<div class="tt-panel">
+
+1. **Too few trades per cell**: each cell in the cross-table has only 1–5 trades; one trade can flip the conclusion.
+2. **The labels were set by hand**: there is no written rule for with, against and flat, such as how small the EMA slope has to be to count as flat. Better to define the rule first, then label.
+3. **Tangled with other factors**: against-both trades were mostly in the afternoon, #16 was also a rushed entry, and 19 trades can't be separated cleanly.
+4. **Many ways of slicing**: 5m, 60m, combinations, number of EMAs with, by setup… the more ways you slice, the more likely you hit a result that looks significant by chance.
+
+</div>
+</TableTabs>
+
+### Hypothesis: add an EMA rule
+
+As with entry time, write the EMA as a rule that can be executed mechanically and re-run it over the 19 trades.
+
+<div class="exp-table split-last">
+
+| Rule | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Skip against both | 14 | 9 | **+6.08R** | +0.43R |
+| At least one EMA with | 13 | 8 | +5.91R | **+0.45R** |
+| Reversals only with the 60m | 15 | 8 | +4.61R | +0.31R |
+| Skip 60m against | 10 | 6 | +4.00R | +0.40R |
+| Skip 5m against | 9 | 6 | +3.13R | +0.35R |
+| Both EMAs with only | 5 | 3 | +1.05R | +0.21R |
+| **No rule (baseline)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">"At least one EMA with" and "skip against both" differ only by #2 (5m flat, 60m against).</p>
+
+1. **"Skip against both" is the simplest and makes the biggest difference**: only 5 trades skipped, and the total goes from +4.33R to +6.08R.
+2. **Too strict is worse**: "both EMAs with only" leaves 5 trades for just +1.05R, missing many good trades.
+3. **Any single-EMA rule is worse than "skip against both"**: either it skips too many (skipping 60m against drops 9 trades), or the total actually falls (skipping 5m against).
+
+### Next step (under discussion)
+
+1. Don't ban against-both yet, but add a question before entry: both EMAs are against me, so why do I think it will reverse? Keep recording over the next 20 trades and see whether it repeats.
+2. Define a rule for "flat"; from now on, define first, then label.
+3. For wedge reversals, prefer the ones in the direction of the 60m EMA.
+
+## 4. 🎯 Whether price retested the entry
+
+In the spreadsheet, "retested entry" records whether price came back to the entry price after entry and before exit. Losing trades always retest the entry, so only breakeven and winning trades are looked at here: 11 in-system trades (the breakeven exit is #14, closed at −0.12R).
+
+<MfeRowsChart
+  groups={[
+    { label: "No retest", ts: beOrWin.filter(t => t.retest === "否") },
+    { label: "Retested entry", tone: "grey", ts: beOrWin.filter(t => t.retest === "是") },
+  ]}
+  detail={t => `Entry bar · ${ebarText[t.ebar]}`}
+  caption="Only the 11 in-system trades that broke even or won (losing trades always retest the entry, so they are left out). The longer the bar, the farther price went in my favour; the farther the dot sits from the right end of the bar, the more was given back."
+/>
+
+### Conclusion
+
+**Statistically it looks like a pattern, but it isn't of much practical use.** The 5 trades that didn't retest averaged +1.56R, the 6 that did +0.55R (p between 0.05 and 0.1). But this is almost explaining the result with the result: a trade that runs smoothly probably won't retest, a trade that struggles probably will, and its result will naturally struggle too. On top of that, "retested entry" has no strict definition, so it isn't treated as a direction for improvement.
+
+## 5. 🕯️ Signal bar
+
+### Definitions
+
+<p class="table-title">Signal bar definitions (same as Experiment 01; for a long, reverse for a short)</p>
+
+<div class="exp-table">
+
+| Grade | What counts |
+|:---|:---|
+| strong trend bar | a. Strong body, not too small (1–2 points doesn't count)<br/>b. Short upper tail |
+| strong pin bar | a. Long lower tail, closes near the high<br/>b. If the body is a large share of the bar: a small upper tail is fine<br/>c. If the body is a small share: the lower tail can't be too long, and there is almost no upper tail |
+| weak pin bar | a. Small body, but a very long lower tail<br/>b. Or a somewhat long upper tail |
+| weak trend bar | a. Doesn't meet the strong trend bar conditions (smallish body or longer upper tail) |
+
+</div>
+
+### Statistics
+
+<TableTabs title="Signal bar statistics" tabs={["Results", "Entry bar mix", "Targets", "vs Experiment 01", "Tests"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Signal bar | Trades | Won | Hit 1R | Hit 1.5R | Hit 2R | Hit 3R | Average |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 9 | 44%<span class="wl">4 trades</span> | 44%<span class="wl">4 trades</span> | 44%<span class="wl">4 trades</span> | 33%<span class="wl">3 trades</span> | 22%<span class="wl">2 trades</span> | +0.29R |
+| strong trend bar | 4 | 50%<span class="wl">2 trades</span> | 25%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | −0.22R |
+| weak pin bar | 5 | 60%<span class="wl">3 trades</span> | 60%<span class="wl">3 trades</span> | 40%<span class="wl">2 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | **+0.49R** |
+| weak trend bar | 1 | 100%<span class="wl">1 trade</span> | 100%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | +0.17R |
+| **All (in-system)** | **19** | **53%**<span class="wl">10 trades</span> | **47%**<span class="wl">9 trades</span> | **32%**<span class="wl">6 trades</span> | **16%**<span class="wl">3 trades</span> | **11%**<span class="wl">2 trades</span> | **+0.23R** |
+
+</div>
+
+<p class="table-note">Percentages are of the trades in that row. "Hit 1R" etc. is how far price went in R at most (MFE ÷ initial stop), regardless of how the trade was exited.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Signal bar | Good trend bar | Acceptable follow-through | Doji | Mild counter bar | Strong counter bar |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 33%<span class="wl">3 trades</span> | 11%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 22%<span class="wl">2 trades</span> | 33%<span class="wl">3 trades</span> |
+| strong trend bar | 0%<span class="wl">0 trades</span> | 50%<span class="wl">2 trades</span> | 0%<span class="wl">0 trades</span> | 50%<span class="wl">2 trades</span> | 0%<span class="wl">0 trades</span> |
+| weak pin bar | 20%<span class="wl">1 trade</span> | 40%<span class="wl">2 trades</span> | 20%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 20%<span class="wl">1 trade</span> |
+| weak trend bar | 100%<span class="wl">1 trade</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> |
+
+</div>
+
+<p class="table-note">The entry bars after a strong pin bar are polarised: the 4 with good follow-through all won, the 5 with a counter bar all lost.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Signal bar | 1R | 1.5R | 2R | 3R | Actual (discretionary exit) |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | −0.06 | +0.16 | +0.26 | **+0.47** | +0.29 |
+| strong trend bar | **+0.01** | −0.22 | −0.22 | −0.22 | −0.22 |
+| weak pin bar | **+0.53** | +0.51 | +0.49 | +0.49 | +0.49 |
+| weak trend bar (1 trade) | **+1.00** | +0.17 | +0.17 | +0.17 | +0.17 |
+
+</div>
+
+<p class="table-note">Values are average R per trade; bold = best in the row. Method: if price reached the target at any point, count the target, otherwise the actual result. Live, the MFE is only recorded up to the exit, and the move may have continued afterwards, so the farther the target, the more <strong>conservative</strong> the result (the opposite of Experiment 01, where 3R was optimistic).</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Signal bar | Trades (experiment + live) | Hit 2R · Experiment 01 | Hit 2R · live | Hit 2R · combined | Hit 1R · combined |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 11 + 9 | 64%<span class="wl">7 trades</span> | 33%<span class="wl">3 trades</span> | **50%**<span class="wl">10 trades</span> | 70%<span class="wl">14 trades</span> |
+| strong trend bar | 12 + 4 | 42%<span class="wl">5 trades</span> | 0%<span class="wl">0 trades</span> | 31%<span class="wl">5 trades</span> | 56%<span class="wl">9 trades</span> |
+| weak pin bar | 6 + 5 | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 36%<span class="wl">4 trades</span> |
+| weak trend bar | 1 + 1 | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 0%<span class="wl">0 trades</span> | 100%<span class="wl">2 trades</span> |
+
+</div>
+
+<p class="table-note">Experiment 01 used a fixed 2R target with no stop moves, so "hit 2R" means the 2R target was filled; live uses MFE. The exits differ, so only "reached or not" is compared, not average R.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Test | Result | p |
+|:---|:---|:---:|
+| ① Live: strong vs weak signal bars (permutation test) | +0.13R vs +0.44R per trade, weak slightly higher | 0.61 |
+| ② Live: three signal bars together (Kruskal–Wallis) | strong pin / strong trend / weak pin distributions differ little | 0.77 |
+| ③ Experiment + live: share that hit 2R (Fisher's exact test) | strong 15 of 36 vs weak 0 of 13 | **0.004** |
+| ④ Live strong pin bars: good vs poor follow-through (Fisher's exact test) | 4 all won vs 5 all lost | **0.008** |
+
+</div>
+
+1. **Permutation test**: shuffle the 19 results 50,000 times and count how often "pick any 13 as strong signal bars" produces a bigger gap than the real one. About 61%, so live there is no visible difference between strong and weak signal bars.
+2. **Kruskal–Wallis test**: compares several groups at once, ranks only, unaffected by big winners. p = 0.77, no systematic difference between the three signal bars live (weak trend bar has only 1 trade and is left out).
+3. **Fisher's exact test (hit 2R)**: combine the 30 trades of Experiment 01 and the 19 live, 49 in total. None of the 13 weak signal bars ever reached 2R; the chance of that by pure luck is only 0.4%. This is the most reliable pattern so far.
+4. **Fisher's exact test (strong pin bar)**: of 9 trades, the 4 winners are exactly the ones with good follow-through, and the 5 losers are exactly the ones with a counter bar. The chance of such a clean split by luck is under 1%.
+
+</div>
+</TableTabs>
+
+### Conclusions
+
+1. **Live, strong signal bars were no better than weak ones**: 13 strong averaged +0.13R, 6 weak +0.44R (p = 0.61), the opposite of Experiment 01 (23 strong totalling +17R, all 7 weak stopped out). Experiment 01 has a larger sample and labels checked against the definitions, so it takes precedence.
+2. **Weak signal bars rarely reach 2R, and both agree on this**: 7 in the experiment plus 6 live, 13 in total, and none reached 2R; strong signal bars reached it 15 times out of 36 (42%), p = 0.004. If you take a weak signal bar, keep the target around 1R (live, weak pin bars with a 1R target give +0.53R, the best).
+3. **The result of a strong pin bar depends almost entirely on the entry bar**: the 4 with good follow-through (good trend bar / acceptable follow-through) all won, +7.14R combined; the 5 with a counter bar all lost, −4.56R combined, never getting beyond 0.17–0.31R (p = 0.008). Consistent with conclusion 4 of Experiment 01.
+4. **Strong trend bars did worst live**: 4 trades averaging −0.22R, none reaching 1.5R. But all 4 were after 12:00 and 2 were rushed entries; too few to conclude anything yet.
+5. **Limitations**:
+   1. The live signal bar labels were set at the time and not re-checked against the Experiment 01 definitions;
+   2. Of the 6 weak live trades, 4 had good follow-through and all won; "weak signal bars do better" may come from the entry bar, not the signal bar itself;
+   3. Live exits are discretionary and the MFE is only recorded up to the exit, so the target simulations are conservative.
+
+## 6. ⚖️ Long vs short
+
+Split the 19 in-system trades by direction: 8 shorts, 11 longs. Below: how much the two sides differ, and where the difference comes from.
+
+<DirectionChart trades={trades} />
+
+<TableTabs title="Long vs short" tabs={["Results", "How far it went", "Targets"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Direction | Trades | Winners | Total | Average per trade | Average win | Average loss | Full stop-outs |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Short | 8 | 6 | **+5.49R** | **+0.69R** | +1.10R | −0.56R | 1 |
+| Long | 11 | 4 | −1.16R | −0.11R | +1.16R | −0.83R | 5 |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** | **+1.12R** | **−0.77R** | **6** |
+
+</div>
+
+<p class="table-note">Full stop-out: lost about −1R (hit the initial stop). The wins are similar on both sides; the difference is that longs lose more, and lose in full more often.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Direction | Trades | Reached 1R | Reached 1.5R | Reached 2R | MFE (median) |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| Short | 8 | **6** | 3 | **2** | **1.23R** |
+| Long | 11 | 3 | 3 | 1 | 0.31R |
+| **All (in-system)** | **19** | **9** | **6** | **3** | **0.94R** |
+
+</div>
+
+<p class="table-note">More than half the longs got no farther than about 0.31R, so they basically never got going after entry.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Direction | 1R | 1.5R | 2R | 3R | Actual (discretionary exit) |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| Short | +0.66 | +0.48 | +0.60 | **+0.70** | +0.69 |
+| Long | −0.19 | −0.06 | −0.06 | **+0.03** | −0.11 |
+
+</div>
+
+<p class="table-note">Values are average R per trade; bold = best in the row. Method: if price reached the target at any point, count the target, otherwise the actual result. Wherever the target is, longs stay near zero, so the problem isn't the profit target.</p>
+
+</div>
+</TableTabs>
+
+<TableTabs title="Broken down" tabs={["By setup", "By entry time", "By EMA", "By entry bar", "By month"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Direction · Setup | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Short · reversal | 4 | 2 | +0.89R | +0.22R |
+| Long · reversal | 5 | 3 | +2.20R | +0.44R |
+| Short · flag | 4 | 4 | **+4.60R** | **+1.15R** |
+| Long · flag | 6 | 1 | −3.36R | −0.56R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">The whole difference is in flags: the 4 short flags all won, the 6 long flags won once, and 3 of them were rushed entries. In reversals, longs actually did better than shorts.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Direction · Entry time | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Short · before 12:00 | 3 | 3 | **+4.86R** | **+1.62R** |
+| Long · before 12:00 | 5 | 3 | +1.64R | +0.33R |
+| Short · after 12:00 | 5 | 3 | +0.63R | +0.13R |
+| Long · after 12:00 | 6 | 1 | −2.80R | −0.47R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">In the morning both sides made money; in the afternoon shorts barely broke even and longs won 1 of 6.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Direction · 60m EMA | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Short · 60m with | 3 | 3 | **+3.53R** | **+1.18R** |
+| Long · 60m with | 7 | 3 | +0.47R | +0.07R |
+| Short · 60m against | 5 | 3 | +1.96R | +0.39R |
+| Long · 60m against | 4 | 1 | −1.63R | −0.41R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">Equally with the 60m, the 3 shorts all won while the 7 longs won 3. Same on the 5m: the 4 shorts with the 5m all won (+5.02R), the 4 longs with the 5m won 1 (−2.06R).</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Direction · Entry bar | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Short · good follow-through | 4 | 4 | **+6.28R** | **+1.57R** |
+| Long · good follow-through | 6 | 4 | +3.40R | +0.57R |
+| Short · poor follow-through | 4 | 2 | −0.79R | −0.20R |
+| Long · poor follow-through | 5 | 0 | −4.56R | −0.91R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">Good follow-through = good trend bar, acceptable follow-through; poor follow-through = Doji, mild counter bar, strong counter bar. With poor follow-through, shorts still kept half; all 5 longs lost.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Direction · Month | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Short · September | 2 | 2 | +2.01R | +1.01R |
+| Long · September | 2 | 2 | +1.61R | +0.80R |
+| Short · October | 6 | 4 | +3.48R | +0.58R |
+| Long · October | 9 | 2 | −2.77R | −0.31R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">Both sides did well in September; all the long losses are in October. October was a down month overall: ES fell from about 7744 on 9/30 to about 7600 on 10/30.</p>
+
+</div>
+</TableTabs>
+
+### Is direction related to the result?
+
+<TableTabs title="Direction vs result" tabs={["Conclusion", "Is there a relationship", "Other explanations", "Limitations"]}>
+<div class="tt-panel">
+
+**Shorts clearly beat longs, but mostly because of the rushed longs and the long flags; the evidence for direction itself isn't enough.**
+
+1. Shorts: 8 trades, 6 won, +5.49R; longs: 11 trades, 4 won, −1.16R; a gap of 0.79R per trade.
+2. The difference is concentrated in two kinds of trade: long flags (6 trades, 1 won, −3.36R) and rushed longs (4 trades, all lost, −4.08R). 4 of the 5 rushed entries were longs.
+3. Without the rushed entries, shorts make +0.78R per trade and longs +0.42R; the gap shrinks by more than half.
+4. All the long losses are in October, which was a down month overall. The problem may not be "I can't trade longs" but "going long against the month's direction".
+5. Every test has p above 0.05; a hint only.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Test | Result | p |
+|:---|:---|:---:|
+| ① Gap in average per trade (exact permutation test) | +0.69R vs −0.11R, a gap of 0.79R | 0.15 |
+| ② Ranking of results (Mann–Whitney) | Shorts rank higher overall | 0.14 |
+| ③ Win rate (Fisher's exact test) | 6 of 8 vs 4 of 11 | 0.17 |
+| ④ Share that reached 1R (Fisher's exact test) | 6 of 8 vs 3 of 11 | 0.07 |
+
+</div>
+
+1. **Exact permutation test**: choose 8 of the 19 trades as "shorts"; there are 75,582 ways, and every one is computed. 15% of them produce a gap bigger than the real one, about one in seven, not hard to get by pure luck.
+2. **Mann–Whitney test**: ranks only, not sizes, so a big winner like #10's +2.85R doesn't matter. p = 0.14, similar to the permutation test.
+3. **Fisher's exact test (win rate)**: 75% and 36% look very different, but the sample is too small, p = 0.17.
+4. **Fisher's exact test (reached 1R)**: the closest to significant. The difference is mainly in "whether it gets going": more than half the longs basically never moved after entry.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Possible cause | Test result |
+|:---|:---|
+| ① Rushed entries | 4 of the 5 rushed trades were longs; controlling for rushing, the direction effect drops from 0.79R to 0.49R (p = 0.33), while rushing itself has p = 0.038 |
+| ② Setup | The whole difference is in flags: 4 short flags all won, 6 long flags won once; in reversals, longs did better |
+| ③ Entry time | Longs after 12:00 won 1 of 6; controlling for entry time, the direction effect is 0.80R (p = 0.11), almost unchanged |
+| ④ October's market | September longs: 2 of 2 won; October longs: 2 of 9, and October was a down month |
+
+</div>
+
+1. **Rushed entries**: put direction and rushing into one regression, and only "rushed" is significant. In other words, a large part of "longs are bad" is really "rushed is bad"; the rushed trades just happened to be mostly longs.
+2. **Setup**: a long flag is buying a pullback in a bull trend; 3 of the 6 were rushed entries. Without those, the remaining 3 long flags went 1 win, 2 losses, −0.28R combined, still not good.
+3. **Entry time**: controlling for entry time, the direction effect barely changes, so "longs are bad" isn't caused by "the afternoon is bad".
+4. **October's market**: going long in a down month is going against the big direction. If next month is up, the result could flip.
+
+</div>
+<div class="tt-panel">
+
+1. **Too few trades**: 8 shorts, 11 longs; one big winner can flip the conclusion. Without #10 (+2.85R), shorts drop from +0.69R to +0.38R per trade.
+2. **Too short a period**: only 6 weeks, and October was down overall. One month's direction directly affects the long and short results.
+3. **Tangled with other factors**: rushing, flags, the afternoon and October's market all lean towards the long side, and 19 trades can't be separated cleanly.
+4. **A different adjustment gives a different conclusion**: controlling for rushing, direction isn't significant (p = 0.33); controlling for the entry bar's follow-through, direction becomes significant (p = 0.03). The more models you try, the easier it is to pick the result you want.
+
+</div>
+</TableTabs>
+
+### Hypothesis: add a direction rule
+
+As before, write direction as a rule that can be executed mechanically and re-run it over the 19 trades.
+
+<div class="exp-table split-last">
+
+| Rule | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Longs: reversals only (no long flags) | 13 | 9 | **+7.69R** | +0.59R |
+| No longs after 12:00 | 13 | 9 | +7.13R | +0.55R |
+| Shorts only | 8 | 6 | +5.49R | **+0.69R** |
+| (For comparison) without rushed entries | 14 | 9 | +8.35R | +0.60R |
+| **No rule (baseline)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">"No longs in October" is only known after the fact and can't be executed before entry, so it's left out. "Without rushed entries" is the conclusion of section 1, shown here for comparison.</p>
+
+1. **"No long flags" works best**: only 6 trades skipped, and the total goes from +4.33R to +7.69R. But 3 of those 6 were rushed entries, overlapping with section 1.
+2. **"Shorts only" has the highest average per trade but skips 11 trades**: the total is lower than the first two, and it may stop working in an up month.
+3. **Every direction rule is worse than "without rushed entries"**: rushing is the main problem, direction is secondary.
+
+## 7. 🧭 Context before entry: the big picture and the local structure
+
+The spreadsheet records two kinds of context before entry: the big picture is the day's larger move; the local structure is the leg the wedge sits in, the wedge itself for a reversal, the pullback for a flag. The local structure has 7 spellings in the spreadsheet, which I grouped into 3:
+
+<div class="exp-table">
+
+| Group | Spreadsheet entries | Trades |
+|:---|:---|:---:|
+| Broad channel | Broad bull channel, Broad bear channel | 5 |
+| Tight trading range (TTR) | TTR | 7 |
+| Tight channel / spike | bull / bear tight channel, bear spike | 7 |
+
+</div>
+
+<p class="table-note">A few entries in the spreadsheet were spelt "Board"; they're all "Broad" here.</p>
+
+<MfeRowsChart
+  groups={[
+    { label: "Broad channel", ts: system.filter(t => locType(t) === "broad") },
+    { label: "Tight range (TTR)", tone: "grey", ts: system.filter(t => locType(t) === "ttr") },
+    { label: "Tight channel / spike", tone: "warm", ts: system.filter(t => locType(t) === "tight") },
+  ]}
+  detail={t => `${t.setup} · ${t.loc}`}
+  caption="In-system 19 trades only, grouped by local structure. The longer the bar, the farther price went in my favour; a dot left of 0 is a loss. Hover (or tap) a row to see that trade and the original spreadsheet entry."
+/>
+
+<TableTabs title="Context statistics" tabs={["Local structure", "Big picture × setup"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Local structure | Trades | Winners | Reached 1R | MFE (median) | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| Broad channel | 5 | **5** | **5** | **1.67R** | **+5.54R** | **+1.11R** |
+| Tight trading range (TTR) | 7 | 4 | 2 | 0.61R | +1.37R | +0.20R |
+| Tight channel / spike | 7 | 1 | 2 | 0.31R | −2.58R | −0.37R |
+| **All (in-system)** | **19** | **10** | **9** | **0.94R** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">All 5 broad-channel trades won and all reached 1R; the 7 tight channel / spike trades won once (#1).</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Big picture · Setup | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| TR · flag | 4 | 3 | +3.54R | +0.88R |
+| TR · reversal | 3 | 1 | −1.31R | −0.44R |
+| Broad bear channel · reversal (long) | 3 | 3 | **+3.68R** | **+1.23R** |
+| Broad bear channel · flag (long) | 3 | 0 | −2.30R | −0.77R |
+| Bull channel · reversal (short) | 2 | 0 | −1.12R | −0.56R |
+| Breakout · flag | 3 | 2 | 0.00R | 0.00R |
+| Big gap down · reversal | 1 | 1 | +1.84R | +1.84R |
+| **All (in-system)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">When the big picture is a broad bear channel: buying a reversal at the bottom of the channel won all 3; treating it as a bull trend and buying a bull flag lost all 3 (#11, #15, #16). In a broad channel, trade reversals at both edges, not the trend along one side.</p>
+
+</div>
+</TableTabs>
+
+### Is context related to the result?
+
+<TableTabs title="Context vs result" tabs={["Conclusion", "Is there a relationship"]}>
+<div class="tt-panel">
+
+**Local structure is one of the most useful hints so far: a wedge in a broad channel does best, a wedge after a tight channel or a spike does worst. The big picture on its own makes little difference.**
+
+1. Broad channel: 5 of 5 won, all reached 1R, +5.54R total; tight channel / spike: 1 of 7 won, −2.58R total (p between 0.015 and 0.03). This is the same thing as "is there a clear pullback between each push" in the three questions.
+2. The big picture and trade direction (with / TR / against) show no relationship (p = 0.47). But when the big picture is a broad bear channel, buying reversals at the bottom won all 3, while treating it as a bull trend and buying flags lost all 3.
+3. To be discounted: 3 of the tight-channel trades were rushed entries and many were in the afternoon; controlling for both at once, the difference is no longer significant. The labels may also have some hindsight in them (#8 for example), and the grouping is mine.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Test | Result | p |
+|:---|:---|:---:|
+| ① Broad channel vs tight channel / spike (exact permutation test) | +1.11R vs −0.37R, a gap of 1.48R | 0.029 |
+| ② Win rate (Fisher's exact test) | Broad channel 5 of 5 vs tight channel / spike 1 of 7 | 0.015 |
+| ③ Three structures together (Kruskal–Wallis) | Ranked from best to worst: broad channel, TTR, tight channel | 0.060 |
+| ④ Is wider better (Spearman) | Tight channel, TTR, broad channel as 0, 1, 2: ρ = 0.55 | 0.015 |
+
+</div>
+
+<p class="table-note">The exact permutation test computes all 792 ways of choosing, and only 2.9% produce a bigger gap than the real one. For comparison, the big picture vs trade direction has ρ of only 0.18 (p = 0.47).</p>
+
+</div>
+</TableTabs>
+
+### Hypothesis: add a context rule
+
+<div class="exp-table split-last">
+
+| Rule | Trades | Winners | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|
+| Skip after a tight channel / spike | 12 | 9 | +6.91R | +0.58R |
+| Broad channel only | 5 | 5 | +5.54R | **+1.11R** |
+| No bull flags in a broad bear channel | 16 | 10 | +6.63R | +0.41R |
+| Skip tight channel / spike + without rushed entries | 10 | 8 | **+7.85R** | +0.79R |
+| (For comparison) without rushed entries | 14 | 9 | +8.35R | +0.60R |
+| **No rule (baseline)** | **19** | **10** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">"Without rushed entries" is the conclusion of section 1, shown here for comparison.</p>
+
+1. **"Skip after a tight channel / spike"**: 7 trades skipped, and the total goes from +4.33R to +6.91R. Of the 7 skipped, only #1 was a winner.
+2. **But it largely overlaps with "without rushed entries"**: remove the rushed entries first, then the tight channels, and the total actually drops from +8.35R to +7.85R.
+
+### Next step (under discussion)
+
+1. Make "skip after a tight channel / spike" the criterion for "is there a clear pullback between each push" in the three questions; label it before entry, not in the review.
+2. When the big picture is a broad channel, prefer reversals at both edges; don't treat it as a trend and take flags.
+
+## 8. 📐 Wedge size
+
+The spreadsheet's "wedge size (bars)" is how many bars the wedge took. The 19 in-system trades range from 5 to 27 bars, median 9.
+
+<ScatterRChart
+  trades={trades}
+  value={t => t.size}
+  ticks={[0, 5, 10, 15, 20, 25, 30]}
+  unit="bars"
+  label="Wedge size"
+  step={5}
+  caption="X axis: how many bars the wedge took; Y axis: the result. Hover (or tap) a dot to see that trade."
+/>
+
+### Conclusion
+
+**No relationship.** How many bars the wedge took has no visible link to whether the trade won or how far it went: size vs result ρ = −0.07 (p = 0.78), and the robust fit's slope is exactly 0; the same holds for reversals and flags separately.
+
+## 9. ⏱️ Hold time
+
+Hold time is the minutes from entry to exit. The 19 in-system trades range from 6 to 37 minutes, median 14. It is mostly decided by the exit: take profit at the target, out at the stop, so it is more of a "result" than a "cause" you could use in advance.
+
+<ScatterRChart
+  trades={trades}
+  value={t => t.hold}
+  ticks={[0, 10, 20, 30, 40]}
+  unit="minutes"
+  label="Hold time"
+  step={10}
+  caption="X axis: minutes held; Y axis: the result. Hover (or tap) a dot to see that trade."
+/>
+
+<TableTabs title="Hold time statistics" tabs={["By hold time", "Winners vs losers"]}>
+<div class="tt-panel">
+
+<div class="exp-table split-last">
+
+| Hold time | Trades | Winners | Reached 1R | Total | Average per trade |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| 10 minutes or less | 6 | 4 | 4 | **+4.36R** | **+0.73R** |
+| 11–15 minutes | 5 | 2 | 2 | −0.30R | −0.06R |
+| 16–20 minutes | 4 | 1 | 2 | −1.17R | −0.29R |
+| Over 20 minutes | 4 | 3 | 1 | +1.44R | +0.36R |
+| **All (in-system)** | **19** | **10** | **9** | **+4.33R** | **+0.23R** |
+
+</div>
+
+<p class="table-note">Good at both ends, poor in the middle, not a straight line. The 6 fastest trades made the most, because the big winners mostly took profit as soon as they reached the target.</p>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| | Trades | Hold time (median) | Shortest | Longest | MFE (range) |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| Winners | 10 | 12.5 min | 6 min | 37 min | 0.61–3.68R |
+| Losers | 9 | 15 min | 6 min | 27 min | 0.03–1.38R |
+| Of which hit the initial stop | 6 | 13.5 min | 10 min | 27 min | 0.03–0.31R |
+
+</div>
+
+<p class="table-note">Winners and losers are held about equally long. Every winner reached at least 0.61R; every trade that hit the initial stop never got beyond 0.31R, yet dragged on for 10–27 minutes before stopping out.</p>
+
+</div>
+</TableTabs>
+
+### Is hold time related to the result?
+
+<TableTabs title="Hold time vs result" tabs={["Conclusion", "Is there a relationship"]}>
+<div class="tt-panel">
+
+**No clear relationship. Hold time is mostly decided by the exit method, not a signal you can use in advance.**
+
+1. Hold time vs result ρ = −0.14 (p = 0.58); winners and losers have similar median hold times (12.5 vs 15 minutes).
+2. The big winners were mostly fast: 4 of the 5 trades above 1R finished within 15 minutes, because of the limit target. It isn't "held short so it won big" but "ran smoothly so it reached the target fast".
+3. One possibly useful point: the 6 trades that hit the initial stop never got beyond 0.03–0.31R, yet took 10–27 minutes to stop out; every winner reached at least 0.61R. That could become a "time stop" hypothesis, but it needs bar-by-bar data to test.
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Test | Result | p |
+|:---|:---|:---:|
+| ① Hold time vs result (Spearman) | ρ = −0.14 | 0.58 |
+| ② Winners' vs losers' hold time (Mann–Whitney) | Median 12.5 vs 15 minutes | 1.00 |
+| ③ Hold time vs MFE (Spearman) | ρ = −0.21 | 0.40 |
+| ④ Winners only: hold time vs size of win (Spearman) | ρ = −0.39, bigger winners slightly faster | 0.26 |
+
+</div>
+
+<p class="table-note">None of the four tests shows a relationship. Among winners only, the bigger the win the shorter the hold, but 10 trades is too few to be significant.</p>
+
+</div>
+</TableTabs>

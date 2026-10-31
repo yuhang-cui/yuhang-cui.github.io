@@ -1,0 +1,332 @@
+---
+// 散点图：横轴是一个数值（比如 wedge 用了几根K、持有几分钟），纵轴是结果（R），每笔交易一个点。
+// 和入场时间分布那张图一个画法：百分比定位的 HTML，两条拟合线（线性回归、稳健回归）可以点按钮隐藏。
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+import { nTrades, dirText } from "@/utils/rep20View";
+
+type Trade = { n: number; date: string; entry: string; dir: string; setup: string; r: number; kind: string };
+type Props = {
+  trades: Trade[];
+  value: (t: Trade) => number;
+  ticks: number[]; // 横轴刻度，第一个和最后一个就是横轴范围
+  unit: string; // 刻度和提示框里的单位，比如"根"、"分钟"
+  label: string; // 提示框里这个数值叫什么，比如"Wedge 大小"
+  step: number; // 拟合线斜率按"每多 step 个单位"来说
+  caption: string;
+};
+const { trades, value, ticks, unit, label, step, caption } = Astro.props;
+const s = useTranslations(Astro.currentLocale).rep20;
+
+const ts = trades.filter(t => t.kind !== "rule");
+const X0 = ticks[0];
+const X1 = ticks[ticks.length - 1];
+const Y0 = -1.25;
+const Y1 = 3;
+const x = (v: number) => ((v - X0) / (X1 - X0)) * 100;
+const y = (r: number) => ((Y1 - r) / (Y1 - Y0)) * 100;
+const signed = (v: number) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "R";
+const count = (rush: boolean) => ts.filter(t => (t.kind === "rush") === rush).length;
+
+// 两条拟合线，只用系统内交易
+const pts = ts.map(t => [value(t), t.r]);
+const xs = pts.map(p => p[0]);
+const lo = Math.min(...xs);
+const hi = Math.max(...xs);
+const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
+const median = (a: number[]) => {
+  const b = [...a].sort((p, q) => p - q);
+  const m = b.length >> 1;
+  return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2;
+};
+// 线性回归（最小二乘）：离所有点的距离平方和最小的直线
+const mx = mean(xs);
+const my = mean(pts.map(p => p[1]));
+const olsB = pts.reduce((s, [a, b]) => s + (a - mx) * (b - my), 0) / pts.reduce((s, [a]) => s + (a - mx) ** 2, 0);
+const olsA = my - olsB * mx;
+// 稳健回归（Theil–Sen）：任意两点连线斜率的中位数，不怕个别大赢单
+const pairs = pts.flatMap((p, i) => pts.slice(i + 1).filter(q => q[0] !== p[0]).map(q => (q[1] - p[1]) / (q[0] - p[0])));
+const tsB = median(pairs);
+const tsA = median(pts.map(([a, b]) => b - tsB * a));
+const grid = Array.from({ length: 41 }, (_, i) => lo + ((hi - lo) * i) / 40);
+const line = (f: (v: number) => number) => grid.map((v, i) => `${i ? "L" : "M"}${x(v).toFixed(2)},${y(f(v)).toFixed(2)}`).join("");
+const perStep = (b: number) =>
+  tplStr(s.perStep, { step, unit, v: `${Math.abs(b * step) < 0.005 ? "" : b < 0 ? "−" : "+"}${Math.abs(b * step).toFixed(2)}R` });
+const fits = [
+  { k: "ols", label: s.ols, d: line(v => olsA + olsB * v), note: perStep(olsB) },
+  { k: "ts", label: s.ts, d: line(v => tsA + tsB * v), note: perStep(tsB) },
+];
+
+// 着急入场画在最上面
+const order = [...ts].sort((a, b) => (a.kind === "rush" ? 1 : 0) - (b.kind === "rush" ? 1 : 0));
+---
+
+<figure class="src" data-hide={s.hideAll} data-show={s.showAll} data-result={s.result}>
+  <div class="fn-legend">
+    <span><i class="src-key-rush"></i>{s.rush}{tplStr(s.paren, { v: nTrades(s, count(true)) })}</span>
+    <span><i class="src-key-other"></i>{s.other}{tplStr(s.paren, { v: nTrades(s, count(false)) })}</span>
+  </div>
+  <div class="src-fits" role="group" aria-label={s.fitsLabel}>
+    {
+      fits.map(f => (
+        <button type="button" aria-pressed="true" data-fit={f.k} title={f.note}>
+          <i class={`is-${f.k}`}></i>
+          {f.label}
+        </button>
+      ))
+    }
+    <button type="button" class="src-fits-all" data-fit="all">{s.hideAll}</button>
+  </div>
+  <div class="src-frame">
+    <div class="src-y">
+      {[3, 2, 1, 0, -1].map(v => <span style={`top:${y(v)}%`}>{v > 0 ? `+${v}R` : v < 0 ? `−${-v}R` : "0"}</span>)}
+    </div>
+    <div class="src-plot" role="img" aria-label={tplStr(s.srcAria, { n: ts.length, label })}>
+      {[3, 2, 1, -1].map(v => <div class="src-grid" style={`top:${y(v)}%`} />)}
+      <div class="src-zero" style={`top:${y(0)}%`} />
+      <svg class="src-fit" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        {fits.map(f => <path class={`src-line is-${f.k}`} d={f.d} vector-effect="non-scaling-stroke" />)}
+      </svg>
+      {
+        order.map(t => (
+          <span
+            class:list={["src-dot", t.kind === "rush" ? "is-rush" : "is-other"]}
+            style={`left:${x(value(t))}%;top:${y(t.r)}%`}
+            tabindex="0"
+            aria-label={`#${t.n} ${label} ${value(t)} ${unit} ${signed(t.r)}`}
+            data-h={`#${t.n} · ${t.date} ${t.entry} · ${dirText(s, t.dir)}${t.kind === "rush" ? ` · ${s.rush}` : ""}`}
+            data-v={`${value(t)} ${unit}`}
+            data-r={signed(t.r)}
+            data-s={t.setup}
+          />
+        ))
+      }
+      <div class="fn-tip" hidden data-label={label}></div>
+    </div>
+    <div class="src-x">
+      {ticks.map(v => <span style={`left:${x(v)}%`}>{v}</span>)}
+    </div>
+  </div>
+  <figcaption class="fn-note">
+    {caption}<br />{tplStr(s.fitNote, { ols: perStep(olsB), ts: perStep(tsB) })}
+  </figcaption>
+</figure>
+
+<script>
+  // 拟合线按钮：按一下隐藏 / 显示那条线；"全部隐藏"在有线显示时全部隐藏，否则全部显示
+  function setupFits() {
+    document.querySelectorAll<HTMLElement>(".src").forEach(fig => {
+      if (fig.dataset.fits) return;
+      fig.dataset.fits = "1";
+      const btns = [...fig.querySelectorAll<HTMLButtonElement>(".src-fits button:not(.src-fits-all)")];
+      const all = fig.querySelector<HTMLButtonElement>(".src-fits-all")!;
+      const set = (b: HTMLButtonElement, on: boolean) => {
+        b.setAttribute("aria-pressed", String(on));
+        fig.classList.toggle(`hide-${b.dataset.fit}`, !on);
+      };
+      const sync = () => (all.textContent = btns.some(b => b.getAttribute("aria-pressed") === "true") ? fig.dataset.hide! : fig.dataset.show!);
+      btns.forEach(b =>
+        b.addEventListener("click", () => {
+          set(b, b.getAttribute("aria-pressed") !== "true");
+          sync();
+        })
+      );
+      all.addEventListener("click", () => {
+        const on = all.textContent === fig.dataset.show;
+        btns.forEach(b => set(b, on));
+        sync();
+      });
+    });
+  }
+
+  // 指针停在点上（或键盘聚焦、手机上点一下）时显示提示框
+  function setup() {
+    setupFits();
+    document.querySelectorAll<HTMLElement>(".src-plot").forEach(plot => {
+      if (plot.dataset.ready) return;
+      plot.dataset.ready = "1";
+      const tip = plot.querySelector<HTMLElement>(".fn-tip")!;
+      const result = plot.closest<HTMLElement>(".src")!.dataset.result;
+      const show = (dot: HTMLElement) => {
+        tip.innerHTML =
+          `<p class="fn-tip-h">${dot.dataset.h}</p>` +
+          `<p class="fn-tip-r">${tip.dataset.label}<b>${dot.dataset.v}</b></p>` +
+          `<p class="fn-tip-r">${result}<b>${dot.dataset.r}</b></p>` +
+          `<p class="fn-tip-h src-tip-setup">${dot.dataset.s}</p>`;
+        tip.hidden = false;
+        const p = plot.getBoundingClientRect();
+        const d = dot.getBoundingClientRect();
+        const cx = d.left + d.width / 2 - p.left;
+        const tw = tip.offsetWidth;
+        tip.style.left = `${cx + 14 + tw > p.width ? cx - 14 - tw : cx + 14}px`;
+        tip.style.top = `${Math.max(0, d.top + d.height / 2 - p.top - tip.offsetHeight / 2)}px`;
+      };
+      const hide = () => (tip.hidden = true);
+      plot.querySelectorAll<HTMLElement>(".src-dot").forEach(dot => {
+        dot.addEventListener("pointerenter", () => show(dot));
+        dot.addEventListener("pointerdown", () => show(dot));
+        dot.addEventListener("focus", () => show(dot));
+        dot.addEventListener("pointerleave", hide);
+        dot.addEventListener("blur", hide);
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style>
+  .src {
+    margin: 1.5rem 0;
+  }
+  .src-frame {
+    position: relative;
+    padding: 8px 12px 26px 44px;
+  }
+  .src-plot {
+    position: relative;
+    height: 280px;
+  }
+  .src-y span,
+  .src-x span {
+    position: absolute;
+    font-size: 12px;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+  .src-y {
+    position: absolute;
+    top: 8px;
+    bottom: 26px;
+    left: 0;
+    width: 36px;
+  }
+  .src-y span {
+    right: 0;
+    transform: translateY(-50%);
+  }
+  .src-x {
+    position: absolute;
+    left: 44px;
+    right: 12px;
+    bottom: 0;
+    height: 18px;
+  }
+  .src-x span {
+    transform: translateX(-50%);
+  }
+  .src-fits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 10px;
+  }
+  .src-fits button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--card);
+    font-size: 12.5px;
+    color: var(--foreground);
+    cursor: pointer;
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+  }
+  .src-fits button:hover {
+    border-color: var(--muted-foreground);
+  }
+  .src-fits button[aria-pressed="false"] {
+    opacity: 0.45;
+  }
+  .src-fits i {
+    display: inline-block;
+    width: 14px;
+    height: 0;
+    border-top: 2px solid;
+  }
+  .src-fits i.is-ols {
+    border-color: var(--foreground);
+    opacity: 0.4;
+  }
+  .src-fits i.is-ts {
+    border-top-style: dashed;
+    border-color: #c4802b;
+    opacity: 0.55;
+  }
+  .src-fits-all {
+    color: var(--summary) !important;
+  }
+  .src-fit {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .src-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .src-line.is-ols {
+    stroke: var(--foreground);
+    opacity: 0.4;
+  }
+  .src-line.is-ts {
+    stroke: #c4802b;
+    stroke-dasharray: 6 4;
+    opacity: 0.55;
+  }
+  .src.hide-ols .src-line.is-ols,
+  .src.hide-ts .src-line.is-ts {
+    display: none;
+  }
+  .src-grid,
+  .src-zero {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px solid rgb(0 0 0 / 0.05);
+  }
+  .src-zero {
+    border-top-color: rgb(0 0 0 / 0.25);
+  }
+  .src-dot {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    margin: -5.5px 0 0 -5.5px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--background);
+    cursor: default;
+    transition: transform 0.12s ease;
+  }
+  .src-dot:hover,
+  .src-dot:focus-visible {
+    transform: scale(1.35);
+    outline: none;
+  }
+  .src-dot.is-rush {
+    background: var(--accent);
+  }
+  .src-dot.is-other {
+    background: color-mix(in srgb, var(--summary) 75%, white);
+  }
+  .src-plot :global(.fn-tip p) {
+    margin: 0;
+  }
+  .src-plot :global(.fn-tip .src-tip-setup) {
+    margin: 4px 0 0 !important;
+  }
+  .fn-legend i.src-key-rush {
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .fn-legend i.src-key-other {
+    background: color-mix(in srgb, var(--summary) 75%, white);
+    border-radius: 50%;
+  }
+</style>

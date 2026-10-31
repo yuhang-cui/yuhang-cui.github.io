@@ -1,0 +1,126 @@
+---
+// Wedge Rep20 实盘概况卡片：可以切换"系统内 19 笔 / 全部 20 笔"；鼠标移到累计 R 曲线上（手机上点一下）看每一笔。
+import { renderOverview, pick, nTrades, type Trade } from "@/utils/rep20View";
+import { useTranslations } from "@/i18n";
+
+type Props = { trades: Trade[] };
+const { trades } = Astro.props;
+const s = useTranslations(Astro.currentLocale).rep20;
+---
+
+<section class="bx r20" aria-label={s.ovLabel}>
+  <div class="bx-controls">
+    <div class="bx-switch" role="group" aria-label={s.scope} data-k="mode">
+      <button type="button" data-v="sys" aria-pressed="true">{s.sys} {nTrades(s, pick(trades, "sys").length)}</button>
+      <button type="button" data-v="all" aria-pressed="false">{s.all} {nTrades(s, trades.length)}</button>
+    </div>
+  </div>
+
+  <div class="r20-view" set:html={renderOverview(trades, "sys", 640, s)} />
+
+  <p class="fn-note">{s.ovNote}</p>
+
+  <script type="application/json" class="r20-data" set:html={JSON.stringify({ trades, s })} />
+</section>
+
+<script>
+  import { mount, bindHover, placeTip, svgX } from "@/utils/chartKit";
+  import { renderOverview, pick, curve, xOf, yScale, signedR, dirText, kindText, B, type Trade, type S } from "@/utils/rep20View";
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".r20").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const { trades, s }: { trades: Trade[]; s: S } = JSON.parse(root.querySelector(".r20-data")!.textContent!);
+      const view = root.querySelector<HTMLElement>(".r20-view")!;
+
+      mount(root, view, ({ opt }, w) => {
+        view.innerHTML = renderOverview(trades, opt.mode, w, s);
+        const ts = pick(trades, opt.mode);
+        const cum = curve(ts);
+        const y = yScale(cum);
+        const box = view.querySelector<HTMLElement>(".r20-chart")!;
+        const svg = box.querySelector("svg")!;
+        const rule = svg.querySelector<SVGLineElement>(".fn-rule")!;
+        const dot = svg.querySelector<SVGCircleElement>(".r20-hover")!;
+        const tip = box.querySelector<HTMLElement>(".fn-tip")!;
+
+        // 指针在哪，就显示离得最近的那一笔
+        bindHover(
+          box,
+          e => {
+            const x = svgX(svg, w, e);
+            if (x < B.l - 6 || x > w - B.r + 6) return false;
+            const i = Math.min(ts.length, Math.max(1, Math.round(((x - B.l) / (w - B.l - B.r)) * ts.length))) - 1;
+            const t = ts[i];
+            const cx = xOf(i + 1, ts.length, w);
+            rule.setAttribute("x1", String(cx));
+            rule.setAttribute("x2", String(cx));
+            dot.setAttribute("cx", String(cx));
+            dot.setAttribute("cy", String(y(cum[i])));
+            svg.classList.add("is-hover");
+            const flag = kindText(s, t.kind) ? ` · ${kindText(s, t.kind)}` : "";
+            tip.innerHTML =
+              `<p class="fn-tip-h">#${t.n} · ${t.date} ${t.entry} · ${dirText(s, t.dir)}${flag}</p>` +
+              `<p class="fn-tip-r">${s.thisTrade}<b>${signedR(t.r)}</b></p>` +
+              `<p class="fn-tip-r">${s.cum}<b>${signedR(cum[i])}</b></p>` +
+              `<p class="fn-tip-h r20-tip-setup">${t.setup === "none" ? s.rule : t.setup}</p>`;
+            placeTip(tip, svg, cx, w, e);
+          },
+          () => {
+            tip.hidden = true;
+            svg.classList.remove("is-hover");
+          }
+        );
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style is:global>
+  .r20 .bx-hero-n {
+    color: var(--summary);
+  }
+  .r20-line {
+    fill: none;
+    stroke: var(--summary);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .r20-pt {
+    stroke: #fbfbf9;
+    stroke-width: 2;
+  }
+  .r20-pt.is-rush {
+    fill: var(--accent);
+  }
+  .r20-pt.is-other {
+    fill: var(--summary);
+  }
+  .r20-pt.is-rule {
+    fill: #fbfbf9;
+    stroke: var(--summary);
+  }
+  .fn-dot.r20-hover {
+    fill: none;
+    stroke: var(--foreground);
+    stroke-width: 1.5;
+  }
+  .fn-tip .r20-tip-setup {
+    margin: 4px 0 0 !important;
+  }
+  .fn-legend i.r20-key-rush {
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .fn-legend i.r20-key-other {
+    background: var(--summary);
+    border-radius: 50%;
+  }
+  .fn-legend i.r20-key-rule {
+    border: 2px solid var(--summary);
+    border-radius: 50%;
+  }
+</style>

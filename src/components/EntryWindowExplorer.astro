@@ -1,0 +1,178 @@
+---
+// 入场时间段假设：选"只在几点到几点之间开仓"，看 19 笔系统内交易会变成什么样。
+// 鼠标移到累计 R 曲线上看每一笔；移到柱子上看那个结束时间的数字，点一下柱子就换成那个结束时间。
+import { renderWindow, STARTS, ENDS, hhmm } from "@/utils/entryWindowView";
+import { pick, type Trade } from "@/utils/rep20View";
+import { useTranslations } from "@/i18n";
+
+type Props = { trades: Trade[]; start?: number; end?: number };
+const { trades, start = 9 * 60 + 30, end = 12 * 60 } = Astro.props;
+const ts = pick(trades, "sys");
+const s = useTranslations(Astro.currentLocale).rep20;
+---
+
+<section class="bx ew" aria-label={s.ewLabel}>
+  <div class="bx-controls">
+    <label class="bx-range">
+      <span>{s.onlyBetween}</span>
+      <select class="bx-y0" aria-label={s.startTime}>
+        {STARTS.map(m => <option value={m} selected={m === start}>{hhmm(m)}</option>)}
+      </select>
+      <span>{s.to}</span>
+      <select class="bx-y1" aria-label={s.endTime}>
+        {ENDS.map(m => <option value={m} selected={m === end}>{hhmm(m)}</option>)}
+      </select>
+      {s.between && <span>{s.between}</span>}
+    </label>
+  </div>
+
+  <div class="ew-view" set:html={renderWindow(ts, start, end, 640, s)} />
+
+  <p class="fn-note">{s.ewNote}</p>
+
+  <script type="application/json" class="ew-data" set:html={JSON.stringify({ ts, s })} />
+</section>
+
+<script>
+  import { mount, bindHover, placeTip, svgX } from "@/utils/chartKit";
+  import { signedR, type Trade, type S } from "@/utils/rep20View";
+  import { renderWindow, curves, curveY, cxOf, CB, BB, endsFrom, barBand, barTip, inWin } from "@/utils/entryWindowView";
+
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".ew").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "1";
+      const { ts, s }: { ts: Trade[]; s: S } = JSON.parse(root.querySelector(".ew-data")!.textContent!);
+      const view = root.querySelector<HTMLElement>(".ew-view")!;
+      const s1 = root.querySelector<HTMLSelectElement>(".bx-y1")!;
+
+      mount(root, view, ({ y0: a, y1: b }, w) => {
+        view.innerHTML = renderWindow(ts, a, b, w, s);
+
+        // 累计 R：指针在哪，就显示离得最近的那一笔
+        const cs = curves(ts, a, b);
+        const y = curveY(ts, a, b);
+        const cbox = view.querySelector<HTMLElement>(".ew-curve")!;
+        const csvg = cbox.querySelector("svg")!;
+        const rule = csvg.querySelector<SVGLineElement>(".fn-rule")!;
+        const dot = csvg.querySelector<SVGCircleElement>(".ew-hover")!;
+        const ctip = cbox.querySelector<HTMLElement>(".fn-tip")!;
+        bindHover(
+          cbox,
+          e => {
+            const x = svgX(csvg, w, e);
+            if (x < CB.l - 6 || x > w - CB.r + 6) return false;
+            const i = Math.min(ts.length, Math.max(1, Math.round(((x - CB.l) / (w - CB.l - CB.r)) * ts.length))) - 1;
+            const t = ts[i];
+            const on = inWin(t, a, b);
+            const cx = cxOf(i + 1, ts.length, w);
+            rule.setAttribute("x1", String(cx));
+            rule.setAttribute("x2", String(cx));
+            dot.setAttribute("cx", String(cx));
+            dot.setAttribute("cy", String(y(cs[i][on ? 1 : 0])));
+            csvg.classList.add("is-hover");
+            ctip.innerHTML =
+              `<p class="fn-tip-h">#${t.n} · ${t.date} ${t.entry} · ${on ? s.take : s.skip}</p>` +
+              `<p class="fn-tip-r">${s.thisTrade}<b>${signedR(t.r)}</b></p>` +
+              `<p class="fn-tip-r"><i class="ew-key-rule"></i>${s.onlyWindow}<b>${signedR(cs[i][1])}</b></p>` +
+              `<p class="fn-tip-r"><i class="ew-key-all"></i>${s.all}<b>${signedR(cs[i][0])}</b></p>`;
+            placeTip(ctip, csvg, cx, w, e);
+          },
+          () => {
+            ctip.hidden = true;
+            csvg.classList.remove("is-hover");
+          }
+        );
+
+        // 柱子：指针在哪一列就显示那个结束时间；点一下换成那个结束时间
+        const ends = endsFrom(a);
+        const bbox = view.querySelector<HTMLElement>(".ew-bars")!;
+        const bsvg = bbox.querySelector("svg")!;
+        const btip = bbox.querySelector<HTMLElement>(".fn-tip")!;
+        const col = (e: PointerEvent) => Math.floor((svgX(bsvg, w, e) - BB.l) / barBand(ends.length, w));
+        bindHover(
+          bbox,
+          e => {
+            const i = col(e);
+            if (i < 0 || i >= ends.length) return false;
+            bsvg.querySelectorAll(".ew-bar").forEach(r => r.classList.toggle("is-hover", r.getAttribute("data-i") === String(i)));
+            btip.innerHTML = barTip(ts, a, ends[i], s);
+            placeTip(btip, bsvg, BB.l + (i + 0.5) * barBand(ends.length, w), w, e);
+          },
+          () => {
+            btip.hidden = true;
+            bsvg.querySelectorAll(".ew-bar.is-hover").forEach(r => r.classList.remove("is-hover"));
+          }
+        );
+        bsvg.addEventListener("click", e => {
+          const i = col(e as PointerEvent);
+          if (i < 0 || i >= ends.length || ends[i] === b) return;
+          s1.value = String(ends[i]);
+          s1.dispatchEvent(new Event("change"));
+        });
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style is:global>
+  .ew-all {
+    fill: none;
+    stroke: #c9c4bb;
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .ew-rule {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .ew-pt {
+    fill: var(--accent);
+    stroke: #fbfbf9;
+    stroke-width: 2;
+  }
+  .ew-pt-off {
+    fill: #c9c4bb;
+    stroke: #fbfbf9;
+    stroke-width: 1.5;
+  }
+  .fn-dot.ew-hover {
+    fill: none;
+    stroke: var(--foreground);
+    stroke-width: 1.5;
+  }
+  .ew-bar {
+    fill: color-mix(in srgb, var(--accent) 30%, white);
+    cursor: pointer;
+    transition: fill 0.1s ease;
+  }
+  .ew-bar.is-hover {
+    fill: color-mix(in srgb, var(--accent) 55%, white);
+  }
+  .ew-bar.is-on {
+    fill: var(--accent);
+  }
+  .fn-chart text.ew-val {
+    fill: var(--summary);
+    font-size: 11.5px;
+  }
+  .fn-chart text.ew-val.is-on {
+    fill: var(--foreground);
+    font-weight: 600;
+  }
+  .ew .bx-sub {
+    margin-top: 24px !important;
+  }
+  .fn-legend i.ew-key-rule,
+  .fn-tip-r i.ew-key-rule {
+    background: var(--accent);
+  }
+  .fn-legend i.ew-key-all,
+  .fn-tip-r i.ew-key-all {
+    background: #c9c4bb;
+  }
+</style>

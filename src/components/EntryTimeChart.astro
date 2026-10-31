@@ -1,0 +1,385 @@
+---
+// 入场时间分布：横轴是入场时间（美东），纵轴是结果（R），每笔交易一个点。
+// 用百分比定位的 HTML 画，文字在手机上不会跟着缩小；背景色块把一天分成四段；鼠标停在点上（手机上点一下）显示这笔交易。
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+import { nTrades, dirText, kindText } from "@/utils/rep20View";
+
+type Trade = {
+  n: number;
+  date: string;
+  entry: string;
+  dir: string;
+  setup: string;
+  r: number;
+  kind: "rush" | "other" | "rule";
+};
+type Props = { trades: Trade[] };
+const { trades } = Astro.props;
+const s = useTranslations(Astro.currentLocale).rep20;
+
+const T0 = 9 * 60 + 30;
+const T1 = 15 * 60;
+const Y0 = -1.25;
+const Y1 = 3;
+const min = (t: string) => +t.slice(0, 2) * 60 + +t.slice(3);
+const x = (m: number) => ((m - T0) / (T1 - T0)) * 100;
+const y = (r: number) => ((Y1 - r) / (Y1 - Y0)) * 100;
+const signed = (v: number) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "R";
+const hours = [10, 11, 12, 13, 14, 15];
+const count = (k: Trade["kind"]) => nTrades(s, trades.filter(t => t.kind === k).length);
+// 一天分四段：开盘第一小时 / 上午 / 午盘 / 下午
+const bands = [
+  { a: T0, b: 10 * 60 + 30, label: s.bands[0] },
+  { a: 10 * 60 + 30, b: 12 * 60, label: s.bands[1] },
+  { a: 12 * 60, b: 13 * 60 + 30, label: s.bands[2] },
+  { a: 13 * 60 + 30, b: T1, label: s.bands[3] },
+];
+// 两条拟合线，只用系统内交易（不含规则外）
+const sys = trades.filter(t => t.kind !== "rule").map(t => [min(t.entry), t.r]);
+const xs = sys.map(p => p[0]);
+const lo = Math.min(...xs);
+const hi = Math.max(...xs);
+const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
+const median = (a: number[]) => {
+  const b = [...a].sort((p, q) => p - q);
+  const m = b.length >> 1;
+  return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2;
+};
+// 线性回归（最小二乘）：离所有点的距离平方和最小的直线
+const mx = mean(xs);
+const my = mean(sys.map(p => p[1]));
+const olsB = sys.reduce((s, [a, b]) => s + (a - mx) * (b - my), 0) / sys.reduce((s, [a]) => s + (a - mx) ** 2, 0);
+const olsA = my - olsB * mx;
+// 稳健回归（Theil–Sen）：任意两点连线斜率的中位数，不怕个别大赢单
+const pairs = sys.flatMap((p, i) => sys.slice(i + 1).filter(q => q[0] !== p[0]).map(q => (q[1] - p[1]) / (q[0] - p[0])));
+const tsB = median(pairs);
+const tsA = median(sys.map(([a, b]) => b - tsB * a));
+const grid = Array.from({ length: 41 }, (_, i) => lo + ((hi - lo) * i) / 40);
+const line = (f: (m: number) => number) => grid.map((m, i) => `${i ? "L" : "M"}${x(m).toFixed(2)},${y(f(m)).toFixed(2)}`).join("");
+const perHour = (b: number) => tplStr(s.perHour, { v: `${b * 60 < 0 ? "−" : "+"}${Math.abs(b * 60).toFixed(2)}R` });
+const fits = [
+  { k: "ols", label: s.ols, d: line(m => olsA + olsB * m), note: perHour(olsB) },
+  { k: "ts", label: s.ts, d: line(m => tsA + tsB * m), note: perHour(tsB) },
+];
+
+// 着急入场画在最上面
+const order = [...trades].sort((a, b) => (a.kind === "rush" ? 1 : 0) - (b.kind === "rush" ? 1 : 0));
+---
+
+<figure class="etc" data-hide={s.hideAll} data-show={s.showAll} data-result={s.result}>
+  <div class="fn-legend">
+    <span><i class="etc-key-rush"></i>{s.rush}{tplStr(s.paren, { v: count("rush") })}</span>
+    <span><i class="etc-key-other"></i>{s.other}{tplStr(s.paren, { v: count("other") })}</span>
+    <span><i class="etc-key-rule"></i>{s.rule}{tplStr(s.paren, { v: count("rule") })}</span>
+  </div>
+  <div class="etc-fits" role="group" aria-label={s.fitsLabel}>
+    {
+      fits.map(f => (
+        <button type="button" aria-pressed="true" data-fit={f.k} title={f.note || undefined}>
+          <i class={`is-${f.k}`}></i>{f.label}
+        </button>
+      ))
+    }
+    <button type="button" class="etc-fits-all" data-fit="all">{s.hideAll}</button>
+  </div>
+  <div class="etc-frame">
+    <div class="etc-y">
+      {[3, 2, 1, 0, -1].map(v => <span style={`top:${y(v)}%`}>{v > 0 ? `+${v}R` : v < 0 ? `−${-v}R` : "0"}</span>)}
+    </div>
+    <div class="etc-plot" role="img" aria-label={tplStr(s.etcAria, { n: trades.length })}>
+      {
+        bands.map((b, i) => (
+          <div class:list={["etc-band", `is-${i}`]} style={`left:${x(b.a)}%;width:${x(b.b) - x(b.a)}%`}>
+            <span>{b.label}</span>
+          </div>
+        ))
+      }
+      {[3, 2, 1, -1].map(v => <div class="etc-grid" style={`top:${y(v)}%`} />)}
+      <div class="etc-zero" style={`top:${y(0)}%`} />
+      <svg class="etc-fit" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        {fits.map(f => <path class={`etc-line is-${f.k}`} d={f.d} vector-effect="non-scaling-stroke" />)}
+      </svg>
+      {
+        order.map(t => (
+          <span
+            class:list={["etc-dot", `is-${t.kind}`]}
+            style={`left:${x(min(t.entry))}%;top:${y(t.r)}%`}
+            tabindex="0"
+            aria-label={`#${t.n} ${t.date} ${t.entry} ${signed(t.r)}`}
+            data-h={`#${t.n} · ${t.date} ${t.entry} · ${dirText(s, t.dir)}${kindText(s, t.kind) ? ` · ${kindText(s, t.kind)}` : ""}`}
+            data-r={signed(t.r)}
+            data-s={t.setup === "none" ? s.rule : t.setup}
+          />
+        ))
+      }
+      <div class="fn-tip" hidden></div>
+    </div>
+    <div class="etc-x">
+      <span style="left:0">9:30</span>
+      {hours.map(h => <span style={`left:${x(h * 60)}%`}>{h}:00</span>)}
+    </div>
+  </div>
+  <figcaption class="fn-note">{s.etcNote}<br />{tplStr(s.fitNote, { ols: perHour(olsB), ts: perHour(tsB) })}</figcaption>
+</figure>
+
+<script>
+  // 拟合线按钮：按一下隐藏 / 显示那条线；"全部隐藏"在有线显示时全部隐藏，否则全部显示
+  function setupFits() {
+    document.querySelectorAll<HTMLElement>(".etc").forEach(fig => {
+      if (fig.dataset.fits) return;
+      fig.dataset.fits = "1";
+      const btns = [...fig.querySelectorAll<HTMLButtonElement>(".etc-fits button:not(.etc-fits-all)")];
+      const all = fig.querySelector<HTMLButtonElement>(".etc-fits-all")!;
+      const set = (b: HTMLButtonElement, on: boolean) => {
+        b.setAttribute("aria-pressed", String(on));
+        fig.classList.toggle(`hide-${b.dataset.fit}`, !on);
+      };
+      const sync = () => (all.textContent = btns.some(b => b.getAttribute("aria-pressed") === "true") ? fig.dataset.hide! : fig.dataset.show!);
+      btns.forEach(b =>
+        b.addEventListener("click", () => {
+          set(b, b.getAttribute("aria-pressed") !== "true");
+          sync();
+        })
+      );
+      all.addEventListener("click", () => {
+        const on = all.textContent === fig.dataset.show;
+        btns.forEach(b => set(b, on));
+        sync();
+      });
+    });
+  }
+
+  // 指针停在点上（或键盘聚焦、手机上点一下）时显示提示框
+  function setup() {
+    setupFits();
+    document.querySelectorAll<HTMLElement>(".etc-plot").forEach(plot => {
+      if (plot.dataset.ready) return;
+      plot.dataset.ready = "1";
+      const tip = plot.querySelector<HTMLElement>(".fn-tip")!;
+      const result = plot.closest<HTMLElement>(".etc")!.dataset.result;
+      const show = (dot: HTMLElement) => {
+        tip.innerHTML =
+          `<p class="fn-tip-h">${dot.dataset.h}</p>` +
+          `<p class="fn-tip-r">${result}<b>${dot.dataset.r}</b></p>` +
+          `<p class="fn-tip-h etc-tip-setup">${dot.dataset.s}</p>`;
+        tip.hidden = false;
+        const p = plot.getBoundingClientRect();
+        const d = dot.getBoundingClientRect();
+        const cx = d.left + d.width / 2 - p.left;
+        const tw = tip.offsetWidth;
+        tip.style.left = `${cx + 14 + tw > p.width ? cx - 14 - tw : cx + 14}px`;
+        tip.style.top = `${Math.max(0, d.top + d.height / 2 - p.top - tip.offsetHeight / 2)}px`;
+      };
+      const hide = () => (tip.hidden = true);
+      plot.querySelectorAll<HTMLElement>(".etc-dot").forEach(dot => {
+        dot.addEventListener("pointerenter", () => show(dot));
+        dot.addEventListener("pointerdown", () => show(dot));
+        dot.addEventListener("focus", () => show(dot));
+        dot.addEventListener("pointerleave", hide);
+        dot.addEventListener("blur", hide);
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style>
+  .etc {
+    margin: 1.5rem 0;
+  }
+  .etc-frame {
+    position: relative;
+    padding: 8px 8px 26px 44px;
+  }
+  .etc-plot {
+    position: relative;
+    height: 300px;
+  }
+  .etc-y span,
+  .etc-x span {
+    position: absolute;
+    font-size: 12px;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+  .etc-y {
+    position: absolute;
+    top: 8px;
+    bottom: 26px;
+    left: 0;
+    width: 36px;
+  }
+  .etc-y span {
+    right: 0;
+    transform: translateY(-50%);
+  }
+  .etc-x {
+    position: absolute;
+    left: 44px;
+    right: 8px;
+    bottom: 0;
+    height: 18px;
+  }
+  .etc-x span {
+    transform: translateX(-50%);
+  }
+  .etc-x span:first-child {
+    transform: none;
+  }
+  @media (max-width: 480px) {
+    .etc-x span:first-child {
+      display: none;
+    }
+  }
+  .etc-band {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+  }
+  .etc-band.is-0 {
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
+  }
+  .etc-band.is-1 {
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
+  }
+  .etc-band.is-2 {
+    background: color-mix(in srgb, var(--summary) 7%, transparent);
+  }
+  .etc-band.is-3 {
+    background: color-mix(in srgb, var(--summary) 3%, transparent);
+  }
+  .etc-band span {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--summary);
+  }
+  .etc-fits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 10px;
+  }
+  .etc-fits button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--card);
+    font-size: 12.5px;
+    color: var(--foreground);
+    cursor: pointer;
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+  }
+  .etc-fits button:hover {
+    border-color: var(--muted-foreground);
+  }
+  .etc-fits button[aria-pressed="false"] {
+    opacity: 0.45;
+  }
+  .etc-fits i {
+    display: inline-block;
+    width: 14px;
+    height: 0;
+    border-top: 2px solid;
+  }
+  .etc-fits i.is-ols {
+    border-color: var(--foreground);
+    opacity: 0.4;
+  }
+  .etc-fits i.is-ts {
+    border-top-style: dashed;
+    border-color: #c4802b;
+    opacity: 0.55;
+  }
+  .etc-fits-all {
+    color: var(--summary) !important;
+  }
+  .etc-fit {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .etc-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .etc-line.is-ols {
+    stroke: var(--foreground);
+    opacity: 0.4;
+  }
+  .etc-line.is-ts {
+    stroke: #c4802b;
+    stroke-dasharray: 6 4;
+    opacity: 0.55;
+  }
+  .etc.hide-ols .etc-line.is-ols,
+  .etc.hide-ts .etc-line.is-ts {
+    display: none;
+  }
+  .etc-grid,
+  .etc-zero {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px solid rgb(0 0 0 / 0.05);
+  }
+  .etc-zero {
+    border-top-color: rgb(0 0 0 / 0.25);
+  }
+  .etc-dot {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    margin: -5.5px 0 0 -5.5px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--background);
+    cursor: default;
+    transition: transform 0.12s ease;
+  }
+  .etc-dot:hover,
+  .etc-dot:focus-visible {
+    transform: scale(1.35);
+    outline: none;
+  }
+  .etc-dot.is-rush {
+    background: var(--accent);
+  }
+  .etc-dot.is-other {
+    background: color-mix(in srgb, var(--summary) 75%, white);
+  }
+  .etc-dot.is-rule {
+    border: 2px solid var(--summary);
+    background: var(--background);
+  }
+  .etc-plot :global(.fn-tip p) {
+    margin: 0;
+  }
+  .etc-plot :global(.fn-tip .etc-tip-setup) {
+    margin: 4px 0 0 !important;
+  }
+  .fn-legend i.etc-key-rush {
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .fn-legend i.etc-key-other {
+    background: color-mix(in srgb, var(--summary) 75%, white);
+    border-radius: 50%;
+  }
+  .fn-legend i.etc-key-rule {
+    border: 2px solid var(--summary);
+    border-radius: 50%;
+  }
+</style>

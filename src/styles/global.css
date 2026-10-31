@@ -1777,6 +1777,21 @@ html[lang="en"] .app-prose th { white-space: normal; }
   display: flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+}
+/* 标签多的时候，手机上不把字挤成竖排，改成横向滑动 */
+.app-prose .tt .rc-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.app-prose .tt .rc-tabs::-webkit-scrollbar {
+  display: none;
+}
+.app-prose .tt .rc-tabs button {
+  flex: none;
+  white-space: nowrap;
 }
 .app-prose .tt-pin {
   display: grid;

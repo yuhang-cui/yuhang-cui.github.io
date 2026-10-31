@@ -1,0 +1,217 @@
+---
+// 分组的逐笔图：每笔一行，浅色条是最远到达（MFE），实心点是最后拿到的结果。
+// 分组由调用方给（比如"有没有回测成本价"、"局部结构"）；鼠标停在一行上（手机上点一下）显示这笔交易。
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+import { nTrades, dirText } from "@/utils/rep20View";
+
+type Trade = { n: number; date: string; entry: string; dir: string; r: number; mfe: number };
+type Group = { label: string; tone?: "accent" | "grey" | "warm"; ts: Trade[] };
+type Props = { groups: Group[]; caption: string; detail?: (t: Trade) => string };
+const { groups, caption, detail } = Astro.props;
+const s = useTranslations(Astro.currentLocale).rep20;
+
+const all = groups.flatMap(g => g.ts);
+const X0 = Math.min(-0.5, Math.floor(Math.min(...all.map(t => t.r)) * 4) / 4);
+const X1 = Math.max(4, Math.ceil(Math.max(...all.map(t => t.mfe))));
+const x = (v: number) => ((v - X0) / (X1 - X0)) * 100;
+const ticks = Array.from({ length: X1 - Math.ceil(X0) + 1 }, (_, i) => Math.ceil(X0) + i);
+const signed = (v: number) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "R";
+const median = (a: number[]) => {
+  const b = [...a].sort((p, q) => p - q);
+  const m = b.length >> 1;
+  return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2;
+};
+const note = (ts: Trade[]) =>
+  tplStr(s.groupNote, { avg: signed(ts.reduce((a, t) => a + t.r, 0) / ts.length), med: `${median(ts.map(t => t.mfe)).toFixed(2)}R` });
+const tickLabel = (v: number) => (v > 0 ? `${v}R` : v < 0 ? `−${-v}R` : "0");
+---
+
+<figure class="mrc">
+  <div class="fn-legend">
+    <span><i class="mrc-key-bar"></i>{s.mfe}</span>
+    <span><i class="mrc-key-dot"></i>{s.got}</span>
+  </div>
+  <div class="mrc-frame" data-mfe={s.mfeShort} data-got={s.got}>
+    {
+      groups.map(g => (
+        <div class:list={["mrc-group", `is-${g.tone ?? "accent"}`]}>
+          <p class="mrc-head">
+            <b>{g.label}</b>{tplStr(s.paren, { v: nTrades(s, g.ts.length) })}<span>{note(g.ts)}</span>
+          </p>
+          {g.ts.map(t => (
+            <div
+              class="mrc-row"
+              tabindex="0"
+              aria-label={tplStr(s.rowAria, { n: t.n, m: `${t.mfe.toFixed(2)}R`, r: signed(t.r) })}
+              data-h={`#${t.n} · ${t.date} ${t.entry} · ${dirText(s, t.dir)}`}
+              data-m={`${t.mfe.toFixed(2)}R`}
+              data-r={signed(t.r)}
+              data-d={detail ? detail(t) : ""}
+            >
+              <span class="mrc-n">#{t.n}</span>
+              <span class="mrc-track">
+                {ticks.map(v => <i class:list={["mrc-grid", v === 0 && "is-zero"]} style={`left:${x(v)}%`} />)}
+                <i class="mrc-bar" style={`left:${x(0)}%;width:${x(t.mfe) - x(0)}%`} />
+                <i class="mrc-dot" style={`left:${x(t.r)}%`} />
+              </span>
+            </div>
+          ))}
+        </div>
+      ))
+    }
+    <div class="mrc-x">
+      {ticks.map(v => <span style={`left:${x(v)}%`}>{tickLabel(v)}</span>)}
+    </div>
+    <div class="fn-tip" hidden></div>
+  </div>
+  <figcaption class="fn-note">{caption}</figcaption>
+</figure>
+
+<script>
+  // 指针停在一行上（或键盘聚焦、手机上点一下）时显示提示框
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".mrc-frame").forEach(frame => {
+      if (frame.dataset.ready) return;
+      frame.dataset.ready = "1";
+      const tip = frame.querySelector<HTMLElement>(".fn-tip")!;
+      const show = (row: HTMLElement) => {
+        tip.innerHTML =
+          `<p class="fn-tip-h">${row.dataset.h}</p>` +
+          `<p class="fn-tip-r">${frame.dataset.mfe}<b>${row.dataset.m}</b></p>` +
+          `<p class="fn-tip-r">${frame.dataset.got}<b>${row.dataset.r}</b></p>` +
+          (row.dataset.d ? `<p class="fn-tip-h mrc-tip-d">${row.dataset.d}</p>` : "");
+        tip.hidden = false;
+        const f = frame.getBoundingClientRect();
+        const r = row.getBoundingClientRect();
+        tip.style.left = `${Math.max(0, f.width - tip.offsetWidth)}px`;
+        const below = r.top - f.top + r.height + 4;
+        tip.style.top = `${below + tip.offsetHeight > f.height ? r.top - f.top - tip.offsetHeight - 4 : below}px`;
+      };
+      const hide = () => (tip.hidden = true);
+      frame.querySelectorAll<HTMLElement>(".mrc-row").forEach(row => {
+        row.addEventListener("pointerenter", () => show(row));
+        row.addEventListener("pointerdown", () => show(row));
+        row.addEventListener("focus", () => show(row));
+        row.addEventListener("pointerleave", hide);
+        row.addEventListener("blur", hide);
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style>
+  .mrc {
+    margin: 1.5rem 0;
+    --tone-accent: var(--accent);
+    --tone-grey: color-mix(in srgb, var(--summary) 75%, white);
+    --tone-warm: #c4802b;
+  }
+  .mrc-frame {
+    position: relative;
+  }
+  .mrc-group + .mrc-group {
+    margin-top: 14px;
+  }
+  .mrc-group.is-accent {
+    --tone: var(--tone-accent);
+  }
+  .mrc-group.is-grey {
+    --tone: var(--tone-grey);
+  }
+  .mrc-group.is-warm {
+    --tone: var(--tone-warm);
+  }
+  .mrc-head {
+    margin: 0 0 4px !important;
+    font-size: 13px;
+    color: var(--foreground);
+  }
+  .mrc-head span {
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--summary);
+  }
+  .mrc-row {
+    display: flex;
+    align-items: center;
+    height: 26px;
+    border-radius: 6px;
+    outline: none;
+  }
+  .mrc-row:hover,
+  .mrc-row:focus-visible {
+    background: rgb(0 0 0 / 0.03);
+  }
+  .mrc-n {
+    flex: none;
+    width: 40px;
+    font-size: 12px;
+    color: var(--summary);
+  }
+  .mrc-track {
+    position: relative;
+    flex: 1;
+    height: 100%;
+  }
+  .mrc-grid {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid rgb(0 0 0 / 0.05);
+  }
+  .mrc-grid.is-zero {
+    border-left-color: rgb(0 0 0 / 0.25);
+  }
+  .mrc-bar {
+    position: absolute;
+    top: 8px;
+    height: 10px;
+    border-radius: 0 4px 4px 0;
+    background: color-mix(in srgb, var(--tone) 22%, transparent);
+  }
+  .mrc-dot {
+    position: absolute;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    margin: -5.5px 0 0 -5.5px;
+    border-radius: 50%;
+    background: var(--tone);
+    box-shadow: 0 0 0 2px var(--background);
+  }
+  .mrc-x {
+    position: relative;
+    height: 18px;
+    margin: 4px 0 0 40px;
+  }
+  .mrc-x span {
+    position: absolute;
+    font-size: 12px;
+    color: var(--faint);
+    transform: translateX(-50%);
+  }
+  .mrc-frame :global(.fn-tip p) {
+    margin: 0;
+  }
+  .mrc-frame :global(.fn-tip .mrc-tip-d) {
+    margin: 4px 0 0 !important;
+  }
+  .fn-legend i.mrc-key-bar {
+    height: 8px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--tone-accent) 22%, white);
+  }
+  .fn-legend i.mrc-key-dot {
+    background: var(--tone-accent);
+    border-radius: 50%;
+  }
+  @media (max-width: 520px) {
+    .mrc-head span {
+      display: block;
+      margin: 2px 0 0;
+    }
+  }
+</style>
