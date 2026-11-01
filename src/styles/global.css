@@ -1388,6 +1388,36 @@ a.tag-pill:hover {
 .app-prose .rc-def li {
   margin: 0.2em 0;
 }
+
+/* 折叠卡片：默认收起，点标题展开；里面的编号列表用 a. b. c. */
+.app-prose details.fold summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--foreground);
+  cursor: pointer;
+  list-style: none;
+}
+.app-prose details.fold summary::-webkit-details-marker {
+  display: none;
+}
+.app-prose details.fold summary::after {
+  content: "＋";
+  font-weight: 400;
+  color: var(--faint);
+}
+.app-prose details.fold[open] summary::after {
+  content: "－";
+}
+.app-prose details.fold[open] summary {
+  border-bottom: 1px solid rgb(0 0 0 / 0.07);
+}
+.app-prose details.fold ol {
+  list-style: lower-alpha;
+}
 .app-prose .rc-pre {
   max-height: 420px;
   margin: 0;
