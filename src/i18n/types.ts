@@ -512,4 +512,36 @@ export interface UIStrings {
     restSub: { sp500: string; ndx: string };
     names: Record<string, string>;
   };
+  dca: {
+    label: string;
+    start: string;
+    end: string;
+    day: string;
+    dayUnit: string;
+    amount: string;
+    invested: string;
+    monthsCount: string;
+    multiple: string;
+    annual: string;
+    ivv: string;
+    qqq: string;
+    months: string[];
+    log: string;
+    reset: string;
+  };
+  /** 标普500 价格指数对全收益指数 */
+  spxTr: {
+    label: string;
+    from1871: string;
+    from1957: string;
+    start: string;
+    end: string;
+    months: string[];
+    spx: string;
+    spxt: string;
+    gap: string;
+    multiple: string;
+    annual: string;
+    log: string;
+  };
 }
