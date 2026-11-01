@@ -13,6 +13,8 @@ export interface UIStrings {
     sharePostIntro: string;
     sharePostOn: string;
     sharePostViaEmail: string;
+    copyLink: string;
+    copied: string;
     tagLabel: string;
     backToTop: string;
     goBack: string;

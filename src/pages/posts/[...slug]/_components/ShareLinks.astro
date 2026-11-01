@@ -2,6 +2,7 @@
 import LinkButton from "@/components/LinkButton.astro";
 import { tplStr, useTranslations } from "@/i18n";
 import config from "@/config";
+import IconLink from "@/assets/icons/IconLink.svg";
 
 const { shareLinks } = config;
 const t = useTranslations(Astro.currentLocale);
@@ -11,6 +12,8 @@ const icons = import.meta.glob<{
 }>("/src/assets/icons/socials/*.svg");
 
 const pageUrl = Astro.url;
+// 复制按钮复制的是线上网址，本地预览时也一样
+const liveUrl = new URL(Astro.url.pathname, config.site.url).href;
 
 const platformLabel = (name: string) =>
   name.charAt(0).toUpperCase() + name.slice(1);
@@ -48,7 +51,45 @@ const items = await Promise.all(
             </LinkButton>
           ) : null
         )}
+        <button
+          type="button"
+          class="share-copy group inline-flex scale-90 items-center gap-1 p-2 hover:rotate-6 hover:text-accent sm:p-1"
+          title={t.post.copyLink}
+          data-url={liveUrl}
+          data-copied={t.post.copied}
+        >
+          <IconLink class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 sm:scale-110" />
+          <span class="sr-only">{t.post.copyLink}</span>
+        </button>
+        <span class="share-copy-msg text-sm" aria-live="polite"></span>
       </div>
     </div>
   )
 }
+
+<script>
+  // 点链接图标：把线上网址复制到剪贴板，旁边短暂显示"已复制"
+  document.addEventListener("click", async e => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".share-copy");
+    if (!btn) return;
+    const url = btn.dataset.url!;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // 剪贴板接口不可用时（旧浏览器、内嵌网页视图），退回到选中文本再复制
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.append(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      if (!ok) return;
+    }
+    const msg = btn.parentElement!.querySelector<HTMLElement>(".share-copy-msg")!;
+    msg.textContent = btn.dataset.copied!;
+    setTimeout(() => (msg.textContent = ""), 1500);
+  });
+</script>
