@@ -34,6 +34,10 @@ const days = Array.from({ length: 28 }, (_, i) => i + 1);
       <span>{s.amount}</span>
       <span class="dca-amt"><i>$</i><input class="dca-a" type="number" min="1" step="50" value="500" inputmode="numeric" aria-label={s.amount} /></span>
     </label>
+    <div class="bx-switch dca-cur">
+      <button type="button" data-cur="usd" aria-pressed="true" aria-label="USD">$</button>
+      <button type="button" data-cur="cny" aria-pressed="false" aria-label="CNY">¥</button>
+    </div>
   </div>
 
   <div class="dca-stats">
@@ -77,11 +81,13 @@ const days = Array.from({ length: 28 }, (_, i) => i + 1);
   const DAY = 86400000;
   const M = { l: 54, r: 44, t: 14, b: 26 };
 
-  const money = (v: number) => "$" + Math.round(v).toLocaleString("en-US");
-  const short = (v: number) => (v >= 1e6 ? "$" + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + "M" : v >= 1e3 ? "$" + Math.round(v / 1e3) + "k" : "$" + Math.round(v));
+  // 货币符号：美元 $ 或人民币 ¥，只影响显示和默认的每月金额，数据本身不换算
+  let SYM = "$";
+  const money = (v: number) => SYM + Math.round(v).toLocaleString("en-US");
+  const short = (v: number) => (v >= 1e6 ? SYM + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + "M" : v >= 1e3 ? SYM + Math.round(v / 1e3) + "k" : SYM + Math.round(v));
   // 对数刻度的标签：两位有效数字，$1.3k、$18k、$230k、$1.3M
   const sig2 = (v: number) => (v < 10 ? v.toFixed(1).replace(/\.0$/, "") : String(Math.round(v)));
-  const shortLog = (v: number) => (v >= 1e6 ? "$" + sig2(v / 1e6) + "M" : v >= 1e3 ? "$" + sig2(v / 1e3) + "k" : "$" + Math.round(v));
+  const shortLog = (v: number) => (v >= 1e6 ? SYM + sig2(v / 1e6) + "M" : v >= 1e3 ? SYM + sig2(v / 1e3) + "k" : SYM + Math.round(v));
   const iso = (d: number) => new Date(d * DAY).toISOString().slice(0, 10);
   // 第一个 >= 目标日的交易日下标
   const lowerBound = (days: number[], target: number) => {
@@ -286,8 +292,13 @@ const days = Array.from({ length: 28 }, (_, i) => i + 1);
         for (const o of dd.options) o.disabled = +y0.value === fy && +m0.value === fm && +o.value < fd;
         if (dd.selectedOptions[0]?.disabled) dd.value = String(fd);
       };
+      const curBtns = Array.from(root.querySelectorAll<HTMLButtonElement>(".dca-cur button"));
+      const symEl = q<HTMLElement>(".dca-amt i");
+      const defAmt = () => (root.dataset.cur === "cny" ? 3000 : 500);
       const run = () => {
         limit();
+        SYM = root.dataset.cur === "cny" ? "¥" : "$";
+        symEl.textContent = SYM;
         let a = +y0.value, b = +m0.value, c = +y1.value, d = +m1.value;
         if (c < a || (c === a && d < b)) { c = a; d = b; y1.value = String(c); m1.value = String(d); }
         const money = Math.max(1, Math.round(+amt.value || 0));
@@ -304,11 +315,18 @@ const days = Array.from({ length: 28 }, (_, i) => i + 1);
         run();
       });
       amt.addEventListener("input", run);
-      // 重置：回到默认的 2000 年 6 月到数据最后一个月、每月 1 号、每月 500
+      // 重置：回到默认的 2000 年 6 月到数据最后一个月、每月 1 号、每月 500 美元（人民币模式下 3000 元）
       q<HTMLButtonElement>(".dca-reset").addEventListener("click", () => {
-        y0.value = "2000"; m0.value = "6"; y1.value = String(Y1); m1.value = String(M1); dd.value = "1"; amt.value = "500";
+        y0.value = "2000"; m0.value = "6"; y1.value = String(Y1); m1.value = String(M1); dd.value = "1"; amt.value = String(defAmt());
         run();
       });
+      // 切换货币：默认金额换成 500 美元 / 3000 元，所有数字前的符号跟着换
+      curBtns.forEach(btn => btn.addEventListener("click", () => {
+        root.dataset.cur = btn.dataset.cur;
+        curBtns.forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+        amt.value = String(defAmt());
+        run();
+      }));
       run();
       let lastW = svg.parentElement!.clientWidth;
       new ResizeObserver(() => { const w = Math.round(svg.parentElement!.clientWidth); if (w && w !== lastW) { lastW = w; run(); } }).observe(svg.parentElement!);
@@ -357,6 +375,10 @@ const days = Array.from({ length: 28 }, (_, i) => i + 1);
     font-size: 14px;
     color: var(--foreground);
     outline: none;
+  }
+  .dca-cur button {
+    padding: 5px 12px;
+    font-weight: 600;
   }
   .dca-foot {
     display: flex;

@@ -1,0 +1,36 @@
+---
+// 带货币切换的卡片：右上角 $ / ¥ 两个按钮，内容里写了 data-usd / data-cny 的文字跟着换。
+type Props = { title: string };
+const { title } = Astro.props;
+---
+
+<section class="rc cc" aria-label={title}>
+  <div class="rc-head">
+    <p class="rc-title">{title}</p>
+    <div class="bx-switch cc-cur">
+      <button type="button" data-cur="usd" aria-pressed="true" aria-label="USD">$</button>
+      <button type="button" data-cur="cny" aria-pressed="false" aria-label="CNY">¥</button>
+    </div>
+  </div>
+  <div class="rc-panel rc-def">
+    <slot />
+  </div>
+</section>
+
+<script>
+  document.addEventListener("click", e => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".cc-cur button");
+    if (!btn) return;
+    const card = btn.closest<HTMLElement>(".cc")!;
+    const cur = btn.dataset.cur as "usd" | "cny";
+    card.querySelectorAll<HTMLButtonElement>(".cc-cur button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+    card.querySelectorAll<HTMLElement>("[data-usd]").forEach(el => (el.textContent = el.dataset[cur]!));
+  });
+</script>
+
+<style is:global>
+  .cc-cur button {
+    padding: 5px 12px;
+    font-weight: 600;
+  }
+</style>
