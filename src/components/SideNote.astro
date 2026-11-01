@@ -1,0 +1,15 @@
+---
+// 正文右侧的小卡片：把要配旁注的那一段包进来，旁注文字放在 <Fragment slot="note"> 里。
+// 宽屏时卡片贴着正文右边、和这一段顶端平齐，跟着正文一起滚动，滚到页头的分隔线处被遮住；
+// 窄屏（目录卡片不显示时）就直接变成这一段前面的一张小卡。
+type Props = { title: string };
+const { title } = Astro.props;
+---
+
+<div class="sn-wrap">
+  <aside class="sn" aria-label={title}>
+    <p class="sn-title">{title}</p>
+    <div class="sn-body"><slot name="note" /></div>
+  </aside>
+  <slot />
+</div>

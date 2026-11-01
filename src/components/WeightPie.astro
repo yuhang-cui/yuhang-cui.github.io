@@ -1,0 +1,264 @@
+---
+// 指数权重环图：左边是图，右边是图例。鼠标停在哪一块（或图例哪一行），那一块亮起来、其余变淡，
+// 环中间显示它的名字和权重；手机上点一下同样效果。
+// index="sp500" 用 VOO 持仓（蓝），index="ndx" 用 QQQ 持仓（红）；数据来自 stockanalysis.com 的 ETF holdings 页，
+// 日期在各自的 asOf 里；谷歌都把 A、C 两类股合在一起。文字走 i18n（weightPie），颜色在下面 <style> 里按序号给，
+// 7 档同一色相由深到浅（dataviz 校验通过），"其余"用灰。
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+type Props = { index: "sp500" | "ndx" };
+const { index } = Astro.props;
+const s = useTranslations(Astro.currentLocale).weightPie;
+
+const DATA = {
+  sp500: {
+    asOf: "2026-09-30",
+    top: [
+      { t: "NVDA", w: 8.39 },
+      { t: "AAPL", w: 7.38 },
+      { t: "MSFT", w: 5.78 },
+      { t: "GOOGL", w: 5.52 },
+      { t: "AMZN", w: 3.71 },
+      { t: "AVGO", w: 2.54 },
+      { t: "META", w: 2.43 },
+    ],
+  },
+  ndx: {
+    asOf: "2026-10-30",
+    top: [
+      { t: "AAPL", w: 8.16 },
+      { t: "NVDA", w: 8.0 },
+      { t: "MSFT", w: 6.29 },
+      { t: "GOOGL", w: 5.15 },
+      { t: "MU", w: 4.47 },
+      { t: "AMZN", w: 4.21 },
+      { t: "AMD", w: 3.69 },
+    ],
+  },
+};
+const d = DATA[index];
+const topSum = d.top.reduce((a, r) => a + r.w, 0);
+type Row = { name: string; sub: string; w: number };
+const rows: Row[] = [
+  ...d.top.map(r => ({ name: s.names[r.t], sub: r.t === "GOOGL" ? "GOOGL + GOOG" : r.t, w: r.w })),
+  { name: s.rest[index], sub: s.restSub[index], w: 100 - topSum },
+];
+
+const C = 100;
+const R = 90;
+const r = 56;
+const pt = (a: number, rad: number) => [C + rad * Math.sin(a), C - rad * Math.cos(a)].map(v => v.toFixed(2));
+let acc = 0;
+const slices = rows.map((row, i) => {
+  const a0 = (acc / 100) * 2 * Math.PI;
+  acc += row.w;
+  const a1 = (acc / 100) * 2 * Math.PI;
+  const big = a1 - a0 > Math.PI ? 1 : 0;
+  const [x0, y0] = pt(a0, R);
+  const [x1, y1] = pt(a1, R);
+  const [x2, y2] = pt(a1, r);
+  const [x3, y3] = pt(a0, r);
+  const path = `M${x0},${y0} A${R},${R} 0 ${big} 1 ${x1},${y1} L${x2},${y2} A${r},${r} 0 ${big} 0 ${x3},${y3} Z`;
+  return { ...row, i, path };
+});
+const pct = (w: number) => w.toFixed(1) + "%";
+const caption = tplStr(s.caption, { source: s.sources[index], asOf: d.asOf, yuan: Math.round(topSum * 100).toLocaleString("en-US") });
+---
+
+<figure class="wp" data-hue={index} data-h0={s.center} data-v0={pct(topSum)}>
+  <div class="wp-grid">
+    <svg class="wp-pie" viewBox="0 0 200 200" role="img" aria-label={tplStr(s.ariaTop, { top: pct(topSum), rest: pct(100 - topSum) })}>
+      {slices.map(s => <path class="wp-slice" d={s.path} data-i={s.i} tabindex="0" aria-label={`${s.name} ${pct(s.w)}`} />)}
+      <text class="wp-c-h" x="100" y="93" text-anchor="middle">{s.center}</text>
+      <text class="wp-c-v" x="100" y="117" text-anchor="middle">{pct(topSum)}</text>
+    </svg>
+    <div class="wp-legend" role="list">
+      {
+        slices.map(s => (
+          <div class="wp-row" role="listitem" data-i={s.i} tabindex="0">
+            <i></i>
+            <span class="wp-name">
+              {s.name}
+              <small>{s.sub}</small>
+            </span>
+            <b>{pct(s.w)}</b>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+  <figcaption class="fn-note">{caption}</figcaption>
+</figure>
+
+<script>
+  // 鼠标 / 焦点 / 手指落在某一块或某一行：两边一起高亮，环中间换成它的名字和权重；离开就还原
+  function setup() {
+    document.querySelectorAll<HTMLElement>(".wp").forEach(fig => {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = "1";
+      const h = fig.querySelector<SVGTextElement>(".wp-c-h")!;
+      const v = fig.querySelector<SVGTextElement>(".wp-c-v")!;
+      const items = fig.querySelectorAll<HTMLElement>("[data-i]");
+      const on = (i: string) => {
+        fig.dataset.on = i;
+        items.forEach(el => el.classList.toggle("is-on", el.dataset.i === i));
+        const row = fig.querySelector<HTMLElement>(`.wp-row[data-i="${i}"]`)!;
+        h.textContent = row.querySelector(".wp-name")!.childNodes[0].textContent!.trim();
+        v.textContent = row.querySelector("b")!.textContent;
+      };
+      const off = () => {
+        delete fig.dataset.on;
+        items.forEach(el => el.classList.remove("is-on"));
+        h.textContent = fig.dataset.h0!;
+        v.textContent = fig.dataset.v0!;
+      };
+      items.forEach(el => {
+        el.addEventListener("pointerenter", () => on(el.dataset.i!));
+        el.addEventListener("pointerdown", () => on(el.dataset.i!));
+        el.addEventListener("focus", () => on(el.dataset.i!));
+        el.addEventListener("pointerleave", off);
+        el.addEventListener("blur", off);
+      });
+    });
+  }
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style>
+  .wp {
+    margin: 0.5rem 0 0;
+  }
+  /* 图例 8 行、每行固定 36px = 288px；环图也是 288px，上下沿正好和第一行、最后一行平齐 */
+  .wp-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 20px 48px;
+  }
+  .wp-pie {
+    flex: 0 0 288px;
+    width: 288px;
+    height: 288px;
+  }
+  .wp-slice {
+    fill: var(--c);
+    stroke: var(--card);
+    stroke-width: 2;
+    cursor: default;
+    outline: none;
+    transform-origin: 100px 100px;
+    transition:
+      opacity 0.15s ease,
+      transform 0.15s ease;
+  }
+  .wp-slice.is-on {
+    transform: scale(1.04);
+  }
+  .wp[data-on] .wp-slice:not(.is-on) {
+    opacity: 0.35;
+  }
+  .wp-c-h {
+    font-size: 11px;
+    fill: var(--summary);
+  }
+  .wp-c-v {
+    font-size: 21px;
+    font-weight: 700;
+    fill: var(--foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .wp-legend {
+    flex: 1 1 200px;
+    max-width: 300px;
+    min-width: 0;
+  }
+  .wp-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    line-height: 1.3;
+    color: var(--prose);
+    cursor: default;
+    outline: none;
+    transition:
+      opacity 0.15s ease,
+      background 0.15s ease;
+  }
+  .wp-row i {
+    flex: 0 0 11px;
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    background: var(--c);
+  }
+  .wp-name small {
+    display: block;
+    font-size: 10.5px;
+    color: var(--faint);
+  }
+  .wp-row b {
+    margin-left: auto;
+    padding-left: 16px;
+    font-weight: 600;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .wp-row.is-on {
+    background: var(--muted);
+  }
+  .wp[data-on] .wp-row:not(.is-on) {
+    opacity: 0.5;
+  }
+
+  /* 标普500：蓝 */
+  .wp[data-hue="sp500"] [data-i="0"] { --c: #003656; }
+  .wp[data-hue="sp500"] [data-i="1"] { --c: #004873; }
+  .wp[data-hue="sp500"] [data-i="2"] { --c: #005a90; }
+  .wp[data-hue="sp500"] [data-i="3"] { --c: #016dac; }
+  .wp[data-hue="sp500"] [data-i="4"] { --c: #2c85ba; }
+  .wp[data-hue="sp500"] [data-i="5"] { --c: #579ec8; }
+  .wp[data-hue="sp500"] [data-i="6"] { --c: #82b7d6; }
+  /* 纳斯达克100：红 */
+  .wp[data-hue="ndx"] [data-i="0"] { --c: #5f1418; }
+  .wp[data-hue="ndx"] [data-i="1"] { --c: #811b20; }
+  .wp[data-hue="ndx"] [data-i="2"] { --c: #a42229; }
+  .wp[data-hue="ndx"] [data-i="3"] { --c: #c2353c; }
+  .wp[data-hue="ndx"] [data-i="4"] { --c: #ce5c62; }
+  .wp[data-hue="ndx"] [data-i="5"] { --c: #d87e83; }
+  .wp[data-hue="ndx"] [data-i="6"] { --c: #e29ea2; }
+  .wp [data-i="7"] { --c: #d6d2ca; }
+
+  /* 深色模式：换成能在深底上看清的一档 */
+  :global([data-theme="dark"]) .wp[data-hue="sp500"] [data-i="0"] { --c: #305470; }
+  :global([data-theme="dark"]) .wp[data-hue="sp500"] [data-i="1"] { --c: #3d6c90; }
+  :global([data-theme="dark"]) .wp[data-hue="sp500"] [data-i="2"] { --c: #4b85b2; }
+  :global([data-theme="dark"]) .wp[data-hue="sp500"] [data-i="3"] { --c: #5aa0d5; }
+  :global([data-theme="dark"]) .wp[data-hue="sp500"] [data-i="4"] { --c: #7fb9e6; }
+  :global([data-theme="dark"]) .wp[data-hue="sp500"] [data-i="5"] { --c: #add2ef; }
+  :global([data-theme="dark"]) .wp[data-hue="sp500"] [data-i="6"] { --c: #d9ebf8; }
+  :global([data-theme="dark"]) .wp[data-hue="ndx"] [data-i="0"] { --c: #7f3b3b; }
+  :global([data-theme="dark"]) .wp[data-hue="ndx"] [data-i="1"] { --c: #a14c4c; }
+  :global([data-theme="dark"]) .wp[data-hue="ndx"] [data-i="2"] { --c: #c55c5c; }
+  :global([data-theme="dark"]) .wp[data-hue="ndx"] [data-i="3"] { --c: #ea6e6e; }
+  :global([data-theme="dark"]) .wp[data-hue="ndx"] [data-i="4"] { --c: #f19797; }
+  :global([data-theme="dark"]) .wp[data-hue="ndx"] [data-i="5"] { --c: #f6bdbd; }
+  :global([data-theme="dark"]) .wp[data-hue="ndx"] [data-i="6"] { --c: #fbe1e1; }
+  :global([data-theme="dark"]) .wp [data-i="7"] { --c: #4a4741; }
+
+  @media (max-width: 560px) {
+    .wp-grid {
+      justify-content: center;
+    }
+    .wp-pie {
+      flex-basis: 220px;
+      width: 220px;
+      height: 220px;
+    }
+  }
+</style>

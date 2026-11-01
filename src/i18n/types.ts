@@ -501,4 +501,13 @@ export interface UIStrings {
     dcNote: string;
     dirCum: string;
   };
+  weightPie: {
+    center: string;
+    ariaTop: string;
+    caption: string;
+    sources: { sp500: string; ndx: string };
+    rest: { sp500: string; ndx: string };
+    restSub: { sp500: string; ndx: string };
+    names: Record<string, string>;
+  };
 }

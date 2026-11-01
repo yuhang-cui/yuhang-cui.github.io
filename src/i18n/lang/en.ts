@@ -515,4 +515,13 @@ export default {
     dcNote: "In-system 19 trades only, in trade order from left to right. Each line only moves when there is a trade in that direction; each dot is one trade. Hover (or tap) a dot to see that trade.",
     dirCum: "Cumulative for this direction",
   },
+  weightPie: {
+    center: "Top 7 combined",
+    ariaTop: "The top 7 companies make up {{top}}; the rest {{rest}}",
+    caption: "Source: {{source}}, {{asOf}}; Alphabet's two share classes are combined. Of every $10,000 you invest, about ${{yuan}} buys these 7 companies.",
+    sources: { sp500: "VOO holdings", ndx: "QQQ holdings" },
+    rest: { sp500: "The other ~500", ndx: "The other ~95" },
+    restSub: { sp500: "each under 2%", ndx: "each under 3.5%" },
+    names: { NVDA: "Nvidia", AAPL: "Apple", MSFT: "Microsoft", GOOGL: "Alphabet", AMZN: "Amazon", AVGO: "Broadcom", META: "Meta", MU: "Micron", AMD: "AMD" },
+  },
 } satisfies UIStrings;

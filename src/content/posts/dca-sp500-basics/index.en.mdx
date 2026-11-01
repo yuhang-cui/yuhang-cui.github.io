@@ -1,0 +1,312 @@
+---
+title: "DCA Series 01: What the S&P 500 Is, and How SPX, SPY, VOO and ES Differ"
+description: "I buy VOO every month. Before starting this series, the basics first: where the S&P 500 index came from, why 500 companies and why market-cap weighting; then, in plain words, what SPX, SPY, VOO and ES are. The four names show up every day, and they are four different things."
+stat: "1957"
+statLabel: "S&P 500 launched"
+pubDatetime: 2026-11-01T20:00:00+08:00
+tags: [Thinking]
+lang: en
+---
+
+import TableTabs from "@/components/TableTabs.astro";
+import Timeline from "@/components/Timeline.astro";
+import SideNote from "@/components/SideNote.astro";
+import WeightPie from "@/components/WeightPie.astro";
+
+> **What this post covers**: where the S&P 500 came from, and what each of the four names SPX, SPY, VOO and ES actually is.
+>
+> **One-sentence version**: SPX is a number; SPY and VOO package that number into a stock you can buy; ES is a leveraged contract built on that number.
+>
+> <span class="takeaway">For dollar-cost averaging you buy VOO, for watching the market you look at ES, and the news talks about SPX. They all track the same "menu", but they are not the same thing.</span>
+
+## Summary
+
+<div class="summary">
+
+**The S&P 500 is a menu:**
+S&P picks roughly 500 large American companies, weights them by market value and computes one number every day. You cannot buy the number itself.
+
+**Born in 1957:**
+Two advantages over the Dow: weighted by market value, and enough companies. That is why the market uses it as the yardstick, not the Dow.
+
+**SPY and VOO are two brands of the same thing:**
+A. SPY is older and has the highest volume, so it suits trading.<br />
+B. VOO charges a third of the fee, so it suits holding for the long term.
+
+**ES is a futures contract:**
+Leverage, expiry dates, nearly 24-hour trading, no dividends. It is a day-trading tool.
+
+**SPX is drawn from 1871 to today, but the S&P 500 itself is only 69 years old:**
+Everything before 1957 is spliced on: 1926–1957 uses its predecessor, the "S&P 90"; earlier than that is a monthly series the Cowles Commission reconstructed in the 1930s.
+<span class="sub">Why anyone bothered: Alfred Cowles wanted to know whether stock forecasters were any good, and needed a "market" curve to compare them against, so he computed one back to 1871. S&P later attached it to the front of its own index, and Shiller extended it to today. So the first 86 years of SPX are stitched-together research data, not trading records.</span>
+
+</div>
+
+## 1. What the S&P 500 is
+
+<SideNote title="Who is S&P">
+<Fragment slot="note">
+
+Short for Standard & Poor's. It started in 1860 publishing financial manuals on railroad companies; later its main business became credit ratings on bonds, the AAA and BBB grades.
+
+Why build an index: it already had financial data on the whole market. Computing a "market average" gave newspapers and fund managers a common yardstick. The more the index was quoted, the bigger the name; today SPY and VOO pay it a licence fee every year to use the name.
+
+In 2012 the index business merged with Dow Jones and is now called S&P Dow Jones Indices.
+
+</Fragment>
+
+Think of it as a **menu**: S&P (S&P Dow Jones Indices) lists roughly 500 large American companies, writes a weight next to each one, bigger company bigger weight, and uses their live share prices to compute one number, say 6,800 points.
+
+</SideNote>
+
+When the news says "the S&P rose 1%", that is the number. It is not a stock, and nobody can "buy one lot of the S&P 500". To buy it, you buy products built around the menu, covered in section 3.
+
+### How a company gets on the menu
+
+It is not "the 500 largest" automatically. A committee picks by criteria. The hard rules today are roughly:
+
+<div class="exp-table">
+
+| Rule | Detail |
+|:---|:---|
+| Domicile | A US company |
+| Size | Above a threshold (about $22.7 billion from 2025, adjusted with the market) |
+| Float | At least half the shares freely traded |
+| Profit | Positive earnings in the latest quarter and over the latest four quarters combined |
+| Liquidity | Enough trading volume |
+
+</div>
+
+<p class="table-note">The profit rule is why Tesla only got in at the end of 2020. Because Alphabet, Berkshire and others have two share classes, the index actually holds 503 tickers but is still called the 500.</p>
+
+### How the weights work
+
+Weighted by **free-float market cap**: a company's market value × the share of its stock that trades freely. Apple, Microsoft and Nvidia each take 6–7% on their own; the few hundred at the bottom take a few hundredths of a percent each. So when you buy the S&P 500, more than half the money goes to the top few dozen companies.
+
+<TableTabs title="Top seven weights" tabs={["S&P 500 · VOO", "Nasdaq-100 · QQQ"]}>
+<div class="tt-panel">
+
+<WeightPie index="sp500" />
+
+</div>
+<div class="tt-panel">
+
+<WeightPie index="ndx" />
+
+</div>
+</TableTabs>
+
+Compare the better-known Dow: only 30 companies, and **weighted by share price**. A company with a $500 share price carries ten times the weight of one at $50, regardless of how big the companies are. That is a leftover from hand calculation in 1896. It makes little sense today, but the name is too famous to drop.
+
+## 2. A short history
+
+<SideNote title="Buffett's ten-year bet">
+<Fragment slot="note">
+
+**The bet**: at the start of 2008 Buffett bet hedge-fund manager Ted Seides that over ten years the plainest S&P 500 index fund would beat a hand-picked portfolio of 5 funds of hedge funds (over 200 hedge funds underneath). $1 million at stake, the winner's charity gets it.
+
+**The ride**: in 2008, year one, the index fell 37% and all 5 funds beat it. For the next nine years the index fund led almost every year.
+
+**The result**: by the end of 2017 the index fund was up 125.8%, 8.5% a year. The 5 funds were up 21.7%, 42.3%, 87.7%, 2.8% and 27.0%, about 3% a year on average. Seides conceded in May 2017, before time was up.
+
+**Why**: hedge funds charge "2% a year plus 20% of profits". Over ten years most of the gains went to the managers; an index fund charges a few hundredths of a percent.
+
+Buffett later published his will in a shareholder letter: 90% of the money left to his wife goes into an S&P 500 index fund.
+
+</Fragment>
+
+<TableTabs title="S&P 500 history" tabs={["Timeline", "Detailed"]}>
+<div class="tt-panel">
+
+<Timeline
+  caption="Solid dots are the moments that matter most to an index investor; the full list is on the Detailed tab."
+  rows={[
+    { label: "Origins (1860–1941)", items: [
+      { year: "1860", text: "Henry Poor publishes a manual of US railroads: the start of Poor's" },
+      { year: "1896", text: "Dow Jones Industrial Average launches: 12 companies, weighted by price" },
+      { year: "1926", text: "Standard Statistics builds a 90-company index, computed daily, weighted by market cap" },
+      { year: "1941", text: "Standard Statistics and Poor's merge into Standard & Poor's" },
+    ] },
+    { label: "Birth and shape (1957–1988)", items: [
+      { year: "1957", text: "S&P 500 launches on 4 March: 425 industrials + 60 utilities + 15 railroads", big: true },
+      { year: "1976", text: "Vanguard launches the first index fund for retail investors", big: true },
+      { year: "1982", text: "CME lists S&P 500 futures at $500 a point" },
+      { year: "1987", text: "Black Monday: −20.5% in one day, still the record" },
+    ] },
+    { label: "The index becomes something you can buy (1993–2009)", items: [
+      { year: "1993", text: "SPY lists, the first US ETF", big: true },
+      { year: "1997", text: "E-mini futures (ES) list at $50 a point", big: true },
+      { year: "2009", text: "Financial-crisis low at 676, down 57% from the 2007 high" },
+    ] },
+    { label: "The VOO era (2010–)", items: [
+      { year: "2010", text: "VOO lists", big: true },
+      { year: "2017", text: "Buffett's ten-year bet ends; the index fund crushes the hedge funds" },
+      { year: "2019", text: "VOO's fee drops to 0.03%; Micro E-mini futures (MES) list" },
+      { year: "2020", text: "Covid: −34% in 33 days, recovered in 5 months" },
+      { year: "2025", text: "VOO passes SPY as the world's largest ETF", big: true },
+    ] },
+  ]}
+/>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| Year | What happened | What it means for an index investor |
+|:---|:---|:---|
+| 1860 | Henry Varnum Poor publishes *History of Railroads and Canals in the United States*, the first systematic collection of listed companies' financials | An index needs reliable data first; this is the starting point |
+| 1896 | Dow Jones Industrial Average launches: 12 companies, price-weighted, computed by hand | The first index the public remembered, with an unsound weighting |
+| 1906 | Standard Statistics founded, covering non-railroad companies | The "Standard" in S&P 500 |
+| 1923 | Standard Statistics builds a 233-company index, updated weekly | The first market-cap-weighted index |
+| 1926 | Trimmed to 90 companies, updated daily | The early part of today's "S&P 500 daily chart from 1928" is this index |
+| 1941 | Standard Statistics and Poor's Publishing merge into Standard & Poor's | — |
+| **1957** | **S&P 500 officially launches on 4 March**<br />425 industrials + 60 utilities + 15 railroads = 500<br />computed hourly on a Datatron computer; starts around 44 points, with the 1941–43 base period = 10 | Most "10% a year over the long run" claims start counting from this year |
+| 1976 | July: the sector quotas change to<br />400 industrials / 40 utilities / 40 financials / 20 transports<br />August: Vanguard launches the first S&P 500 index fund for retail investors, mocked by peers as "Bogle's folly" | **Index investing only became possible from this year** |
+| 1982 | CME lists S&P 500 futures (the big SP contract, $500 a point) | Futures let institutions hedge, and later let ETFs be arbitraged cheaply |
+| 1983 | CBOE lists SPX options | — |
+| 1987 | Black Monday, 19 October: −20.5% in one day | Still the largest one-day drop; the index recovered within two years |
+| **1993** | **SPY lists on 22 January**, the first US ETF | Retail investors can buy the whole index like a stock for the first time |
+| **1997** | **E-mini futures (ES) list on 9 September**, $50 a point, nearly 24-hour trading | The chart I watch intraday |
+| 2000 | May: IVV lists, BlackRock's S&P ETF | The second of the "three S&P brothers" |
+| 2005 | Switch to free-float market-cap weighting | Shares locked up by insiders no longer count |
+| 2007–2009 | Peak at 1,565 in October 2007; low at 676 in March 2009, −57% | The deepest drawdown an index investor has lived through |
+| **2010** | **VOO lists on 7 September** with a 0.06% fee, two-thirds of SPY's | The one I buy |
+| 2014 | Buffett publishes his will in a shareholder letter: 90% of the money left to his wife into an S&P 500 index fund, 10% into short-term Treasuries | The best stock picker alive tells ordinary people not to pick stocks |
+| **2017** | **Buffett's ten-year bet with the hedge funds, made in 2008, ends**: the S&P 500 index fund up 126%, the five funds of hedge funds up 36% on average | Low fees and no fiddling beat the professionals over ten years |
+| 2019 | April: VOO's fee drops to 0.03%, the cheapest S&P ETF; May: Micro E-mini futures (MES) list at $5 a point | $3 a year on every $10,000 |
+| 2020 | February–March Covid crash: −34% in 33 days, recovered by August; December: Tesla joins | The fastest bear market and the fastest recovery on record |
+| **2025** | **18 February: VOO's assets pass SPY's, making it the world's largest ETF**; April tariff shock, −19% in 7 weeks, new high by late June | From launch to number one in fourteen and a half years |
+
+</div>
+
+</div>
+</TableTabs>
+
+</SideNote>
+
+A few things worth one more sentence:
+
+**Why 500.** Before 1957, 90 companies was about the limit of what people could compute by hand. That year S&P used an electronic computer for the first time (a Burroughs Datatron), which could run 500 companies in an hour, so the index jumped straight to 500. Every change since has swapped constituents; the count never moved.
+
+**Why market-cap weighting.** This is the essential difference between the S&P 500 and the Dow. Weighting by market value means "the proportions in which all the money in the market is invested across these 500 companies are your proportions". You do not guess which one will go up; you just follow the average holding of all investors. The idea became the standard for indexes worldwide, and it is where "buying the index is buying the whole market" comes from.
+
+**The starting point.** Around 44 points at launch in 1957 (base period 1941–43 = 10). Today it is over 6,000: more than 100× without dividends, and roughly 1,000× with dividends reinvested. Those two numbers differ by a factor of 10.
+
+## 3. SPX, SPY, VOO and ES
+
+<TableTabs title="The four side by side" tabs={["What it is", "How it trades", "Fees and dividends"]}>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| | SPX | SPY | VOO | ES |
+|:---|:---|:---|:---|:---|
+| Full name | S&P 500 Index | SPDR S&P 500 ETF | Vanguard S&P 500 ETF | E-mini S&P 500 futures |
+| What it is | A number | The 500 companies bought per the menu and packaged into one stock | Same as SPY | A contract settled in index points |
+| Can you buy it | No | Yes | Yes | Yes |
+| What it is for | Seeing how many points the market rose or fell today | Short-term trading, options | Dollar-cost averaging, long-term holding | Day trading, hedging a portfolio |
+| Issuer | S&P | State Street | Vanguard | CME |
+| Launched | 1957 | 1993 | 2010 | 1997 |
+| Rough price | 6,800 points | 1/10 of SPX | 1/11 of SPX | SPX plus or minus a "basis" |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| | SPX | SPY | VOO | ES |
+|:---|:---|:---|:---|:---|
+| Hours | Only during the US session: 9:30–16:00 Eastern | 9:30–16:00; pre- and post-market trading exists but is thin | Same as SPY | Sunday 18:00 to Friday 17:00 Eastern, with a one-hour break at 17:00 each day |
+| Leverage | — | None | None | One contract = $50 × index ≈ $340,000 of exposure for a margin of a few tens of thousands |
+| Expiry | — | None | None | One contract per quarter (March, June, September, December); you roll at expiry |
+| Who it suits | Reading the news, computing returns | Frequent traders, options traders | Long-term holders, index investors | Day traders, hedgers |
+
+</div>
+
+</div>
+<div class="tt-panel">
+
+<div class="exp-table">
+
+| | SPX | SPY | VOO | ES |
+|:---|:---|:---|:---|:---|
+| Annual fee | — | 0.0945% | 0.03% | No management fee; commissions and roll costs |
+| Dividends | Not included | Paid in cash each quarter; cannot be reinvested in between (old trust structure) | Paid in cash each quarter; the fund can reinvest internally | None; dividends are priced into the contract |
+| Holdings | — | Shares of the 500 companies | Shares of the 500 companies | Holds nothing; it is just a contract |
+
+</div>
+
+</div>
+</TableTabs>
+
+### SPX: the index itself
+
+Just a number. Its job is to be the **yardstick**: every product is judged against it.
+
+### SPY: the first and most traded S&P ETF
+
+Launched by State Street in 1993, the first ETF in the US. One share of SPY is a proportional slice of all 500 companies, priced at about one tenth of SPX.
+
+Its strengths are **the highest volume in the world and the most active options**, which makes it the traders' default. But it uses a 1993-era unit-trust structure: dividends it receives have to sit in cash until the quarterly payout and cannot be reinvested in between, and it cannot lend out its shares for extra income. Both make it a touch slower than VOO.
+
+### VOO: Vanguard's S&P ETF
+
+<SideNote title="VOO vs IVV">
+<Fragment slot="note">
+
+**Fee**: 0.03% for both.
+
+**Structure**: both are modern open-end ETFs. Both can reinvest dividends inside the fund and lend out shares for a little extra. SPY can do neither.
+
+**Origins**: IVV is BlackRock's, launched in 2000; VOO is Vanguard's, launched in 2010. VOO holds about $800 billion, IVV about $670 billion.
+
+**Verdict**: same holdings, same fee, and the long-run return gap is on the order of a hundredth of a percent a year. Pick whichever your broker trades commission-free. Owning both is pointless.
+
+</Fragment>
+
+Launched in 2010, tracking the same menu, with holdings almost identical to SPY. The fee is 0.03%, a third of SPY's, and the structure is more modern: dividends can be reinvested straight away.
+
+</SideNote>
+
+SPY versus VOO comes down to this: **the same thing, SPY for frequent trading, VOO for holding**. Over twenty years of monthly buying, a 0.06% fee gap is invisible in any single year and real money once compounded.
+
+There is also IVV, BlackRock's version, also at 0.03%. VOO, IVV and SPY are the "three S&P brothers": the same holdings, differing only in fee and structure.
+
+### ES: S&P 500 futures
+
+The E-mini contract CME launched in 1997. It is **not "buying 500 companies"**. It is a wager: you and a counterparty agree to settle on the S&P's point value at $50 a point.
+
+It differs from the other three in kind:
+
+- **Leverage**: one contract is about $340,000 of S&P exposure for a margin of a few tens of thousands.
+- **Expiry**: one contract per quarter; you roll to the next at expiry.
+- **Nearly 24-hour trading**: Sunday evening to Friday afternoon, with a one-hour break each day.
+- **No dividends**: so ES trades at a "basis" to SPX (cost of carry minus expected dividends) rather than at the same price.
+- There is also a smaller version, MES, at $5 a point, one tenth of ES.
+
+The chart I day-trade is ES. It and index investing are two different worlds: one bets on a few hours with leverage, the other holds for decades without it.
+
+### Where the gaps in SPX come from
+
+SPX only has a value during the six and a half hours the US market is open, but the world does not stop at the close: Asian and European sessions, overnight news and earnings all play out first on ES, which trades almost around the clock. At 9:30 the next morning SPX jumps straight to where ES already is, and that leaves a gap on the chart. So a gap does not mean "cheaper" or "dearer"; it is the overnight move booked in one step. For an index investor the open is just the open. There is nothing to wait for.
+
+### The Nasdaq equivalents
+
+<div class="exp-table">
+
+| S&P 500 | Nasdaq-100 |
+|:---|:---|
+| SPX (index) | NDX |
+| SPY / VOO / IVV (ETFs) | QQQ / QQQM |
+| ES / MES (futures) | NQ / MNQ |
+
+</div>
+
+<p class="table-note">The Nasdaq-100 is a different menu: the 100 largest non-financial companies listed on the Nasdaq exchange. How it really differs from the S&P 500 is for later in this series.</p>
+
+## Next in the series
+
+How the S&P 500's return over sixty-odd years is actually computed: the difference between the price index and the total-return index, and why reinvesting dividends makes a 10× difference.

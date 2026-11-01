@@ -1440,6 +1440,86 @@ a.tag-pill:hover {
   color: var(--faint);
 }
 
+/* ===== 正文右侧的小卡片（SideNote）：样式和目录卡片一套；窄屏时作为正文里的一张小卡 ===== */
+.app-prose .sn-wrap {
+  position: relative;
+}
+.app-prose .sn {
+  margin: 1.25rem 0;
+  padding: 14px 16px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / 0.03),
+    0 4px 10px -2px rgb(0 0 0 / 0.05);
+}
+.app-prose .sn-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+.app-prose .sn-body p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--summary);
+}
+.app-prose .sn-body p + p {
+  margin-top: 8px;
+}
+@media (min-width: 1360px) {
+  .app-prose .sn {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 40px);
+    width: 232px;
+    margin: 0;
+  }
+  /* 页头只有正文那么宽；把它的底色往右延到卡片那一栏，卡片滚上去时就在分隔线处被遮住 */
+  body:has(.app-prose .sn) header::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    width: 300px;
+    background: var(--background);
+  }
+}
+
+/* ===== 文首总结：每条先一行加粗的标题，内容另起一行 ===== */
+.app-prose .summary {
+  padding-bottom: 1.5rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid rgb(0 0 0 / 0.09);
+}
+.app-prose .summary p {
+  font-size: 17px;
+  line-height: 1.8;
+}
+.app-prose .summary p > strong:first-child {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+}
+[data-theme="dark"] .app-prose .summary p > strong:first-child {
+  color: var(--foreground);
+}
+
+/* ===== 一段话下面的一行小字说明 ===== */
+.app-prose .sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--faint);
+}
+
 /* ===== 表格上方的标题：左边一道竖线 ===== */
 .app-prose .table-title {
   margin: 1.75rem 0 -0.5rem;

@@ -515,4 +515,13 @@ export default {
     dcNote: "只算系统内 19 笔，按交易顺序从左到右。每条线只在这个方向有交易时才动，点就是那一笔交易。鼠标停在点上可以看到这笔交易。",
     dirCum: "这个方向累计",
   },
+  weightPie: {
+    center: "前 7 家合计",
+    ariaTop: "前 7 家公司合计 {{top}}，其余合计 {{rest}}",
+    caption: "数据：{{source}}，{{asOf}}；谷歌合并了 A、C 两类股。定投 1 万元，大约 {{yuan}} 元买的是这 7 家公司。",
+    sources: { sp500: "VOO 持仓", ndx: "QQQ 持仓" },
+    rest: { sp500: "其余约 500 家", ndx: "其余约 95 家" },
+    restSub: { sp500: "每家都不到 2%", ndx: "每家都不到 3.5%" },
+    names: { NVDA: "英伟达", AAPL: "苹果", MSFT: "微软", GOOGL: "谷歌", AMZN: "亚马逊", AVGO: "博通", META: "Meta", MU: "美光", AMD: "AMD" },
+  },
 } satisfies UIStrings;
