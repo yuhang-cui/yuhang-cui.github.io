@@ -1,0 +1,148 @@
+---
+title: "DCA Series 02: What You Can Buy Every Month, and Where the Dividends Go"
+description: "The last post explained what the S&P 500 is. This one lines up the four ETFs you can buy every month: what they track, how the fees differ, when they launched; then a chart from 1871 shows where the dividends actually go."
+stat: "0.03%"
+statLabel: "VOO annual fee"
+pubDatetime: 2026-11-01T20:00:00+08:00
+tags: [Thinking]
+lang: en
+---
+
+import DcaExplorer from "@/components/DcaExplorer.astro";
+import SpxTrExplorer from "@/components/SpxTrExplorer.astro";
+import CurrencyCard from "@/components/CurrencyCard.astro";
+
+The last post explained what the S&P 500 is. This one puts the data on the table so you can change the years and the amount yourself and see how buying the S&P 500 (IVV) compares with buying the Nasdaq-100 (QQQ).
+
+## 1. IVV vs QQQ: $500 a month since 2000
+
+<DcaExplorer />
+
+Data: Yahoo Finance daily adjusted closes, dividends reinvested, through 30 October 2026.
+
+You can pick the day of the month. If the market is closed that day, or it falls on a weekend or holiday, the purchase moves to the next trading day.
+
+The S&P 500 line uses IVV rather than VOO because IVV is ten years older, with data from May 2000. QQQ's data starts in March 1999; for a fair comparison both lines start by default from June 2000, IVV's first full month. The earliest start you can pick is 19 May 2000, IVV's first trading day.
+
+<section class="rc" aria-label="Dividends, distributions, and reinvesting">
+  <div class="rc-head"><p class="rc-title">Dividends, distributions, and reinvesting when you buy monthly</p></div>
+  <div class="rc-panel rc-def">
+
+**Are dividends and distributions the same thing?** A distribution is anything a company or fund hands back to its holders; a dividend is the part paid in cash. For US ETFs, a “dividend” is always cash, so the two words mean the same thing here.
+
+**Where do the dividends go when you buy every month?** The ETF pays them out as cash into your brokerage account each quarter; they do not turn into shares by themselves. To reinvest automatically, switch on DRIP (dividend reinvestment) at your broker: the cash is then used to buy more of the ETF on the day it arrives, fractional shares included. Without it the cash just sits there until your next purchase.
+
+**How does the chart above count them?** As “reinvested on the day they arrive” (adjusted prices), which is the same as having DRIP on.
+
+  </div>
+</section>
+
+## 2. What is suitable for monthly investing
+
+Monthly investing means buying the same thing on a fixed day each month for a fixed amount, whatever the market is doing. To keep that up for twenty or thirty years, the thing you buy has to pass three tests:
+
+- **You can hold it forever**: no expiry date, no rolling, no margin call.
+- **No leverage**: a 50% drop is a 50% drop, not a wipeout.
+- **Spread wide enough**: not bet on one company, so one failure does not matter.
+
+Four products pass all three:
+
+<div class="exp-table">
+
+| Ticker | Tracks | Annual fee | Dividend yield | Launched |
+|:---|:---|:---|:---|:---|
+| **VOO** | S&P 500 | 0.03% | about 1.1% | September 2010 |
+| IVV | S&P 500 | 0.03% | about 1.0% | May 2000 |
+| SPY | S&P 500 | 0.09% | about 1.0% | January 1993 |
+| QQQ | Nasdaq-100 | 0.18% | about 0.5% | March 1999 |
+
+</div>
+
+<p class="table-note">Fees and yields from stockanalysis.com, October 2026.</p>
+
+## 3. The S&P 500's history is far longer than any ETF's
+
+SPX is the ticker of the S&P 500 index itself; when the news says “the S&P rose 1%”, that is SPX. It has existed since 1957, 36 years before the first S&P ETF (SPY, 1993), so for returns over decades you look at it, not at VOO. The chart below shows it two ways: SPX, price only, and SPXT, with dividends bought back in.
+
+<SpxTrExplorer />
+
+Data: Professor Robert Shiller's public monthly series at Yale, with the S&P's price and dividend for every month since 1871, updated to the present.
+
+<details class="rc fold">
+  <summary>A few things to know</summary>
+  <div class="rc-panel rc-def">
+
+1. Everything before 1957 was reconstructed later; it is not strictly the S&P 500.
+2. Prices are monthly averages, not month-end closes, so a crash within a month (October 1987, March 2020) looks shallower than on a daily chart.
+3. The dividend data runs a few months behind; from July 2026 it carries the June level forward.
+4. Total return simply buys the dividend back into the index at that month's price. From 1988 on it matches S&P's official total-return index.
+
+  </div>
+</details>
+
+One more thing: US dividends paid to residents of China have 10% tax withheld first; check with your broker.
+
+## 4. Notes
+
+**Only three tests for what to buy monthly:** you can hold it forever, no leverage, spread wide enough. What passes is basically a fund tracking a broad index.
+
+**QQQ is the more aggressive choice:** it tracks the Nasdaq-100, only 100 companies, more than half of them tech. It rises faster than the S&P and falls harder, at a 0.18% fee.
+
+## Summary
+
+<CurrencyCard title="Annualised returns">
+
+At these rates, <span data-usd="$500" data-cny="¥3,000">$500</span> a month for 30 years (<span data-usd="$180,000" data-cny="¥1.08 million">$180,000</span> invested in total) gives:
+
+- IVV: 8.5% a year since May 2000 → about <span data-usd="$770,000" data-cny="¥4.63 million">$770,000</span> after 30 years, ×4.3
+- QQQ: 9.1% a year since May 2000 → about <span data-usd="$870,000" data-cny="¥5.22 million">$870,000</span> after 30 years, ×4.8
+
+The two above count from 2000 and lived through the 2000 and 2008 crashes; the two below count from 2010 and missed both:
+
+- VOO: 14.7% a year since September 2010 → about <span data-usd="$2.61 million" data-cny="¥15.67 million">$2.61 million</span> after 30 years, ×14.5
+- QQQ: 19.2% a year since September 2010 → about <span data-usd="$6.59 million" data-cny="¥39.53 million">$6.59 million</span> after 30 years, ×36.6
+
+</CurrencyCard>
+
+<details class="rc fold">
+  <summary>How these numbers are computed</summary>
+  <div class="rc-panel rc-def">
+
+The card uses just three formulas. The symbols first:
+
+<div class="fx-sym">
+<span><b>r</b>annual return</span>
+<span><b>m</b>monthly return</span>
+<span><b>A</b>the amount invested each month</span>
+<span><b>N</b>the number of months</span>
+<span><b>x<sup>n</sup></b>x to the power n: x multiplied by itself n times</span>
+<span><b>x<sup>1/n</sup></b>the n-th root of x: the number that gives x when multiplied by itself n times</span>
+</div>
+
+**1. Annual return r**: spread “how many times it grew in total” evenly over the years, compounding at the same rate every year.
+
+<div class="fx"><i>r</i> = <span class="frac"><span>ending value</span><span>starting value</span></span><sup>1 / years</sup> − 1</div>
+
+<p class="fx-ex">IVV grew 8.62× from May 2000 to October 2026, 26.45 years: the 26.45th root of 8.62, minus 1, is 8.5%.</p>
+
+**2. Monthly return m**: the annual rate split into months. Not simply divided by 12, because the months compound on each other too.
+
+<div class="fx"><i>m</i> = (1 + <i>r</i>)<sup>1 / 12</sup> − 1</div>
+
+<p class="fx-ex">With r = 8.5%, m = 0.68%. Dividing by 12 would give 0.71%, too high.</p>
+
+**3. What N months of buying adds up to**: the first month's A compounds for N months, the last month's A for only 1 month; add the N amounts together. They form a geometric series, and its sum is the formula below.
+
+<div class="fx">final value = <i>A</i> × <span class="frac"><span>(1 + <i>m</i>)<sup><i>N</i></sup> − 1</span><span><i>m</i></span></span></div>
+
+<p class="fx-ex">A = 500, N = 360, m = 0.68%: 500 × (1.0068 to the power 360 − 1) ÷ 0.0068 ≈ $770,000. Invested: 500 × 360 = $180,000, so ×4.3.</p>
+
+**Two different “annual returns”.** In the “IVV vs QQQ” chart at the top of the post, IVV shows 11.7% a year; in this card IVV is 8.5%. The difference is the method:
+
+- That chart really buys $500 every month: 317 purchases, each compounding from its own date to today, and then solves for the single rate that fits them all. Because most of the money was invested in the bull market after 2010, that number runs high, and it changes with the start and end dates.
+- The 8.5% in this card is the annual return of “buy IVV once in May 2000 and hold to today”, which does not depend on when you bought and is closer to IVV's own long-run speed. The card then assumes the next 30 years return 8.5% every year and applies formula 3.
+
+So the $770,000 in this card is a projection, not history.
+
+  </div>
+</details>

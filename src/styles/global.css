@@ -1396,6 +1396,9 @@ a.tag-pill:hover {
   cursor: default;
   user-select: text;
 }
+.app-prose details.fold p {
+  display: block;
+}
 .app-prose details.fold summary {
   display: flex;
   align-items: center;
@@ -1423,6 +1426,63 @@ a.tag-pill:hover {
 }
 .app-prose details.fold ol {
   list-style: lower-alpha;
+}
+
+/* 公式块：衬线斜体变量、上标、分数，给折叠卡片里的三个公式用 */
+.app-prose .fx {
+  margin: 8px 0 14px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 0.035);
+  font-family: "Times New Roman", "Songti SC", "Noto Serif CJK SC", serif;
+  font-size: 19px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--foreground);
+  overflow-x: auto;
+}
+.app-prose .fx i {
+  font-style: italic;
+}
+.app-prose .fx sup {
+  font-size: 0.62em;
+  vertical-align: 0.55em;
+}
+.app-prose .fx .frac {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: middle;
+  margin: 0 3px;
+  font-size: 0.88em;
+  line-height: 1.2;
+  text-align: center;
+}
+.app-prose .fx .frac > span:first-child {
+  padding: 0 5px 1px;
+  border-bottom: 1px solid currentColor;
+}
+.app-prose .fx .frac > span:last-child {
+  padding: 1px 5px 0;
+}
+.app-prose .fx-sym {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 4px 16px;
+  margin: 6px 0 14px;
+  font-size: 13.5px;
+  color: var(--summary);
+}
+.app-prose .fx-sym b {
+  margin-right: 8px;
+  font-family: "Times New Roman", serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--foreground);
+}
+.app-prose .fx-ex {
+  margin: 0 0 4px !important;
+  font-size: 14px;
+  color: var(--summary);
 }
 .app-prose .rc-pre {
   max-height: 420px;
@@ -1583,6 +1643,12 @@ a.tag-pill:hover {
 }
 .app-prose .exp-table td:first-child {
   min-width: 9.5em;
+}
+/* 第一列只有三五个字的对照表：第一列收窄，把宽度让给右边 */
+.app-prose .exp-table--narrow td:first-child {
+  min-width: 0;
+  width: 6em;
+  white-space: nowrap;
 }
 .app-prose .exp-table td[style*="center"] {
   white-space: nowrap;

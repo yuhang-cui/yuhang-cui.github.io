@@ -15,17 +15,17 @@ import WeightPie from "@/components/WeightPie.astro";
 
 > **What this post covers**: where the S&P 500 came from, and how SPX, SPY, VOO and ES each relate to it.
 >
-> **Put simply**: SPX is a number; SPY and VOO package that number into a stock you can buy; ES is a leveraged contract built on that number.
+> **Put simply**: SPX is a number; SPY and VOO package that number into a stock you can buy; ES is a futures contract (with leverage) built on that number.
 
 ## Summary
 
 <div class="summary">
 
-**The S&P 500 is a menu:**
-S&P picks roughly 500 large American companies, weights them by market value and computes one number every day. It is just a number, not a product you can buy or sell.
+**The S&P 500 is “a basket of stocks”:**
+S&P picks roughly 500 large American companies, weights them by market value and computes one number every day. At bottom it is a string of numbers, not a product you can buy or sell.
 
 **Born in 1957:**
-Two advantages over the Dow: weighted by market value, and enough companies. That is why the market uses it as the yardstick, not the Dow.
+The S&P 500 has two advantages over the Dow: weighted by market value, and enough companies. That is why the market uses it as the yardstick, not the Dow.
 
 **SPY and VOO are two brands of the same thing:**
 A. SPY is older and has the highest volume, so it suits trading.<br />
@@ -34,7 +34,7 @@ B. VOO charges a third of the fee and is the better choice for holding long term
 **ES is a futures contract:**
 Leverage, expiry dates, nearly 24-hour trading, no dividends. It is a day-trading tool.
 
-**SPX is drawn from 1871 to today, but the S&P 500 itself is only 69 years old:**
+**SPX runs 155 years, from 1871 to today, but the S&P 500 itself is only 69 years old:**
 Everything before 1957 is spliced on: 1926–1957 uses its predecessor, the "S&P 90"; earlier than that is a monthly series the Cowles Commission reconstructed in the 1930s.
 <span class="sub">Why anyone bothered: Alfred Cowles wanted to know whether stock forecasters were any good, and needed a "market" curve to compare them against, so he computed one back to 1871. S&P later attached it to the front of its own index, and Shiller extended it to today. So the first 86 years of SPX are stitched-together research data, not trading records.</span>
 
@@ -53,15 +53,19 @@ In 2012 the index business merged with Dow Jones and is now called S&P Dow Jones
 
 </Fragment>
 
-Think of it as a **menu**: S&P (S&P Dow Jones Indices) lists roughly 500 large American companies, writes a weight next to each one, bigger company bigger weight, and uses their live share prices to compute one number, say 6,800 points.
+Think of it as “**a basket of stocks**”: S&P (S&P Dow Jones Indices) picks roughly 500 large American companies and puts them in the basket, each with a share set by its weight, bigger company bigger share, and uses their live share prices to compute one number, say 6,800 points.
 
 </SideNote>
 
 Think of the number as "the average share price of 500 large American companies". When it rises 1%, those companies rose 1% on average. What you can actually buy are the products built around this number, covered in section 3.
 
-### How a company gets on the menu
+### How a company gets into the S&P 500
 
-It is not "the 500 largest" automatically. A committee picks by criteria. The hard rules today are roughly:
+It is not “the 500 largest” automatically. A committee picks, against a few hard rules.
+
+<details class="rc fold">
+  <summary>The rules for getting in</summary>
+  <div class="rc-panel rc-def">
 
 <div class="exp-table">
 
@@ -77,9 +81,12 @@ It is not "the 500 largest" automatically. A committee picks by criteria. The ha
 
 <p class="table-note">The profit rule is why Tesla only got in at the end of 2020. Because Alphabet, Berkshire and others have two share classes, the index actually holds 503 tickers but is still called the 500.</p>
 
+  </div>
+</details>
+
 ### How the weights work
 
-Weighted by **free-float market cap**: a company's market value × the share of its stock that trades freely. Apple, Microsoft and Nvidia each take 6–7% on their own; the few hundred at the bottom take a few hundredths of a percent each. So when you buy the S&P 500, more than half the money goes to the top few dozen companies.
+Weighted by **free-float market cap**: a company's market value × the share of its stock that trades freely. Apple, Microsoft and Nvidia each take 6–7% on their own; the few hundred at the bottom take less than 1% each, some less than 0.1%. So when you buy the S&P 500, more than half the money goes to the top few dozen companies.
 
 <TableTabs title="Top seven weights" tabs={["S&P 500 · VOO", "Nasdaq-100 · QQQ"]}>
 <div class="tt-panel">
@@ -109,7 +116,7 @@ Compare the better-known Dow: only 30 companies, and **weighted by share price**
 
 **Why**: hedge funds charge "2% a year plus 20% of profits". Over ten years most of the gains went to the managers; an index fund charges a few hundredths of a percent.
 
-Buffett later published his will in a shareholder letter: 90% of the money left to his wife goes into an S&P 500 index fund.
+Buffett later published his will in a shareholder letter: <u>90% of the money left to his wife goes into an S&P 500 index fund</u>.
 
 </Fragment>
 
@@ -187,7 +194,7 @@ A few things worth one more sentence:
 
 **Why 500.** Before 1957, 90 companies was about the limit of what people could compute by hand. That year S&P used an electronic computer for the first time (a Burroughs Datatron), which could run 500 companies in an hour, so the index jumped straight to 500. Every change since has swapped constituents; the count never moved.
 
-**Why market-cap weighting.** This is the essential difference between the S&P 500 and the Dow. Weighting by market value means "the proportions in which all the money in the market is invested across these 500 companies are your proportions". You do not guess which one will go up; you just follow the average holding of all investors. The idea became the standard for indexes worldwide, and it is where "buying the index is buying the whole market" comes from.
+**Why market-cap weighting.** This is the essential difference between the S&P 500 and the Dow. Weighting by market value means <u>“the proportions in which all the money in the market is invested across these 500 companies are your proportions”</u>. You do not guess which one will go up; you just follow the average holding of all investors. The idea became the standard for indexes worldwide, and it is where “buying the index is buying the whole market” comes from.
 
 **The starting point.** Around 44 points at launch in 1957 (base period 1941–43 = 10). Today it is over 6,000: more than 100× without dividends, and roughly 1,000× with dividends reinvested. Those two numbers differ by a factor of 10.
 
@@ -196,12 +203,12 @@ A few things worth one more sentence:
 <TableTabs title="The four side by side" tabs={["What it is", "How it trades", "Fees and dividends"]}>
 <div class="tt-panel">
 
-<div class="exp-table">
+<div class="exp-table exp-table--narrow">
 
 | | SPX | SPY | VOO | ES |
 |:---|:---|:---|:---|:---|
 | Full name | S&P 500 Index | SPDR S&P 500 ETF | Vanguard S&P 500 ETF | E-mini S&P 500 futures |
-| What it is | A number | The 500 companies bought per the menu and packaged into one stock | Same as SPY | A contract settled in index points |
+| What it is | A string of numbers | The basket packaged into one stock you can buy | Same as SPY | A contract settled in index points |
 | Can you buy it | No | Yes | Yes | Yes |
 | What it is for | Seeing how many points the market rose or fell today | Short-term trading, options | Dollar-cost averaging, long-term holding | Day trading, hedging a portfolio |
 | Issuer | S&P | State Street | Vanguard | CME |
@@ -213,7 +220,7 @@ A few things worth one more sentence:
 </div>
 <div class="tt-panel">
 
-<div class="exp-table">
+<div class="exp-table exp-table--narrow">
 
 | | SPX | SPY | VOO | ES |
 |:---|:---|:---|:---|:---|
@@ -227,7 +234,7 @@ A few things worth one more sentence:
 </div>
 <div class="tt-panel">
 
-<div class="exp-table">
+<div class="exp-table exp-table--narrow">
 
 | | SPX | SPY | VOO | ES |
 |:---|:---|:---|:---|:---|
@@ -246,7 +253,7 @@ Just a number. Its job is to be the **yardstick**: every product is judged again
 
 ### SPY: the first and most traded S&P ETF
 
-Launched by State Street in 1993, the first ETF in the US. One share of SPY is a proportional slice of all 500 companies, priced at about one tenth of SPX.
+Launched by State Street in 1993, the first ETF in the US. One share of SPY is a proportional slice of all 500 companies.
 
 Its strengths are **the highest volume in the world and the most active options**, which makes it the traders' default. But it uses a 1993-era unit-trust structure: dividends it receives have to sit in cash until the quarterly payout and cannot be reinvested in between, and it cannot lend out its shares for extra income. Both make it a touch slower than VOO.
 
@@ -265,17 +272,17 @@ Its strengths are **the highest volume in the world and the most active options*
 
 </Fragment>
 
-Launched in 2010, tracking the same menu, with holdings almost identical to SPY. The fee is 0.03%, a third of SPY's, and the structure is more modern: dividends can be reinvested straight away.
+Launched in 2010, tracking the same basket, with holdings almost identical to SPY. The fee is 0.03%, a third of SPY's, and the structure is more modern: dividends can be reinvested straight away.
 
 </SideNote>
 
-SPY versus VOO comes down to this: **the same thing, SPY for frequent trading, VOO for holding**. Over twenty years of monthly buying, a 0.06% fee gap is invisible in any single year and real money once compounded.
+SPY and VOO track the same thing, but **SPY suits options trading and VOO suits buying every month and holding for the long run**: a 0.06% fee gap compounds into a real difference over decades.
 
-There is also IVV, BlackRock's version, also at 0.03%. VOO, IVV and SPY are the "three S&P brothers": the same holdings, differing only in fee and structure.
+There is also IVV, BlackRock's version, with the same 0.03% fee as VOO. VOO, IVV and SPY are known as the “three S&P brothers”: the same holdings, with small differences in fee and structure.
 
 ### ES: S&P 500 futures
 
-The E-mini contract CME launched in 1997. It is **not "buying 500 companies"**. It is a wager: you and a counterparty agree to settle on the S&P's point value at $50 a point.
+The E-mini contract CME launched in 1997. It is **not "buying 500 companies"**. It is a wager: you and a counterparty agree to settle on the S&P's point value at $50 a point. It is used for day trading and for hedging a portfolio.
 
 It differs from the other three in kind:
 
@@ -283,13 +290,12 @@ It differs from the other three in kind:
 - **Expiry**: one contract per quarter; you roll to the next at expiry.
 - **Nearly 24-hour trading**: Sunday evening to Friday afternoon, with a one-hour break each day.
 - **No dividends**: so ES trades at a "basis" to SPX (cost of carry minus expected dividends) rather than at the same price.
-- There is also a smaller version, MES, at $5 a point, one tenth of ES.
 
 The chart I day-trade is ES. It and index investing are two different worlds: one bets on a few hours with leverage, the other holds for decades without it.
 
 ### Where the gaps in SPX come from
 
-SPX only has a value during the six and a half hours the US market is open, but the world does not stop at the close: Asian and European sessions, overnight news and earnings all play out first on ES, which trades almost around the clock. At 9:30 the next morning SPX jumps straight to where ES already is, and that leaves a gap on the chart. So a gap does not mean "cheaper" or "dearer"; it is the overnight move booked in one step. For an index investor the open is just the open. There is nothing to wait for.
+SPX only has a value during the six and a half hours the US market is open, but the world does not stop at the close: Asian and European sessions, overnight news and earnings all play out first on ES, which trades almost around the clock. At 9:30 the next morning SPX jumps straight to where ES already is, and that leaves a gap on the chart.
 
 ### The Nasdaq equivalents
 
@@ -303,8 +309,4 @@ SPX only has a value during the six and a half hours the US market is open, but 
 
 </div>
 
-<p class="table-note">The Nasdaq-100 is a different menu: the 100 largest non-financial companies listed on the Nasdaq exchange. How it really differs from the S&P 500 is for later in this series.</p>
-
-## Next in the series
-
-How the S&P 500's return over sixty-odd years is actually computed: the difference between the price index and the total-return index, and why reinvesting dividends makes a 10× difference.
+<p class="table-note">The Nasdaq-100 is a different basket: the 100 largest non-financial companies listed on the Nasdaq exchange.</p>
