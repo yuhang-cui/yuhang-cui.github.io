@@ -1390,6 +1390,12 @@ a.tag-pill:hover {
 }
 
 /* 折叠卡片：默认收起，点标题展开；里面的编号列表用 a. b. c. */
+/* 排版样式把 details 默认设成 inline-block、不可选中，这里改回来 */
+.app-prose details.fold {
+  display: block;
+  cursor: default;
+  user-select: text;
+}
 .app-prose details.fold summary {
   display: flex;
   align-items: center;
