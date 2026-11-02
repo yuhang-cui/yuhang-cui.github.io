@@ -17,7 +17,7 @@ const yearOpts = Array.from({ length: 40 }, (_, i) => i + 1);
 <section class="bx dp" aria-label={s.label} data-c="sp">
   <div class="bx-controls">
     <div class="bx-switch dp-preset">
-      {PRESETS.map(p => <button type="button" data-r={p.r} data-c={p.c} aria-pressed={String(p.k === "sp2000")}>{s.presets[p.k]}</button>)}
+      {PRESETS.map(p => <button type="button" data-r={p.r} data-c={p.c} aria-pressed={p.k === "sp2000" ? "true" : "false"}>{s.presets[p.k]}</button>)}
     </div>
     <div class="bx-switch dp-cur">
       <button type="button" data-cur="usd" aria-pressed="true" aria-label="USD">$</button>
