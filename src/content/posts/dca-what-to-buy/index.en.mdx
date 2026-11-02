@@ -11,6 +11,7 @@ lang: en
 import DcaExplorer from "@/components/DcaExplorer.astro";
 import SpxTrExplorer from "@/components/SpxTrExplorer.astro";
 import CurrencyCard from "@/components/CurrencyCard.astro";
+import DcaProjector from "@/components/DcaProjector.astro";
 
 The last post explained what the S&P 500 is. This one puts the data on the table so you can change the years and the amount yourself and see how buying the S&P 500 (IVV) compares with buying the Nasdaq-100 (QQQ).
 
@@ -90,6 +91,10 @@ One more thing: US dividends paid to residents of China have 10% tax withheld fi
 
 ## Summary
 
+You invest by the month, not by the year, so the chart below first converts the annual rate into a monthly one and then compounds month by month. The four buttons are the four annual rates from the card below; change the monthly amount and the number of years as you like, or type in your own rate. Grey is the money you put in; the colour is what it earned.
+
+<DcaProjector />
+
 <CurrencyCard title="Annualised returns">
 
 At these rates, <span data-usd="$500" data-cny="¥3,000">$500</span> a month for 30 years (<span data-usd="$180,000" data-cny="¥1.08 million">$180,000</span> invested in total) gives:
@@ -99,8 +104,8 @@ At these rates, <span data-usd="$500" data-cny="¥3,000">$500</span> a month for
 
 The two above count from 2000 and lived through the 2000 and 2008 crashes; the two below count from 2010 and missed both:
 
-- VOO: 14.7% a year since September 2010 → about <span data-usd="$2.61 million" data-cny="¥15.67 million">$2.61 million</span> after 30 years, ×14.5
-- QQQ: 19.2% a year since September 2010 → about <span data-usd="$6.59 million" data-cny="¥39.53 million">$6.59 million</span> after 30 years, ×36.6
+- VOO: 14.7% a year since September 2010 → about <span data-usd="$2.62 million" data-cny="¥15.72 million">$2.62 million</span> after 30 years, ×14.6
+- QQQ: 19.2% a year since September 2010 → about <span data-usd="$6.55 million" data-cny="¥39.30 million">$6.55 million</span> after 30 years, ×36.4
 
 </CurrencyCard>
 
@@ -137,6 +142,21 @@ The card uses just three formulas. The symbols first:
 
 <p class="fx-ex">A = 500, N = 360, m = 0.68%: 500 × (1.0068 to the power 360 − 1) ÷ 0.0068 ≈ $770,000. Invested: 500 × 360 = $180,000, so ×4.3.</p>
 
+**The chart above is these three formulas.** The annual rate you pick goes through formula 2 to become a monthly rate; formula 3 is then run with N from the 1st month to the last, one point per month, and the points joined up make the coloured line. The grey principal is A × N. The monthly rates behind the four buttons:
+
+<div class="exp-table exp-table--narrow">
+
+| | Annual r | Monthly m |
+|:---|:---|:---|
+| S&P 500 since 2000 (IVV) | 8.5% | 0.68% |
+| S&P 500 since 2010 (VOO) | 14.7% | 1.15% |
+| Nasdaq since 2000 (QQQ) | 9.1% | 0.73% |
+| Nasdaq since 2010 (QQQ) | 19.2% | 1.47% |
+
+</div>
+
+<p class="fx-ex">The monthly rates differ by only a few tenths of a percent, but over 30 years that is a gap of several times: 0.68% compounded over 360 months is ×11.5, 1.47% is ×191. The chart's default readings and the four lines in the card use the same arithmetic, so the numbers agree.</p>
+
 **Two different “annual returns”.** In the “IVV vs QQQ” chart at the top of the post, IVV shows 11.7% a year; in this card IVV is 8.5%. The difference is the method:
 
 - That chart really buys $500 every month: 317 purchases, each compounding from its own date to today, and then solves for the single rate that fits them all. Because most of the money was invested in the bull market after 2010, that number runs high, and it changes with the start and end dates.
@@ -146,3 +166,5 @@ So the $770,000 in this card is a projection, not history.
 
   </div>
 </details>
+
+(First published on November 1, 2026. Updated on November 2: added the DCA projection chart to the summary, with your own rate, monthly amount and number of years; the 30-year VOO and QQQ figures in the card recomputed from the rounded rates.)

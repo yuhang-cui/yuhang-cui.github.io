@@ -530,6 +530,29 @@ export interface UIStrings {
     log: string;
     reset: string;
   };
+  /** 定投推算：年化换月化，按月滚 N 年 */
+  dcaProj: {
+    label: string;
+    presets: { sp2000: string; sp2010: string; ndx2000: string; ndx2010: string };
+    amount: string;
+    years: string;
+    yearsUnit: string;
+    annual: string;
+    monthly: string;
+    invested: string;
+    after: string;
+    value: string;
+    gain: string;
+    monthsCount: string;
+    multiple: string;
+    share: string;
+    tipHead: string;
+    tipHeadYear: string;
+    yearTick: string;
+    note: string;
+    noteCny: string;
+    reset: string;
+  };
   /** 标普500 价格指数对全收益指数 */
   spxTr: {
     label: string;

@@ -1,0 +1,396 @@
+---
+// 定投推算：选一个年化（四个预设，或自己填），先按 (1+r)^(1/12)−1 换成月化，再按月滚 N 年。
+// 图上灰色是累计投入的本金，彩色是赚的那部分；三个式子都在文章的"这些数字是怎么算出来的"里。
+// 这是推算，不是历史：假设每个月都按同一个月化涨。
+import { useTranslations } from "@/i18n";
+
+const s = useTranslations(Astro.currentLocale).dcaProj;
+const PRESETS = [
+  { k: "sp2000", r: 8.5, c: "sp" },
+  { k: "sp2010", r: 14.7, c: "sp" },
+  { k: "ndx2000", r: 9.1, c: "ndx" },
+  { k: "ndx2010", r: 19.2, c: "ndx" },
+] as const;
+const yearOpts = Array.from({ length: 40 }, (_, i) => i + 1);
+---
+
+<section class="bx dp" aria-label={s.label} data-c="sp">
+  <div class="bx-controls">
+    <div class="bx-switch dp-preset">
+      {PRESETS.map(p => <button type="button" data-r={p.r} data-c={p.c} aria-pressed={String(p.k === "sp2000")}>{s.presets[p.k]}</button>)}
+    </div>
+    <div class="bx-switch dp-cur">
+      <button type="button" data-cur="usd" aria-pressed="true" aria-label="USD">$</button>
+      <button type="button" data-cur="cny" aria-pressed="false" aria-label="CNY">¥</button>
+    </div>
+  </div>
+  <div class="bx-controls dp-inputs">
+    <label class="bx-range">
+      <span>{s.amount}</span>
+      <span class="dp-box"><i class="dp-sym">$</i><input class="dp-a" type="number" min="1" step="50" value="500" inputmode="numeric" aria-label={s.amount} /></span>
+    </label>
+    <label class="bx-range">
+      <span>{s.years}</span>
+      <select class="dp-n" aria-label={s.years}>{yearOpts.map(y => <option value={y} selected={y === 30}>{y}</option>)}</select>
+      <span>{s.yearsUnit}</span>
+    </label>
+    <label class="bx-range">
+      <span>{s.annual}</span>
+      <span class="dp-box"><input class="dp-r" type="number" min="0" max="50" step="0.1" value="8.5" inputmode="decimal" aria-label={s.annual} /><i>%</i></span>
+      <span class="dp-m">—</span>
+    </label>
+  </div>
+
+  <div class="dp-stats">
+    <div class="dp-stat">
+      <p class="bx-hero-k"><i class="dp-key dp-key-inv"></i>{s.invested}</p>
+      <p class="dp-v dp-inv">—</p>
+      <p class="bx-hero-n dp-inv-n">&nbsp;</p>
+    </div>
+    <div class="dp-stat">
+      <p class="bx-hero-k dp-after">{s.after}</p>
+      <p class="dp-v dp-val">—</p>
+      <p class="bx-hero-n dp-val-n">&nbsp;</p>
+    </div>
+    <div class="dp-stat">
+      <p class="bx-hero-k"><i class="dp-key dp-key-gain"></i>{s.gain}</p>
+      <p class="dp-v dp-gain">—</p>
+      <p class="bx-hero-n dp-gain-n">&nbsp;</p>
+    </div>
+  </div>
+
+  <div class="fn-chart dp-chart">
+    <svg></svg>
+    <div class="fn-tip" hidden></div>
+  </div>
+  <div class="dp-foot">
+    <p class="fn-note">{s.note} {s.noteCny}</p>
+    <button type="button" class="bx-reset dp-reset">{s.reset}</button>
+  </div>
+
+  <script type="application/json" class="dp-strings" set:html={JSON.stringify(s)} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+
+  type Strings = {
+    invested: string; after: string; gain: string; monthsCount: string; multiple: string; share: string;
+    monthly: string; tipHead: string; tipHeadYear: string; value: string; yearTick: string;
+  };
+  const M = { l: 56, r: 16, t: 14, b: 26 };
+
+  let SYM = "$";
+  const money = (v: number) => SYM + Math.round(v).toLocaleString("en-US");
+  const short = (v: number) => (v >= 1e6 ? SYM + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + "M" : v >= 1e3 ? SYM + Math.round(v / 1e3) + "k" : SYM + Math.round(v));
+  const pct = (v: number, d = 2) => (v * 100).toFixed(d) + "%";
+
+  // 第 k 个月末：投入 A×k；市值按公式 3（等比数列求和），月化为 0 时就是本金
+  function series(A: number, N: number, r: number) {
+    const m = Math.pow(1 + r, 1 / 12) - 1;
+    const n = N * 12;
+    const inv = new Float64Array(n + 1), val = new Float64Array(n + 1);
+    for (let k = 0; k <= n; k++) {
+      inv[k] = A * k;
+      val[k] = m > 0 ? (A * (Math.pow(1 + m, k) - 1)) / m : A * k;
+    }
+    return { m, n, inv, val };
+  }
+  type Result = ReturnType<typeof series>;
+
+  function niceTicks(max: number) {
+    const raw = max / 5;
+    const p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map(m => m * p).find(v => v >= raw)!;
+    const out: number[] = [];
+    for (let v = 0; v <= max + 1e-9; v += step) out.push(v);
+    return out;
+  }
+
+  function draw(root: HTMLElement, r: Result, s: Strings, N: number) {
+    const svg = root.querySelector<SVGSVGElement>(".dp-chart svg")!;
+    const W = Math.max(280, Math.round(svg.parentElement!.clientWidth));
+    const H = W < 520 ? 240 : 300;
+    const plotH = H - M.t - M.b, plotW = W - M.l - M.r;
+    const yMax = Math.max(1, r.val[r.n]) * 1.04;
+    const x = (k: number) => M.l + (k / r.n) * plotW;
+    const y = (v: number) => M.t + (1 - v / yMax) * plotH;
+    const yTicks = niceTicks(yMax);
+    // 横轴按年标，最多 8 格（手机 5 格）
+    const maxLab = W < 520 ? 5 : 8;
+    const stepY = [1, 2, 5, 10][[1, 2, 5, 10].findIndex(st => N / st <= maxLab)] ?? 10;
+    const yrs: number[] = [];
+    for (let yy = stepY; yy <= N; yy += stepY) yrs.push(yy);
+
+    const pt = (k: number, v: number) => x(k).toFixed(1) + "," + y(v).toFixed(1);
+    const fwd = (arr: Float64Array) => { let d = ""; for (let k = 0; k <= r.n; k++) d += (k ? "L" : "M") + pt(k, arr[k]); return d; };
+    const back = (arr: Float64Array) => { let d = ""; for (let k = r.n; k >= 0; k--) d += "L" + pt(k, arr[k]); return d; };
+    const areaInv = fwd(r.inv) + "L" + pt(r.n, 0) + "L" + pt(0, 0) + "Z";
+    const areaGain = fwd(r.val) + back(r.inv) + "Z";
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("width", String(W));
+    svg.setAttribute("height", String(H));
+    svg.innerHTML =
+      yTicks.map(v => `<line class="fn-grid" x1="${M.l}" x2="${W - M.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text x="${M.l - 8}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("") +
+      yrs.map(yy => `<text x="${x(yy * 12).toFixed(1)}" y="${H - 8}" text-anchor="${yy === N ? "end" : "middle"}">${tplStr(s.yearTick, { n: yy })}</text>`).join("") +
+      `<path class="dp-area dp-area-inv" d="${areaInv}"/>` +
+      `<path class="dp-area dp-area-gain" d="${areaGain}"/>` +
+      `<line class="fn-axis" x1="${M.l}" x2="${W - M.r}" y1="${(M.t + plotH).toFixed(1)}" y2="${(M.t + plotH).toFixed(1)}"/>` +
+      `<path class="dp-line dp-line-inv" d="${fwd(r.inv)}"/>` +
+      `<path class="dp-line dp-line-val" d="${fwd(r.val)}"/>` +
+      `<line class="fn-rule" y1="${M.t}" y2="${H - M.b}"/>` +
+      `<circle class="fn-dot dp-dot-val" r="4"/><circle class="fn-dot dp-dot-inv" r="3"/>`;
+
+    // 十字线 + 提示框：按横坐标找最近的月份
+    const tip = root.querySelector<HTMLElement>(".fn-tip")!;
+    const rule = svg.querySelector<SVGLineElement>(".fn-rule")!;
+    const dotV = svg.querySelector<SVGCircleElement>(".dp-dot-val")!;
+    const dotI = svg.querySelector<SVGCircleElement>(".dp-dot-inv")!;
+    const show = (e: PointerEvent) => {
+      const rect = svg.getBoundingClientRect();
+      const px = ((e.clientX - rect.left) / rect.width) * W;
+      const k = Math.min(r.n, Math.max(1, Math.round(((px - M.l) / plotW) * r.n)));
+      const xx = x(k);
+      rule.setAttribute("x1", String(xx)); rule.setAttribute("x2", String(xx));
+      dotV.setAttribute("cx", String(xx)); dotV.setAttribute("cy", String(y(r.val[k])));
+      dotI.setAttribute("cx", String(xx)); dotI.setAttribute("cy", String(y(r.inv[k])));
+      svg.classList.add("is-hover");
+      tip.replaceChildren();
+      const yy = Math.floor(k / 12), mm = k % 12;
+      const h = document.createElement("p"); h.className = "fn-tip-h";
+      h.textContent = mm ? tplStr(s.tipHead, { y: yy, m: mm }) : tplStr(s.tipHeadYear, { y: yy });
+      tip.append(h);
+      const row = (cls: string, label: string, v: string) => {
+        const p = document.createElement("p"); p.className = "fn-tip-r";
+        const key = document.createElement("i"); key.className = cls;
+        const b = document.createElement("b"); b.textContent = v;
+        p.append(key, document.createTextNode(label), b); tip.append(p);
+      };
+      row("dp-key-inv", s.invested, money(r.inv[k]));
+      row("dp-key-val", s.value, money(r.val[k]) + "  ×" + (r.val[k] / r.inv[k]).toFixed(2));
+      row("dp-key-gain", s.gain, money(r.val[k] - r.inv[k]));
+      tip.hidden = false;
+      const left = (xx / W) * rect.width;
+      const tw = tip.offsetWidth;
+      tip.style.left = `${left + 14 + tw > rect.width ? left - 14 - tw : left + 14}px`;
+      tip.style.top = `${Math.max(0, ((e.clientY - rect.top) / rect.height) * H - 30)}px`;
+    };
+    const hide = () => { svg.classList.remove("is-hover"); tip.hidden = true; };
+    svg.onpointermove = show; svg.onpointerdown = show; svg.onpointerleave = hide;
+  }
+
+  function fillStats(root: HTMLElement, r: Result, s: Strings, N: number) {
+    const q = (c: string) => root.querySelector<HTMLElement>(c)!;
+    const inv = r.inv[r.n], val = r.val[r.n], gain = val - inv;
+    q(".dp-inv").textContent = money(inv);
+    q(".dp-inv-n").textContent = tplStr(s.monthsCount, { n: r.n });
+    q(".dp-after").textContent = tplStr(s.after, { n: N });
+    q(".dp-val").textContent = money(val);
+    q(".dp-val-n").textContent = tplStr(s.multiple, { x: (val / inv).toFixed(1) });
+    q(".dp-gain").textContent = money(gain);
+    q(".dp-gain-n").textContent = tplStr(s.share, { p: Math.round((gain / val) * 100) + "%" });
+    q(".dp-m").textContent = "→ " + tplStr(s.monthly, { m: pct(r.m) });
+  }
+
+  function setup() {
+    for (const root of document.querySelectorAll<HTMLElement>(".dp")) {
+      if (root.dataset.ready) continue;
+      root.dataset.ready = "1";
+      const s = JSON.parse(root.querySelector(".dp-strings")!.textContent!) as Strings;
+      const q = <T extends Element>(c: string) => root.querySelector<T>(c)!;
+      const amt = q<HTMLInputElement>(".dp-a"), yrs = q<HTMLSelectElement>(".dp-n"), rate = q<HTMLInputElement>(".dp-r");
+      const svg = q<SVGSVGElement>(".dp-chart svg");
+      const presets = Array.from(root.querySelectorAll<HTMLButtonElement>(".dp-preset button"));
+      const curBtns = Array.from(root.querySelectorAll<HTMLButtonElement>(".dp-cur button"));
+      const defAmt = () => (root.dataset.cur === "cny" ? 3000 : 500);
+      const run = () => {
+        SYM = root.dataset.cur === "cny" ? "¥" : "$";
+        q<HTMLElement>(".dp-sym").textContent = SYM;
+        const A = Math.max(1, Math.round(+amt.value || 0));
+        const N = Math.max(1, Math.min(40, Math.round(+yrs.value || 30)));
+        const rr = Math.max(0, Math.min(50, +rate.value || 0)) / 100;
+        const r = series(A, N, rr);
+        fillStats(root, r, s, N);
+        draw(root, r, s, N);
+      };
+      // 四个预设：填进年化，线的颜色跟着标普（蓝）或纳指（红）
+      presets.forEach(btn => btn.addEventListener("click", () => {
+        presets.forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+        rate.value = btn.dataset.r!;
+        root.dataset.c = btn.dataset.c;
+        run();
+      }));
+      // 自己改年化：四个预设都不再亮
+      rate.addEventListener("input", () => {
+        presets.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.r === rate.value)));
+        run();
+      });
+      amt.addEventListener("input", run);
+      yrs.addEventListener("change", run);
+      // 切换货币：默认金额换成 500 美元 / 3000 元，数字前的符号跟着换；年化不变
+      curBtns.forEach(btn => btn.addEventListener("click", () => {
+        root.dataset.cur = btn.dataset.cur;
+        curBtns.forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+        amt.value = String(defAmt());
+        run();
+      }));
+      // 重置：标普500 since 2000、30 年、500 美元（人民币模式下 3000 元）
+      q<HTMLButtonElement>(".dp-reset").addEventListener("click", () => {
+        presets[0].click();
+        yrs.value = "30";
+        amt.value = String(defAmt());
+        run();
+      });
+      run();
+      let lastW = svg.parentElement!.clientWidth;
+      new ResizeObserver(() => { const w = Math.round(svg.parentElement!.clientWidth); if (w && w !== lastW) { lastW = w; run(); } }).observe(svg.parentElement!);
+    }
+  }
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style is:global>
+  .dp {
+    --c-sp: #016dac;
+    --c-ndx: #c2353c;
+    --c-inv: #8a8680;
+    --c: var(--c-sp);
+  }
+  [data-theme="dark"] .dp {
+    --c-sp: #5595c8;
+    --c-ndx: #e06a6a;
+    --c-inv: #9c988f;
+  }
+  .dp[data-c="ndx"] { --c: var(--c-ndx); }
+  .dp .bx-controls {
+    margin-bottom: 12px;
+  }
+  .dp .dp-inputs {
+    margin-bottom: 18px;
+  }
+  .dp-preset {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+  }
+  .dp-preset button {
+    white-space: nowrap;
+  }
+  .dp-cur button {
+    padding: 5px 12px;
+    font-weight: 600;
+  }
+  .dp .bx-range select {
+    padding-right: 6px;
+  }
+  .dp-box {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--foreground);
+  }
+  .dp-box i {
+    padding: 0 8px;
+    font-style: normal;
+    font-size: 13px;
+    color: var(--faint);
+  }
+  .dp-box i + input { padding-left: 0; }
+  .dp-box input + i { padding-left: 0; }
+  .dp-box input {
+    width: 76px;
+    padding: 5px 8px;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 14px;
+    color: var(--foreground);
+    outline: none;
+  }
+  .dp-box .dp-r { width: 60px; }
+  .dp-m {
+    font-variant-numeric: tabular-nums;
+  }
+  .dp-foot {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 10px;
+  }
+  .dp-foot .fn-note {
+    margin-top: 0 !important;
+  }
+  .dp-foot .bx-reset {
+    flex: none;
+    white-space: nowrap;
+  }
+  .dp-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 20px;
+    margin-bottom: 14px;
+  }
+  .dp-stat .bx-hero-k {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .dp-key,
+  .fn-tip-r i[class^="dp-key"] {
+    display: inline-block;
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+  }
+  .dp-key-inv { background: var(--c-inv); }
+  .dp-key-val { background: var(--c); }
+  .dp-key-gain { background: color-mix(in srgb, var(--c) 35%, transparent); }
+  .dp-v {
+    margin-top: 2px !important;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+  .dp-area-inv { fill: color-mix(in srgb, var(--c-inv) 18%, transparent); }
+  .dp-area-gain { fill: color-mix(in srgb, var(--c) 22%, transparent); }
+  .dp-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .dp-line-val { stroke: var(--c); }
+  .dp-line-inv { stroke: var(--c-inv); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  .dp .fn-dot { stroke: var(--card); stroke-width: 2; }
+  .dp .dp-dot-val { fill: var(--c); }
+  .dp .dp-dot-inv { fill: var(--c-inv); }
+  @media (max-width: 560px) {
+    .dp-preset {
+      width: 100%;
+      grid-template-columns: 1fr 1fr;
+    }
+    .dp-preset button {
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+    .dp-stats {
+      grid-template-columns: 1fr 1fr;
+    }
+    .dp-stats .dp-stat:nth-child(2) {
+      grid-column: 1 / -1;
+      order: -1;
+    }
+    .dp-v {
+      font-size: 22px;
+    }
+    .dp-foot {
+      flex-direction: column;
+      align-items: flex-end;
+    }
+  }
+</style>
