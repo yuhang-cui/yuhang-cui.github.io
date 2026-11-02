@@ -100,6 +100,11 @@ const items = headings.filter(h => h.depth === 2 || h.depth === 3);
         const to = i + 1 < links.length ? mid(links[i + 1]) : links[i].offsetTop + links[i].offsetHeight;
         height = from + (to - from) * f;
       }
+      // 滚到页面底部时，最后一节可能太短、标题到不了顶部：直接点亮最后一项、蓝条拉满
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+        i = links.length - 1;
+        height = links[i].offsetTop + links[i].offsetHeight;
+      }
       fill.style.height = `${height}px`;
 
       if (i !== active) {

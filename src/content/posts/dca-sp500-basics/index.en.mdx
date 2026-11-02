@@ -15,19 +15,20 @@ import WeightPie from "@/components/WeightPie.astro";
 
 > **What this post covers**: where the S&P 500 came from, and how SPX, SPY, VOO and ES each relate to it.
 >
-> **Put simply**: SPX is a number; SPY and VOO package that number into a stock you can buy; ES is a futures contract (with leverage) built on that number.
+> **Put simply**: SPX is a number; SPY and VOO actually buy the S&P 500 basket and package it into a stock fund you can buy; ES is a futures contract (with leverage) built on that number.
 
 ## Summary
 
 <div class="summary">
 
-**The S&P 500 is “a basket of stocks”:**
+**The S&P 500 is a score for “a basket of stocks”:**
 S&P picks roughly 500 large American companies, weights them by market value and computes one number every day. At bottom it is a string of numbers, not a product you can buy or sell.
 
 **Born in 1957:**
 The S&P 500 has two advantages over the Dow: weighted by market value, and enough companies. That is why the market uses it as the yardstick, not the Dow.
 
 **SPY and VOO are two brands of the same thing:**
+Both are funds. They actually buy these 500 companies' shares in proportion, then slice the whole into units and sell them to you. One share gives you a small piece of all 500 companies.<br />
 A. SPY is older and has the highest volume, so it suits trading.<br />
 B. VOO charges a third of the fee and is the better choice for holding long term.
 
@@ -282,16 +283,16 @@ There is also IVV, BlackRock's version, with the same 0.03% fee as VOO. VOO, IVV
 
 ### ES: S&P 500 futures
 
-The E-mini contract CME launched in 1997. It is **not "buying 500 companies"**. It is a wager: you and a counterparty agree to settle on the S&P's point value at $50 a point. It is used for day trading and for hedging a portfolio.
+The E-mini contract CME launched in 1997. It is **not “buying 500 companies”**. It is a contract that settles wins and losses on the S&P's points: for every point the S&P rises, the long side gains $50 and the short side loses $50, and the other way round when it falls.
 
 It differs from the other three in kind:
 
-- **Leverage**: one contract is about $340,000 of S&P exposure for a margin of a few tens of thousands.
-- **Expiry**: one contract per quarter; you roll to the next at expiry.
+- **Leverage**: put down a few tens of thousands of dollars and your gains and losses are counted on about $340,000 of S&P, so both are magnified several times.
+- **Expiry**: one contract every three months; before it expires you close the old one and switch to the next.
 - **Nearly 24-hour trading**: Sunday evening to Friday afternoon, with a one-hour break each day.
-- **No dividends**: so ES trades at a "basis" to SPX (cost of carry minus expected dividends) rather than at the same price.
+- **No dividends**: so the ES price always differs from SPX by a little and is never exactly the same.
 
-The chart I day-trade is ES. It and index investing are two different worlds: one bets on a few hours with leverage, the other holds for decades without it.
+This index future is better suited to traders doing day trading.
 
 ### Where the gaps in SPX come from
 
