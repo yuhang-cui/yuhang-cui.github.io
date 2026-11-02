@@ -1,13 +1,14 @@
 ---
 // K 线收线提醒：每根 K 线收线前响一下（默认 5 分钟图、提前 1 分钟，只在所选市场的交易时段响）。
-// 时钟上方选市场：美东 ES、北京股指期货、德国 DAX、东京日经 225、伦敦富时 100，时间和时段都按当地时间。
+// 时钟上方选市场：美东 ES、北京股指期货、德国 DAX、东京日经 225、伦敦富时 100，时间和时段都按当地时间；
+// 还有“世界时间”：按本机时区、每天都响，默认 00:00–24:00 全天，K 线从第 1 根排到最后一根，不分组。
 // 可以单独关掉接下来某几根，或者静音一段时间。设置和“哪几根不响”存在本机浏览器里。
 // 声音用 Web Audio 按音频时钟提前排好，后台标签页里计时器被浏览器放慢也能准时响。
 import { useTranslations } from "@/i18n";
 
 const s = useTranslations(Astro.currentLocale).barAlarm;
 // 市场的顺序和 s.zones 的名字一一对应（具体时区和时段写在下面的脚本里）
-const MARKETS = ["us", "cn", "de", "jp", "uk"];
+const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
 ---
 
 <section class="bx ba" aria-label={s.label} data-s={JSON.stringify(s)}>
@@ -30,7 +31,7 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
     <div class="ba-grid">
       <label>{s.tf}
         <select name="tf">
-          {[1, 2, 3, 5, 10, 15].map(m => <option value={m} selected={m === 5}>{m} {s.min}</option>)}
+          {[1, 2, 3, 5, 10, 15, 30, 60].map(m => <option value={m} selected={m === 5}>{m} {s.min}</option>)}
         </select>
       </label>
       <label>{s.lead}
@@ -60,7 +61,7 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
     <button type="button" data-restore>{s.restore} <kbd>R</kbd></button>
   </div>
 
-  <p class="bx-sub"><b class="ba-listday">{s.upcoming}</b><span>{s.upcomingHint}</span></p>
+  <p class="bx-sub"><b class="ba-listday">{s.upcoming}</b><span class="ba-listhint">{s.upcomingHint}</span></p>
   <div class="ba-list"></div>
 
 
@@ -74,12 +75,15 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
   type Saved = { settings: Settings; skipped: number[]; muteUntil: number; running: boolean };
 
   // 每个市场：当地时区 + 默认交易时段（只算周一到周五开始的时段，不含交易所假日）
-  const MARKETS: Record<string, { tz: string; sessions: Session[] }> = {
+  // 世界时间用这台电脑的时区
+  const LOCAL_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const MARKETS: Record<string, { tz: string; sessions: Session[]; everyDay?: boolean }> = {
     us: { tz: "America/New_York", sessions: [["09:30", "16:15"]] }, // ES / MES 日盘
     cn: { tz: "Asia/Shanghai", sessions: [["09:30", "11:30"], ["13:00", "15:00"]] }, // 中金所股指期货，中午休市
     de: { tz: "Europe/Berlin", sessions: [["09:00", "17:30"]] }, // DAX，Xetra 开盘时段
     jp: { tz: "Asia/Tokyo", sessions: [["08:45", "15:45"], ["17:00", "06:00"]] }, // 日经 225：日盘、夜盘
     uk: { tz: "Europe/London", sessions: [["08:00", "16:30"]] }, // 富时 100，伦敦交易所开盘时段
+    world: { tz: LOCAL_TZ, sessions: [["00:00", "00:00"]], everyDay: true }, // 世界时间：开始等于结束就是全天 24 小时，周末也响
   };
 
   const KEY = "bar-alarm-v1";
@@ -164,7 +168,7 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
     for (let dayStep = -1; out.length < count && dayStep < 10; dayStep++) {
       const day = new Date(Date.UTC(p.y, p.mo - 1, p.d + dayStep));
       const wd = day.getUTCDay();
-      if (wd === 0 || wd === 6) continue;
+      if (!MARKETS[st.market].everyDay && (wd === 0 || wd === 6)) continue;
       for (const b of barsOn(st, day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate())) {
         if (b.close > now && out.length < count) out.push(b);
       }
@@ -182,7 +186,10 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
       // 刷新或切回页面时沿用上次的开关：开着就接着开，声音等用户点一下页面再恢复（浏览器规定）
       let running = state.running;
       let ctx: AudioContext | null = running ? new AudioContext() : null;
-      let scheduled: { at: number; nodes: AudioScheduledSourceNode[] } | null = null;
+      // 已经排在音频时钟上的提醒：提醒时刻 → 音频时钟上的时间和声音节点
+      const slots = new Map<number, { when: number; nodes: AudioScheduledSourceNode[] }>();
+      const notified = new Set<number>();
+      let resuming = false;
       let lastTick = Date.now();
 
       // 设置面板 ← 存储
@@ -208,9 +215,21 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
         tz = MARKETS[state.settings.market].tz;
         renderSessions();
         // 下面的小字：先说这个市场的时段为什么长这样，再接通用说明
-        $(".ba-mnote").textContent = s.marketNotes[state.settings.market] + " ";
+        $(".ba-mnote").textContent = s.marketNotes[state.settings.market].replace("{{tz}}", LOCAL_TZ) + " ";
+        $(".ba-listhint").textContent = MARKETS[state.settings.market].everyDay ? s.flatHint : s.upcomingHint;
       }
       useMarket();
+
+      // 提前量要比一根 K 线短：比如 1 分钟图不能选“收线前 1 分钟”以上，选不了的变灰
+      function fitLead() {
+        const lead = field("lead") as unknown as HTMLSelectElement;
+        const max = +field("tf").value * 60;
+        const opts = [...lead.options];
+        opts.forEach(o => (o.disabled = +o.value >= max));
+        if (+lead.value >= max) lead.value = opts.filter(o => !o.disabled).at(-1)!.value;
+      }
+      fitLead();
+      state.settings.lead = +field("lead").value;
 
       const isSkipped = (b: Bar) => state.skipped.includes(b.close) || b.alarm < state.muteUntil;
       const persist = () => {
@@ -223,7 +242,7 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
         (sessionsOf(state.settings).length > 1 ? sessName(b.sess) + " " : "") + s.bar.replace("{{n}}", String(b.n));
 
       // —— 声音：两声短促的“嘀” ——
-      function beepAt(when: number) {
+      function beepAt(when: number, b?: Bar) {
         if (!ctx) return [];
         const nodes: AudioScheduledSourceNode[] = [];
         for (const [offset, freq] of [[0, 880], [0.22, 1175]] as const) {
@@ -240,28 +259,46 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
           osc.stop(t0 + 0.2);
           nodes.push(osc);
         }
+        // 系统通知跟着声音走：音频线程的事件不受后台计时器放慢的影响
+        if (b) nodes[0].onended = () => notify(b);
         return nodes;
       }
-      function unschedule() {
-        scheduled?.nodes.forEach(n => {
+      function drop(at: number) {
+        slots.get(at)?.nodes.forEach(n => {
+          n.onended = null;
           try {
             n.stop();
           } catch {}
         });
-        scheduled = null;
+        slots.delete(at);
       }
-      // 把下一次要响的提醒按音频时钟排好；目标变了就重排
-      function reschedule(next: Bar | undefined) {
+      const unschedule = () => [...slots.keys()].forEach(drop);
+      // 把接下来要响的几次提醒都按音频时钟排好。
+      // 后台标签页里浏览器可能一分钟才跑一次计时器，只排一声的话，1 分钟图的下一声会来不及排。
+      const AHEAD = 3;
+      function reschedule(due: Bar[]) {
         // 声音被浏览器挂起时音频时钟是停的，排了也不准：先撤掉，恢复后再排
-        if (!running || !ctx || ctx.state !== "running" || !next) return unschedule();
-        if (scheduled?.at === next.alarm) return;
-        if (scheduled && scheduled.at <= Date.now()) scheduled = null; // 上一次已经在响了：让它响完，不掐断
-        unschedule();
-        const when = ctx.currentTime + Math.max(0, (next.alarm - Date.now()) / 1000);
-        scheduled = { at: next.alarm, nodes: beepAt(when) };
+        if (!running || !ctx || ctx.state !== "running") return unschedule();
+        const now = Date.now();
+        const want = new Map(due.slice(0, AHEAD).map(b => [b.alarm, b]));
+        for (const at of [...slots.keys()]) {
+          if (at <= now) {
+            if (at < now - 2000) slots.delete(at); // 已经响过；正在响的让它响完，不掐断
+          } else if (!want.has(at)) drop(at); // 被关掉或设置变了
+        }
+        for (const [at, b] of want) {
+          const when = ctx.currentTime + (at - now) / 1000;
+          const had = slots.get(at);
+          // 电脑睡眠、换耳机时音频时钟会停一下，和真实时间对不上：差半秒以上就重排（马上要响的不动）
+          if (had && (at - now < 500 || Math.abs(had.when - when) < 0.5)) continue;
+          if (had) drop(at);
+          slots.set(at, { when, nodes: beepAt(when, b) });
+        }
       }
 
       function notify(b: Bar) {
+        if (notified.has(b.close)) return;
+        notified.add(b.close);
         if (!state.settings.notify || !("Notification" in window) || Notification.permission !== "granted") return;
         try {
           new Notification(s.notifyTitle.replace("{{bar}}", barName(b)), {
@@ -276,6 +313,7 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
       const groupNames = s.groups as string[];
       let listKey = "";
       let activeGroup = "";
+      let flatHead = 0;
 
       // 列表：这一个交易日（今天，或收盘后 / 周末时的下一个交易日）的全部 K 线，按时段分组，只展开当前时段
       function renderDay(head: Bar, now: number, at: (ms: number) => string) {
@@ -283,6 +321,8 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
         const [y, mo, d] = head.ymd;
         const bars = barsOn(st, y, mo, d);
         // 美东沿用“早盘 / 午盘 / 晚盘 / 收盘前”；其他市场每段按 2 小时再分组，名字是“日盘 2”这样
+        // 世界时间不分组：从第 1 根排到最后一根，放在一个能滚动的框里
+        const flat = !!MARKETS[st.market].everyDay;
         const named = st.market === "us" && sessionsOf(st).length === 1;
         const chunkOf = (b: Bar) => {
           const first = bars.find(x => x.sess === b.sess)!;
@@ -292,9 +332,19 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
 
         // 换了一天或改了设置才重建分组，平时只更新每格的状态，展开 / 收起不会被打断
         const key = `${y}-${mo}-${d}|${st.tf}|${st.lead}|${st.market}|${JSON.stringify(sessionsOf(st))}`;
-        if (key !== listKey) {
+        const tile = (b: Bar) => `<button type="button" class="ba-tile is-new" data-close="${b.close}" title="${s.ringAt.replace("{{t}}", at(b.alarm))}">
+                  <span class="ba-n">${s.bar.replace("{{n}}", String(b.n))}</span><span class="ba-tag"></span>
+                  <span class="ba-win">${clock(b.open)}–${clock(b.close)}</span>
+                </button>`;
+        const rebuild = key !== listKey;
+        if (rebuild) {
           listKey = key;
           activeGroup = "";
+          flatHead = 0;
+        }
+        if (rebuild && flat) {
+          list.innerHTML = `<div class="ba-flat"><div class="ba-tiles">${bars.map(tile).join("")}</div></div>`;
+        } else if (rebuild) {
           const groups = new Map<string, Bar[]>();
           bars.forEach(b => {
             const g = groupOf(b);
@@ -310,12 +360,7 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
               const name = named ? groupNames[chunk] : sessName(sess) + (many ? ` ${chunk + 1}` : "");
               const last = named && idx === keys.length - 1;
               const meta = `${s.range.replace("{{a}}", String(g[0].n)).replace("{{b}}", String(g[g.length - 1].n))} · ${clock(g[0].open)}–${clock(g[g.length - 1].close)}`;
-              const tiles = g
-                .map(b => `<button type="button" class="ba-tile is-new" data-close="${b.close}" title="${s.ringAt.replace("{{t}}", at(b.alarm))}">
-                  <span class="ba-n">${s.bar.replace("{{n}}", String(b.n))}</span><span class="ba-tag"></span>
-                  <span class="ba-win">${clock(b.open)}–${clock(b.close)}</span>
-                </button>`)
-                .join("");
+              const tiles = g.map(tile).join("");
               return `<details class="ba-group" data-g="${k}">
                 <summary><span class="ba-gname">${name}</span><span class="ba-gmeta">${meta}${last ? ` · ${s.lastHint}` : ""}</span><span class="ba-gcount"></span></summary>
                 <div class="ba-tiles">${tiles}</div>
@@ -324,9 +369,17 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
             .join("");
         }
 
+        // 世界时间：到了新的一根，把框滚到这一根（只滚框，不动整页）
+        if (flat && head.close !== flatHead) {
+          flatHead = head.close;
+          const box = list.querySelector<HTMLElement>(".ba-flat");
+          const cur = box?.querySelector<HTMLElement>(`[data-close="${head.close}"]`);
+          if (box && cur) box.scrollTop = Math.max(0, cur.offsetTop - 12);
+        }
+
         // 到了新的时段：只展开这一段，其他收起
         const g = groupOf(head);
-        if (g !== activeGroup) {
+        if (!flat && g !== activeGroup) {
           activeGroup = g;
           list.querySelectorAll<HTMLDetailsElement>(".ba-group").forEach(el => {
             el.open = el.dataset.g === g;
@@ -400,8 +453,13 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
         const head = current || upcoming(state.settings, now, 1)[0];
         if (head) renderDay(head, now, at);
 
-        reschedule(next);
-        // 系统通知跟着计时器走：上一次检查到现在之间到点的提醒都发（声音已经排在音频时钟上）
+        // 声音被系统挂起（换耳机、睡眠唤醒）：这个页面已经点过的话，浏览器允许直接恢复，不用再点
+        if (running && ctx && ctx.state !== "running" && !resuming && navigator.userActivation?.hasBeenActive) {
+          resuming = true;
+          ctx.resume().catch(() => {}).finally(() => (resuming = false));
+        }
+        reschedule(future.filter(b => !isSkipped(b)));
+        // 系统通知一般跟着声音发；声音没排上时（比如被挂起）由计时器补发，同一根只发一次
         if (running)
           bars.filter(b => b.alarm > lastTick && b.alarm <= now && !isSkipped(b)).forEach(notify);
         lastTick = now;
@@ -469,6 +527,7 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
 
       form.addEventListener("change", async e => {
         const t = e.target as HTMLInputElement;
+        fitLead();
         state.settings = {
           ...state.settings,
           tf: +field("tf").value,
@@ -520,6 +579,16 @@ const MARKETS = ["us", "cn", "de", "jp", "uk"];
         if (!document.body.contains(root)) return window.clearInterval(timer);
         render();
       }, 250);
+      // 在站内点到别的页面：撤掉已经排好的声音、关掉音频，不然离开后还会响一声
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          window.clearInterval(timer);
+          unschedule();
+          ctx?.close().catch(() => {});
+        },
+        { once: true }
+      );
     });
   }
 

@@ -1310,6 +1310,7 @@ a.tag-pill:hover {
 .ba-grid select,
 .ba-grid input[type="time"] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); font-size: 14px; color: var(--foreground); }
 .ba-grid .ba-check { display: flex; align-items: center; gap: 8px; }
+.ba-flat { position: relative; max-height: 360px; padding-top: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); overflow-y: auto; } /* 世界时间：不分组，一个能滚动的框 */
 .ba-sess { display: contents; } /* 交易时段的输入框由脚本按市场生成，直接排进设置的网格 */
 @media (max-width: 560px) {
   .ba-clock { font-size: 34px; }

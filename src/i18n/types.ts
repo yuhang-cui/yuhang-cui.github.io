@@ -205,6 +205,7 @@ export interface UIStrings {
     upcoming: string;
     upcomingDay: string;
     upcomingHint: string;
+    flatHint: string;
     groups: string[];
     lastHint: string;
     range: string;
