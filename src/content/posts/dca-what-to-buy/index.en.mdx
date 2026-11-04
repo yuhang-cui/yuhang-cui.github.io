@@ -1,10 +1,11 @@
 ---
-title: "DCA Series 02: What You Can Buy Every Month, and Where the Dividends Go"
+title: "The Eighth Wonder of the World: Compound Interest"
 description: "The last post explained what the S&P 500 is. This one lines up the four ETFs you can buy every month: what they track, how the fees differ, when they launched; then a chart from 1871 shows where the dividends actually go."
 stat: "0.03%"
 statLabel: "VOO annual fee"
 pubDatetime: 2026-11-01T20:00:00+08:00
 tags: [Thinking]
+featured: true
 lang: en
 ---
 
@@ -13,13 +14,20 @@ import SpxTrExplorer from "@/components/SpxTrExplorer.astro";
 import CurrencyCard from "@/components/CurrencyCard.astro";
 import DcaProjector from "@/components/DcaProjector.astro";
 
-The last post explained what the S&P 500 is. This one puts the data on the table so you can change the years and the amount yourself and see how buying the S&P 500 (IVV) compares with buying the Nasdaq-100 (QQQ).
+The last post explained what the S&P 500 is. A one-line refresher on the names first:
+
+- **SPX**: the S&P 500 index itself. A number; you cannot buy it.
+- **SPY, VOO, IVV**: funds that package those 500 companies' shares into something you can buy. Three brands, same thing.
+- **ES**: S&P 500 futures, a trader's tool; not needed for monthly buying.
+- **QQQ**: new in this post, a fund that tracks the Nasdaq-100, mostly tech.
+
+This post puts the data on the table so you can change the years and the amount yourself and see how buying the S&P 500 (IVV) compares with buying the Nasdaq-100 (QQQ).
 
 ## 1. IVV vs QQQ: $500 a month since 2000
 
 <DcaExplorer />
 
-Data: Yahoo Finance daily adjusted closes, dividends reinvested, through 30 October 2026.
+Data: Yahoo Finance daily adjusted closes, through 30 October 2026. An adjusted close is the price with dividends folded back in: each time an ETF pays a dividend its price drops by that amount on the day, and the adjusted close puts it back, as if the dividend were reinvested the moment it arrived. So the curves on the chart already include dividends.
 
 You can pick the day of the month. If the market is closed that day, or it falls on a weekend or holiday, the purchase moves to the next trading day.
 
@@ -166,5 +174,3 @@ So the $770,000 in this card is a projection, not history.
 
   </div>
 </details>
-
-(First published on November 1, 2026. Updated on November 2: added the DCA projection chart to the summary, with your own rate, monthly amount and number of years; the 30-year VOO and QQQ figures in the card recomputed from the rounded rates.)
