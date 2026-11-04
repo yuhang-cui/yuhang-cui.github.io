@@ -34,6 +34,8 @@ export default {
     featured: "Featured",
     recentPosts: "Recent Posts",
     allPosts: "All Posts",
+    featuredExpand: "Show all featured",
+    featuredCollapse: "Collapse featured",
   },
   footer: {
     copyright: "Copyright",

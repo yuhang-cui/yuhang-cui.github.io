@@ -138,6 +138,34 @@
 .post-item--card:hover {
   background: #efece6;
 }
+/* 精选的折叠：标题旁一个下拉箭头，收起时只露出前 3 篇 */
+.featured-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 2px;
+  align-self: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.featured-toggle:hover {
+  border-color: var(--muted-foreground);
+  color: var(--foreground);
+}
+.featured-toggle svg {
+  transition: transform 0.2s ease;
+}
+.featured-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+#featured[data-collapsed] .post-cards > li:nth-child(n + 4) {
+  display: none;
+}
 .post-item--card .post-link {
   padding: 22px 24px;
 }
