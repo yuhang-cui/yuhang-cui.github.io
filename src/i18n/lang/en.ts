@@ -570,6 +570,27 @@ export default {
     noteCny: "The rates are dollar returns; ¥ only changes the unit and ignores exchange-rate moves.",
     reset: "Reset",
   },
+  /** Example-image card: one big image + thumbnails + arrow keys */
+  cases: {
+    label: "Examples",
+    prev: "Previous",
+    next: "Next",
+    counter: "{{i}} / {{n}}",
+    hint: "← → to switch",
+  },
+  /** 强抛售之后的路径图 */
+  // 待翻译：中文先定稿，英文版之后再写
+  selloff: {
+    label: "开局连绵抛售走完之后，价格走到哪",
+    hero: "{{n}} 天，这段抛售的最低点之后 58 根 5 分钟 K 线（4 小时 50 分）",
+    legStart: "这段抛售的起点",
+    legEnd: "这段抛售的最低点",
+    tipHead: "抛售走完之后 {{m}} 分钟",
+    median: "中位数",
+    band: "中间一半的日子",
+    inside: "还在最低点之上",
+    note: "纵轴是收盘价相对这段抛售的位置：0 是这段的最低点，100% 是回到这段的起点，负数是跌出了新低。实线是中位数，阴影是中间一半的日子。",
+  },
   /** S&P 500 price index vs total return */
   spxTr: {
     label: "S&P 500: price index vs total return",

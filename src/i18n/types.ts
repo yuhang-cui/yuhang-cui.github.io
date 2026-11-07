@@ -555,6 +555,26 @@ export interface UIStrings {
     noteCny: string;
     reset: string;
   };
+  /** 例图卡片：一张大图 + 缩略图 + 左右切换 */
+  cases: {
+    label: string;
+    prev: string;
+    next: string;
+    counter: string;
+    hint: string;
+  };
+  /** 强抛售之后的路径图 */
+  selloff: {
+    label: string;
+    hero: string;
+    legStart: string;
+    legEnd: string;
+    tipHead: string;
+    median: string;
+    band: string;
+    inside: string;
+    note: string;
+  };
   /** 标普500 价格指数对全收益指数 */
   spxTr: {
     label: string;

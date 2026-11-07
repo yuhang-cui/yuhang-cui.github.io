@@ -1,0 +1,128 @@
+---
+// 开局连绵抛售走完之后的路径：横轴是这段抛售的最低点之后的分钟数，纵轴是收盘价相对这段抛售的位置（0 = 最低点，100% = 起点）。
+// 数据来自 open-selloff/open-selloff.py 写出的 open-selloff.json：每 5 分钟一个点，中位数、25%、75% 分位，和"还在最低点之上"的比例。
+import data from "@/data/open-selloff.json";
+import { useTranslations } from "@/i18n";
+import { tplStr } from "@/i18n/format";
+
+const s = useTranslations(Astro.currentLocale).selloff;
+const d = data as { n: number; q25: number[]; q50: number[]; q75: number[]; above: number[] };
+---
+
+<section class="bx sp" aria-label={s.label}>
+  <p class="sp-hero">{tplStr(s.hero, { n: d.n })}</p>
+  <div class="fn-chart sp-chart">
+    <svg></svg>
+    <div class="fn-tip" hidden></div>
+  </div>
+  <p class="fn-note">{s.note}</p>
+  <script type="application/json" class="sp-data" set:html={JSON.stringify({ d, s })} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+
+  type Series = { n: number; q25: number[]; q50: number[]; q75: number[]; above: number[] };
+  type Strings = { legStart: string; legEnd: string; tipHead: string; median: string; band: string; inside: string };
+  const M = { l: 48, r: 14, t: 16, b: 26 };
+  const fmt = (v: number) => (v > 0 ? "+" : "") + Math.round(v * 100) + "%";
+
+  function draw(root: HTMLElement, ser: Series, s: Strings) {
+    const svg = root.querySelector<SVGSVGElement>(".sp-chart svg")!;
+    const W = Math.max(280, Math.round(svg.parentElement!.clientWidth));
+    const H = W < 520 ? 230 : 280;
+    const plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+    const n = ser.q50.length;
+    const lo = Math.min(0, ...ser.q25) - 0.1;
+    const hi = Math.max(1, ...ser.q75) + 0.08;                    // 起点（100%）总在图里
+    const x = (k: number) => M.l + ((k + 1) / n) * plotW;
+    const y = (v: number) => M.t + ((hi - v) / (hi - lo)) * plotH;
+    const pt = (k: number, v: number) => x(k).toFixed(1) + "," + y(v).toFixed(1);
+    const line = (arr: number[]) => arr.map((v, k) => (k ? "L" : "M") + pt(k, v)).join("");
+    const band = line(ser.q75) + ser.q25.map((_, k) => "L" + pt(n - 1 - k, ser.q25[n - 1 - k])).join("") + "Z";
+    const ticks = [-0.5, 0, 0.5, 1].filter(v => v > lo && v < hi);
+    const total = n * 5;
+    const step = W < 520 ? 60 : 30;
+    const mins: number[] = [];
+    for (let mm = step; mm <= total; mm += step) mins.push(mm);
+    if (total % step) mins.push(total);
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("width", String(W));
+    svg.setAttribute("height", String(H));
+    svg.innerHTML =
+      ticks.map(v => `<line class="fn-grid" x1="${M.l}" x2="${W - M.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text x="${M.l - 8}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${fmt(v)}</text>`).join("") +
+      mins.map(mm => `<text x="${x(mm / 5 - 1).toFixed(1)}" y="${H - 8}" text-anchor="${mm === total ? "end" : "middle"}">${mm}</text>`).join("") +
+      `<path class="sp-band" d="${band}"/>` +
+      `<line class="fn-ref" x1="${M.l}" x2="${W - M.r}" y1="${y(1).toFixed(1)}" y2="${y(1).toFixed(1)}"/>` +
+      `<text class="sp-ref-t" x="${M.l + 4}" y="${(y(1) - 5).toFixed(1)}">${s.legStart}</text>` +
+      `<line class="fn-axis" x1="${M.l}" x2="${W - M.r}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/>` +
+      `<text class="sp-ref-t" x="${M.l + 4}" y="${(y(0) + 13).toFixed(1)}">${s.legEnd}</text>` +
+      `<path class="sp-median" d="${line(ser.q50)}"/>` +
+      `<line class="fn-rule" y1="${M.t}" y2="${H - M.b}"/>` +
+      `<circle class="fn-dot sp-dot" r="4"/>`;
+
+    const tip = root.querySelector<HTMLElement>(".fn-tip")!;
+    const rule = svg.querySelector<SVGLineElement>(".fn-rule")!;
+    const dot = svg.querySelector<SVGCircleElement>(".sp-dot")!;
+    const show = (e: PointerEvent) => {
+      const rect = svg.getBoundingClientRect();
+      const px = ((e.clientX - rect.left) / rect.width) * W;
+      const k = Math.min(n - 1, Math.max(0, Math.round(((px - M.l) / plotW) * n) - 1));
+      const xx = x(k);
+      rule.setAttribute("x1", String(xx)); rule.setAttribute("x2", String(xx));
+      dot.setAttribute("cx", String(xx)); dot.setAttribute("cy", String(y(ser.q50[k])));
+      svg.classList.add("is-hover");
+      tip.replaceChildren();
+      const h = document.createElement("p"); h.className = "fn-tip-h";
+      h.textContent = tplStr(s.tipHead, { m: (k + 1) * 5 });
+      tip.append(h);
+      const row = (cls: string, label: string, v: string) => {
+        const p = document.createElement("p"); p.className = "fn-tip-r";
+        const key = document.createElement("i"); key.className = cls;
+        const b = document.createElement("b"); b.textContent = v;
+        p.append(key, document.createTextNode(label), b); tip.append(p);
+      };
+      row("sp-key-median", s.median, fmt(ser.q50[k]));
+      row("sp-key-band", s.band, fmt(ser.q25[k]) + " ~ " + fmt(ser.q75[k]));
+      row("sp-key-inside", s.inside, Math.round(ser.above[k] * 100) + "%");
+      tip.hidden = false;
+      const left = (xx / W) * rect.width;
+      const tw = tip.offsetWidth;
+      tip.style.left = `${left + 14 + tw > rect.width ? left - 14 - tw : left + 14}px`;
+      tip.style.top = `${Math.max(0, ((e.clientY - rect.top) / rect.height) * H - 30)}px`;
+    };
+    const hide = () => { svg.classList.remove("is-hover"); tip.hidden = true; };
+    svg.onpointermove = show; svg.onpointerdown = show; svg.onpointerleave = hide;
+  }
+
+  function setup() {
+    for (const root of document.querySelectorAll<HTMLElement>(".sp")) {
+      if (root.dataset.ready) continue;
+      root.dataset.ready = "1";
+      const { d, s } = JSON.parse(root.querySelector(".sp-data")!.textContent!) as { d: Series; s: Strings };
+      const svg = root.querySelector<SVGSVGElement>(".sp-chart svg")!;
+      const run = () => draw(root, d, s);
+      run();
+      let lastW = svg.parentElement!.clientWidth;
+      new ResizeObserver(() => { const w = Math.round(svg.parentElement!.clientWidth); if (w && w !== lastW) { lastW = w; run(); } }).observe(svg.parentElement!);
+    }
+  }
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style is:global>
+  .sp { --c: var(--bear); }
+  .sp-hero {
+    margin-bottom: 10px !important;
+    font-size: 13px;
+    color: var(--summary);
+  }
+  .sp-band { fill: color-mix(in srgb, var(--c) 14%, transparent); }
+  .sp-median { fill: none; stroke: var(--c); stroke-width: 2; stroke-linejoin: round; }
+  .sp-dot { fill: var(--c); }
+  .fn-chart text.sp-ref-t { fill: var(--summary); font-size: 11.5px; }
+  .fn-tip-r i.sp-key-median { background: var(--c); }
+  .fn-tip-r i.sp-key-band { background: color-mix(in srgb, var(--c) 25%, white); }
+  .fn-tip-r i.sp-key-inside { background: #cfcac2; }
+</style>
