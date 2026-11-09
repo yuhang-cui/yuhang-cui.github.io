@@ -1,0 +1,58 @@
+---
+// 品种切换卡片：同一段内容的 ES 版和 GC 版放在一张卡片里，顶上两个按钮切换。
+// 全文所有这种卡片联动：在任何一张上点 GC，整篇文章的卡片一起切到 GC。
+// 内容里每个版本包一层 <div class="dt-panel">，顺序和 tabs 一一对应。外观沿用研究卡片（.rc）。
+type Props = {
+  title?: string;
+  tabs?: string[];
+};
+const { title, tabs = ["ES", "GC"] } = Astro.props;
+---
+
+<section class="rc dt">
+  <div class="rc-head">
+    {title && <p class="rc-title">{title}</p>}
+    <div class="rc-tabs" role="tablist">
+      {tabs.map((label, i) => (
+        <button type="button" role="tab" aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}>{label}</button>
+      ))}
+    </div>
+  </div>
+  <div class="rc-panel dt-body">
+    <slot />
+  </div>
+</section>
+
+<script>
+  const cards = () => document.querySelectorAll<HTMLElement>(".dt");
+  const show = (i: number) => {
+    cards().forEach(card => {
+      card.querySelectorAll<HTMLButtonElement>("[role=tab]").forEach((b, j) => {
+        b.setAttribute("aria-selected", String(j === i));
+        b.tabIndex = j === i ? 0 : -1;
+      });
+      card.querySelectorAll<HTMLElement>(".dt-panel").forEach((p, j) => (p.hidden = j !== i));
+      card.dataset.ready = "";
+    });
+  };
+  show(0);
+
+  // 点任何一张卡片的标签，所有卡片一起切；切换时让这张卡片留在原来的位置，不要跳
+  document.addEventListener("click", e => {
+    const tab = (e.target as HTMLElement).closest<HTMLButtonElement>(".dt [role=tab]");
+    if (!tab) return;
+    const card = tab.closest<HTMLElement>(".dt")!;
+    const top = card.getBoundingClientRect().top;
+    show(Array.from(tab.parentElement!.children).indexOf(tab));
+    window.scrollBy(0, card.getBoundingClientRect().top - top);
+  });
+
+  document.addEventListener("keydown", e => {
+    const tab = (e.target as HTMLElement).closest<HTMLButtonElement>(".dt [role=tab]");
+    if (!tab || (e.key !== "ArrowRight" && e.key !== "ArrowLeft")) return;
+    const tabs = Array.from(tab.parentElement!.querySelectorAll<HTMLButtonElement>("[role=tab]"));
+    const next = tabs[(tabs.indexOf(tab) + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+    next.focus();
+    next.click();
+  });
+</script>

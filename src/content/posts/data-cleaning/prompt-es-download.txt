@@ -1,0 +1,8 @@
+请帮我写一段 Python 代码，从 Databento 下载 ES 期货（标普 500 E-mini）的历史 1 分钟 K 线。要求：
+1. 使用官方 databento 库；数据集 GLBX.MDP3（CME Globex MDP 3.0），合约代码 ES.c.0，代码类型 continuous（连续合约），数据格式 ohlcv-1m。
+2. 时间从 2010-06-06 到今天。
+3. 先用 metadata.get_cost 查询并打印这次下载的费用，等我输入 y 确认后才真正下载，避免误扣费。
+4. API 密钥运行时用 getpass 让我手动输入，不要写在代码或文件里。
+5. 把结果保存为 CSV，保留 ts_event、instrument_id、open、high、low、close、volume 等原始列，时间保持 UTC。
+6. 下载完打印总行数、第一行和最后一行的时间，方便我核对。
+7. 每一步都加中文注释，告诉我需要先安装什么（pip install databento）。

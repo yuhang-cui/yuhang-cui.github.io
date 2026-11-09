@@ -1,0 +1,9 @@
+I have a CSV of 1-minute gold futures bars (Databento's GC.v.0 continuous contract, timestamps in UTC, with an instrument_id column). Please write Python code to clean it, following these rules:
+1. Convert timestamps to US Eastern time (US/Eastern), handling daylight saving time automatically. A gold trading day runs from 18:00 the previous day to 17:00 (17:15 on and before September 18, 2015); bars after 18:00 belong to the next day's trading day. There's no RTH/ETH split, so delete whole trading days.
+2. First check data quality and print the results: missing values, duplicate timestamps, rows where the high is below the open/close or the low is above the open/close, and prices not on the 0.1 tick.
+3. Remove data around contract rolls: find where instrument_id changes (the roll). GC.v.0 rolls at midnight UTC, in the middle of the Asian session, so the roll day mixes two contracts, and the day before the roll the old contract has almost no trades. Delete two days per roll: the day before the roll and the roll day.
+4. Remove holidays and half days: gold trades on US holidays but closes early, so delete every trading day whose last bar is earlier than 16:00.
+5. Remove days with bad data: the first bar arrives more than an hour after the open, there's a gap of more than an hour in the middle, or the whole day has only a handful of bars. List these days for me first, and delete them only after I confirm.
+6. Write out the cleaned 1-minute data, and also build 5-minute bars in US Eastern time (open = first bar's open, high = max, low = min, close = last bar's close, volume = sum).
+7. Finally verify and print: how many trading days are left, how many 1-minute bars each day has (a full day is 1,380), whether any day mixes two contracts, and whether any day has a gap of 30 minutes or more.
+Please add comments to every step explaining why it's done that way.

@@ -1,0 +1,8 @@
+Please write Python code that downloads historical 1-minute bars for ES futures (S&P 500 E-mini) from Databento. Requirements:
+1. Use the official databento library; dataset GLBX.MDP3 (CME Globex MDP 3.0), symbol ES.c.0, stype continuous (continuous contract), schema ohlcv-1m.
+2. Date range from 2010-06-06 to today.
+3. First call metadata.get_cost to look up and print the cost of this download. Only download after I type y to confirm, so I don't get charged by mistake.
+4. Ask me for the API key at runtime with getpass. Don't put it in the code or any file.
+5. Save the result as CSV, keeping the original columns such as ts_event, instrument_id, open, high, low, close, volume, with timestamps in UTC.
+6. After downloading, print the total row count and the timestamps of the first and last rows so I can check them.
+7. Add comments to every step, and tell me what I need to install first (pip install databento).

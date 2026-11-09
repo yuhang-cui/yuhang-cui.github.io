@@ -1,0 +1,8 @@
+Please write Python code that downloads historical 1-minute bars for gold futures (COMEX GC) from Databento. Requirements:
+1. Use the official databento library; dataset GLBX.MDP3 (CME Globex MDP 3.0), symbol GC.v.0, stype continuous, schema ohlcv-1m. Use the volume-based roll v.0, not the expiry-based c.0: only the even-month gold contracts are active, and c.0 would land on odd-month contracts that nobody trades.
+2. Date range from 2010-06-07 to today.
+3. First call metadata.get_cost to look up and print the cost (this step is free). Only download after I confirm, so I don't get charged by mistake.
+4. Ask me for the API key at runtime with getpass. Don't put it in the code or any file.
+5. Save the result as CSV, keeping the original columns such as ts_event, instrument_id, open, high, low, close, volume, with timestamps in UTC.
+6. After downloading, print the total row count and the timestamps of the first and last rows so I can check them.
+7. Add comments to every step, and tell me what I need to install first (pip install databento).

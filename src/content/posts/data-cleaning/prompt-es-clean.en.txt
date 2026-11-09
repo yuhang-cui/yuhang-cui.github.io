@@ -1,0 +1,9 @@
+I have a CSV of 1-minute ES futures bars (Databento's ES.c.0 continuous contract, timestamps in UTC, with an instrument_id column). Please write Python code to clean it, following these rules:
+1. Convert timestamps to US Eastern time (US/Eastern), handling daylight saving time automatically. RTH = 09:30–16:15 (1-minute bars from 09:30 to 16:14, 405 bars); ETH = previous trading day 16:15 to 09:29 today.
+2. First check data quality and print the results: missing values, duplicate timestamps, rows where the high is below the open/close or the low is above the open/close, and prices not on the 0.25 tick.
+3. Remove data around contract rolls: find where instrument_id changes (the roll), and delete everything from 16:15 on the last trading day before expiration to 16:15 on the first trading day after the roll. Expiration is usually the third Friday; if that day is a holiday, expiration moves up a day, so handle that case separately.
+4. Remove holidays and half days: days whose last RTH bar is earlier than 13:30 (stock market closed with only futures trading, or an early 13:00 close). Delete the previous evening's overnight session along with them.
+5. Remove days whose overnight session spans two or more nights (for example Good Friday or a state funeral, when stocks are closed but futures trade), and the first day after any fully missing day.
+6. Write out the cleaned 1-minute data, and also build 5-minute bars in US Eastern time (open = first bar's open, high = max, low = min, close = last bar's close, volume = sum).
+7. Finally verify and print: how many trading days are left, whether every day has a complete RTH session (405 one-minute bars), and whether any day's overnight session mixes two contracts.
+Please add comments to every step explaining why it's done that way.

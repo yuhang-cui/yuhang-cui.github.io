@@ -1727,6 +1727,37 @@ a.tag-pill:hover {
   margin-bottom: 0.5rem;
 }
 
+/* ===== 品种切换卡片（DataTabs）：ES / GC 两个版本放一张卡片里，全文联动 ===== */
+.app-prose .dt:not([data-ready]) .dt-panel:not(:first-child) {
+  display: none;
+}
+.app-prose .dt-body {
+  font-size: 15px;
+}
+.app-prose .dt-panel > :first-child {
+  margin-top: 0;
+}
+.app-prose .dt-panel > :last-child {
+  margin-bottom: 0;
+}
+.app-prose .dt-panel table {
+  margin-top: 0;
+}
+.app-prose .dt-panel .day-funnel,
+.app-prose .dt-panel .roll-timeline {
+  margin: 1.25rem 0;
+}
+/* 卡片里的 Prompt 不再套一层边框 */
+.app-prose .dt-panel .prompt-card {
+  margin: 0 0 1.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.app-prose .dt-panel .prompt-card:last-child {
+  margin-bottom: 0;
+}
+
 /* ===== 二级编号用 a. b. c. ===== */
 .app-prose ol ol {
   list-style-type: lower-alpha;

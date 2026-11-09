@@ -1,0 +1,8 @@
+请帮我写一段 Python 代码，从 Databento 下载黄金期货（COMEX GC）的历史 1 分钟 K 线。要求：
+1. 使用官方 databento 库；数据集 GLBX.MDP3（CME Globex MDP 3.0），合约代码 GC.v.0，代码类型 continuous，数据格式 ohlcv-1m。注意要用按成交量换月的 v.0，不要用按到期日换月的 c.0：黄金只有双月合约活跃，c.0 会轮到没人交易的单月合约上。
+2. 时间从 2010-06-07 到今天。
+3. 先用 metadata.get_cost 查询并打印费用（这一步不收费），等我输入确认后才真正下载，避免误扣费。
+4. API 密钥运行时用 getpass 让我手动输入，不要写在代码或文件里。
+5. 把结果保存为 CSV，保留 ts_event、instrument_id、open、high、low、close、volume 等原始列，时间保持 UTC。
+6. 下载完打印总行数、第一行和最后一行的时间，方便我核对。
+7. 每一步都加中文注释，告诉我需要先安装什么（pip install databento）。
