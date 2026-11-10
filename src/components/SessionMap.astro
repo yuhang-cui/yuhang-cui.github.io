@@ -1,0 +1,150 @@
+---
+// 全球主要市场的开盘时段图：一条 24 小时的横线，每个市场一行，开盘时段上色、其余灰色；
+// 黄金期货（GC）每天休市的那一小时就是黄金那一行条里的灰色缺口，不另外标。顶上的按钮换时间基准（北京 / 伦敦 / 纽约 / 东京 / 本机）。
+// 各市场的时间按今天的夏令时状态用 Intl 换算，所以冬夏令时自动对。
+const BASES: [string, string][] = [
+  ["America/New_York", "纽约"],
+  ["Asia/Shanghai", "北京"],
+  ["Europe/London", "伦敦"],
+  ["Asia/Tokyo", "东京"],
+  ["local", "本机"],
+];
+---
+
+<div class="sm" data-sm>
+  <div class="sm-base" role="group" aria-label="时间基准">
+    {BASES.map(([tz, name], i) => <button type="button" data-tz={tz} aria-pressed={i === 0 ? "true" : "false"}>{name}</button>)}
+  </div>
+  <div class="sm-chart">
+    <div class="sm-axis" data-axis></div>
+    <div class="sm-rows" data-rows></div>
+  </div>
+  <p class="sm-note" data-note></p>
+</div>
+
+<script>
+  type Seg = [string, string];                       // 当地时间 "HH:MM" 开、收；收 < 开 表示跨过午夜
+  type Market = { name: string; tz: string; segs: Seg[]; color: string; local: string; dark?: boolean; breaks?: Seg[]; noText?: boolean };
+  // dark：底色浅，字用深色；breaks：午休，画成浅一点的同色；noText：色块里不写时间（跨午夜会被切开，写了反而乱）
+
+  // 行的顺序按美东时间一天里出现的先后：黄金 18:00 开盘，然后东京、上海、伦敦、法兰克福、纽约
+  const MARKETS: Market[] = [
+    { name: "黄金期货 GC", tz: "America/New_York", segs: [["18:00", "17:00"]], color: "#c9a227", local: "18:00–次日 17:00 美东", dark: true },
+    { name: "东京 TSE", tz: "Asia/Tokyo", segs: [["09:00", "11:30"], ["12:30", "15:30"]], breaks: [["11:30", "12:30"]], noText: true, color: "#d9813f", local: "09:00–15:30 当地" },
+    { name: "上海 SSE", tz: "Asia/Shanghai", segs: [["09:30", "11:30"], ["13:00", "15:00"]], breaks: [["11:30", "13:00"]], noText: true, color: "#c0392b", local: "09:30–15:00 当地" },
+    { name: "伦敦 LSE", tz: "Europe/London", segs: [["08:00", "16:30"]], color: "#2f6fb3", local: "08:00–16:30 当地" },
+    { name: "法兰克福 Xetra", tz: "Europe/Berlin", segs: [["09:00", "17:30"]], color: "#7aa6d6", local: "09:00–17:30 当地", dark: true },
+    { name: "纽约 NYSE", tz: "America/New_York", segs: [["09:30", "16:00"]], color: "#3f9a6e", local: "09:30–16:00 当地" },
+  ];
+
+  const LOCAL_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const fmtCache = new Map<string, Intl.DateTimeFormat>();
+  const fmt = (tz: string) => {
+    let f = fmtCache.get(tz);
+    if (!f) {
+      f = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" });
+      fmtCache.set(tz, f);
+    }
+    return f;
+  };
+  // 某个时区在某一时刻的 年/月/日/时/分
+  const parts = (tz: string, ms: number) => {
+    const o: Record<string, number> = {};
+    for (const p of fmt(tz).formatToParts(ms)) if (p.type !== "literal") o[p.type] = +p.value;
+    return o;
+  };
+  // 某个时区的当地时间 → 时间戳（先按 UTC 猜，再用时差修正两次，跨夏令时也对）
+  const toMs = (tz: string, y: number, mo: number, d: number, minutes: number) => {
+    let ms = Date.UTC(y, mo - 1, d, 0, minutes);
+    for (let i = 0; i < 2; i++) {
+      const p = parts(tz, ms);
+      const got = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute);
+      ms += Date.UTC(y, mo - 1, d, 0, minutes) - got;
+    }
+    return ms;
+  };
+  const hm = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const label = (min: number) => `${pad(Math.floor(((min % 1440) + 1440) % 1440 / 60))}:${pad(min % 60)}`;
+
+  // 把一个市场的当地时段换算成基准时区的"一天里第几分钟"区间，跨午夜的拆成两段
+  const toBase = (tz: string, seg: Seg, baseTz: string, now: number) => {
+    const d = parts(tz, now);                                  // 该市场今天的日期
+    const a = toMs(tz, d.year, d.month, d.day, hm(seg[0]));
+    let b = toMs(tz, d.year, d.month, d.day, hm(seg[1]));
+    if (b <= a) b += 86400000;
+    const pa = parts(baseTz, a);
+    const start = pa.hour * 60 + pa.minute;
+    const len = Math.round((b - a) / 60000);
+    const out: [number, number][] = [];
+    if (start + len <= 1440) out.push([start, start + len]);
+    else { out.push([start, 1440]); out.push([0, start + len - 1440]); }
+    return out;
+  };
+
+  const root = document.querySelector<HTMLElement>("[data-sm]");
+  if (root) {
+    const axis = root.querySelector<HTMLElement>("[data-axis]")!;
+    const rows = root.querySelector<HTMLElement>("[data-rows]")!;
+    const note = root.querySelector<HTMLElement>("[data-note]")!;
+    const pct = (min: number) => `${(min / 1440) * 100}%`;
+
+    const render = (baseTz: string) => {
+      const now = Date.now();
+      const tz = baseTz === "local" ? LOCAL_TZ : baseTz;
+
+      axis.innerHTML = "";
+      for (let h = 0; h <= 24; h += 3) {
+        const t = document.createElement("span");
+        t.style.left = pct(h * 60);
+        t.textContent = `${pad(h % 24)}:00`;
+        axis.appendChild(t);
+      }
+
+      rows.innerHTML = "";
+      for (const m of MARKETS) {
+        const row = document.createElement("div");
+        row.className = "sm-row";
+        row.innerHTML = `<div class="sm-name">${m.name}<small>${m.local}</small></div><div class="sm-track"></div>`;
+        const track = row.querySelector<HTMLElement>(".sm-track")!;
+        for (const seg of m.segs) {
+          for (const [s, e] of toBase(m.tz, seg, tz, now)) {
+            const el = document.createElement("div");
+            el.className = "sm-seg";
+            el.style.left = pct(s);
+            el.style.width = pct(e - s);
+            el.style.background = m.color;
+            if (m.dark) el.style.color = "#23211d";
+            el.title = `${label(s)}–${label(e)}`;
+            if (e - s >= 150 && !m.noText) el.textContent = `${label(s)}–${label(e)}`;
+            track.appendChild(el);
+          }
+        }
+        for (const seg of m.breaks ?? []) {
+          for (const [s, e] of toBase(m.tz, seg, tz, now)) {
+            const el = document.createElement("div");
+            el.className = "sm-seg sm-break";
+            el.style.left = pct(s);
+            el.style.width = pct(e - s);
+            el.style.background = m.color;
+            el.title = `午休 ${label(s)}–${label(e)}`;
+            track.appendChild(el);
+          }
+        }
+        rows.appendChild(row);
+      }
+
+      note.textContent = `横轴是${baseTz === "local" ? "本机" : root.querySelector<HTMLElement>(`[data-tz="${baseTz}"]`)!.textContent}时间，浅色代表午休，灰色代表没开盘。`;
+    };
+
+    let base = "America/New_York";
+    root.querySelectorAll<HTMLButtonElement>("[data-tz]").forEach(b =>
+      b.addEventListener("click", () => {
+        base = b.dataset.tz!;
+        root.querySelectorAll<HTMLButtonElement>("[data-tz]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+        render(base);
+      })
+    );
+    render(base);
+  }
+</script>

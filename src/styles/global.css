@@ -1758,6 +1758,386 @@ a.tag-pill:hover {
   margin-bottom: 0;
 }
 
+/* ===== 全球开盘时段图（SessionMap） ===== */
+.app-prose .sm {
+  margin: 1.75rem 0;
+}
+.app-prose .sm-base {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.app-prose .sm-base button {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 13px;
+  color: var(--summary);
+  cursor: pointer;
+}
+.app-prose .sm-base button:hover {
+  border-color: var(--muted-foreground);
+  color: var(--foreground);
+}
+.app-prose .sm-base button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.app-prose .sm-chart {
+  position: relative;
+  --sm-label: 128px;
+  padding-left: var(--sm-label);
+}
+.app-prose .sm-axis {
+  position: relative;
+  height: 20px;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+.app-prose .sm-axis span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-variant-numeric: tabular-nums;
+}
+.app-prose .sm-axis span:first-child {
+  transform: none;
+}
+.app-prose .sm-axis span:last-child {
+  transform: translateX(-100%);
+}
+.app-prose .sm-row {
+  display: flex;
+  align-items: center;
+  height: 34px;
+}
+.app-prose .sm-name {
+  flex: none;
+  width: var(--sm-label);
+  margin-left: calc(-1 * var(--sm-label));
+  padding-right: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--foreground);
+}
+.app-prose .sm-name small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--faint);
+}
+.app-prose .sm-track {
+  position: relative;
+  flex: 1;
+  height: 22px;
+  border-radius: 4px;
+  background: #e8e5df;
+  overflow: hidden;
+}
+.app-prose .sm-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+.app-prose .sm-seg.sm-break {
+  opacity: 0.35;
+}
+.app-prose .sm-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--faint);
+}
+@media (max-width: 640px) {
+  .app-prose .sm-chart { --sm-label: 84px; }
+  .app-prose .sm-name { font-size: 12px; }
+  .app-prose .sm-name small { display: none; }
+  .app-prose .sm-seg { font-size: 0; }
+  .app-prose .sm-axis span:nth-child(even) { display: none; }
+}
+
+/* ===== 黄金三次开盘的波动（GoldOpens）：三栏结论、事件曲线、对照小图 ===== */
+.app-prose .go {
+  --go-sh: #c0392b;
+  --go-eu: #2f6fb3;
+  --go-ny: #3f9a6e;
+  --go-gold: #a8791a;
+  --go-bronze: #6f5210;
+  --go-lo: #2f6fb3;
+  margin: 1.75rem 0;
+}
+[data-theme="dark"] .app-prose .go {
+  --go-sh: #e66767;
+  --go-eu: #3987e5;
+  --go-ny: #199e70;
+  --go-gold: #d0a548;
+  --go-bronze: #e6cb8c;
+  --go-lo: #3987e5;
+}
+.app-prose .go-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.app-prose .go-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 14px 16px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-top: 3px solid var(--c);
+  margin-top: -1px;
+}
+.app-prose .go-fact:first-child {
+  border-left: 0;
+}
+.app-prose .go-fact {
+  --c: var(--go-gold);
+}
+.app-prose .go-fact-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.app-prose .go-fact-name i {
+  flex: none;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--c);
+}
+.app-prose .go-fact-when {
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.app-prose .go-fact-big {
+  font-size: 40px;
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.app-prose .go-fact-big small {
+  margin-left: 2px;
+  font-size: 0.5em;
+  font-weight: 500;
+  color: var(--faint);
+}
+.app-prose .go-fact-rows {
+  display: grid;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 13px;
+}
+.app-prose .go-fact-rows span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.app-prose .go-fact-rows em {
+  font-style: normal;
+  color: var(--summary);
+  white-space: nowrap;
+}
+.app-prose .go-fact-rows b {
+  font-weight: 500;
+  color: var(--foreground);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.app-prose .go-panel {
+  padding: 14px 16px 10px;
+  border: 1px solid rgb(0 0 0 / 0.09);
+  border-radius: 16px;
+  background: #fbfbf9;
+}
+[data-theme="dark"] .app-prose .go-panel {
+  border-color: var(--border);
+  background: var(--card);
+}
+.app-prose .go-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-bottom: 10px;
+}
+.app-prose .go-seg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-prose .go-seg > span {
+  font-size: 12px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.app-prose .go-seg > div {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--muted);
+}
+.app-prose .go-seg button {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--summary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.app-prose .go-seg button[aria-pressed="true"] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.app-prose .go-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--summary);
+}
+.app-prose .go-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.app-prose .go-legend li::marker {
+  content: none;
+}
+.app-prose .go-legend b {
+  font-weight: 400;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.app-prose .go-chart {
+  position: relative;
+  width: 100%;
+}
+.app-prose .go-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+.go-chart .g { stroke: var(--border); stroke-width: 1; opacity: 0.7; }
+.go-chart .ax { stroke: var(--border); stroke-width: 1; }
+.go-chart .ref { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 2 4; }
+.go-chart .tk { font-family: var(--font-label); font-size: 10.5px; fill: var(--faint); }
+.go-chart .mk { font-size: 11px; fill: var(--summary); }
+.go-chart .mkl { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 1 3; }
+.go-chart .el { font-size: 12px; font-weight: 600; }
+.go-chart .hair { stroke: var(--summary); stroke-width: 1; }
+.go-chart .dot { stroke: var(--card); stroke-width: 2; }
+.app-prose .go-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  padding: 7px 10px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.14);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.app-prose .go-tip-h {
+  margin-bottom: 2px;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+.app-prose .go-tip-r {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-prose .go-tip-r i {
+  flex: none;
+  width: 14px;
+  height: 0;
+  border-top: 2px solid;
+}
+.app-prose .go-tip-r b {
+  min-width: 3.2em;
+  font-weight: 600;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.app-prose .go-tip-r span {
+  color: var(--summary);
+}
+.app-prose .go-note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--faint);
+}
+.app-prose .go-checks {
+  display: grid;
+  gap: 22px;
+  margin: 0;
+}
+.app-prose .go-check-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.app-prose .go-check-read {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--summary);
+}
+@media (max-width: 640px) {
+  .app-prose .go-facts {
+    grid-template-columns: 1fr;
+  }
+  .app-prose .go-fact,
+  .app-prose .go-fact:first-child {
+    border-left: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 2px 14px;
+  }
+  .app-prose .go-fact:last-child {
+    border-bottom: 0;
+  }
+  .app-prose .go-panel {
+    padding: 12px 10px 8px;
+  }
+}
+
 /* ===== 二级编号用 a. b. c. ===== */
 .app-prose ol ol {
   list-style-type: lower-alpha;

@@ -1,0 +1,314 @@
+---
+// 黄金一天里的波动。三个部分，各放一处：
+// part="day"：三栏结论 + 24 小时曲线（每根 K 线占当天全天波幅的百分之几），这是主图；
+// part="hilo"：同一条横轴，换成当天最高点、最低点出在这根 K 线里的概率；可以看合并的一条线，也可以分开看最高点、最低点；
+// part="checks"：三张对照小图。
+// 数据是 量化/code 里两个脚本算出来的汇总（src/data/gold-share.json、gold-opens.json），只有平均值，没有原始行情。
+import data from "@/data/gold-opens.json";
+import share from "@/data/gold-share.json";
+
+type Props = { part?: "day" | "hilo" | "checks" };
+const { part = "day" } = Astro.props;
+
+// 开盘那一根 K 线在曲线上的位置（从美东 18:00 起第几根）：上海冬令时 20:00、夏令时 21:00
+const cv = share.curve;
+const nW = cv.n.winter, nS = cv.n.summer;
+const barAt = (iw: number, is: number) => (cv.pct.winter[iw] * nW + cv.pct.summer[is] * nS) / (nW + nS);
+const FACTS = [
+  { k: "sh", name: "上海开盘", when: "北京 09:00", bar: barAt(24, 36) },
+  { k: "eu", name: "欧洲开盘", when: "伦敦 08:00", bar: barAt(108, 108) },
+  { k: "ny", name: "纽约开盘", when: "纽约 09:30", bar: barAt(186, 186) },
+] as const;
+const CHECKS = [
+  { id: "sh", title: "上海：中国休市的日子" },
+  { id: "eu", title: "欧洲：夏令时错开的几周" },
+  { id: "ny", title: "纽约：美股休市的假日" },
+];
+const pc = (v: number) => (v * 100).toFixed(1) + "%";
+const rnd = share.random["60"];
+---
+
+{
+  part === "day" && (
+    <section class="go" data-go="day" aria-label="黄金一天里的波动分布">
+      <div class="go-facts">
+        {FACTS.map(f => {
+          const o = share.open[f.k]["60"];
+          return (
+            <div class="go-fact" data-k={f.k}>
+              <span class="go-fact-name"><i />{f.name}</span>
+              <span class="go-fact-when">{f.when} 之后 1 小时，占全天波幅</span>
+              <span class="go-fact-big">{(o.all.A * 100).toFixed(1)}<small>%</small></span>
+              <span class="go-fact-rows">
+                <span><em>随便取 1 小时</em><b>{pc(rnd.all[0])}</b></span>
+                <span><em>2024 年以来</em><b>{pc(o.y24.A)}</b></span>
+                <span><em>全天高低点出在这里</em><b>{pc(o.all.C)}</b></span>
+                <span><em>开盘那一根</em><b>{f.bar.toFixed(1)}%</b></span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div class="go-panel">
+        <div class="go-controls" />
+        <ul class="go-legend" />
+        <div class="go-chart" data-chart="curve" />
+        <p class="go-note" />
+      </div>
+      <script type="application/json" class="go-data" set:html={JSON.stringify({ events: data.events, curve: { n: cv.n, by: cv.by, hl: cv.hl, hi: cv.hi, lo: cv.lo } })} />
+    </section>
+  )
+}
+{
+  part === "hilo" && (
+    <section class="go" data-go="hilo" aria-label="全天最高点和最低点出现的时间">
+      <div class="go-panel">
+        <div class="go-controls" />
+        <ul class="go-legend" />
+        <div class="go-chart" data-chart="curve" />
+        <p class="go-note" />
+      </div>
+    </section>
+  )
+}
+{
+  part === "checks" && (
+    <section class="go go-checks" data-go="checks" aria-label="三次开盘的对照">
+      {CHECKS.map(c => (
+        <div class="go-check">
+          <p class="go-check-title">{c.title}</p>
+          <ul class="go-legend" data-legend={c.id} />
+          <div class="go-chart" data-chart={c.id} />
+          <p class="go-check-read" data-read={c.id} />
+        </div>
+      ))}
+    </section>
+  )
+}
+
+<script>
+  type Series = { label: string; c: string; dash?: string; w?: number; n?: number; xs: number[]; ys: (number | null)[]; step?: number; fill?: boolean };
+  type Mark = { x: number; t: string; key?: number; row?: number; c?: string; soft?: boolean };   // soft：次要的标记，虚线、不加粗
+  type Opt = {
+    h: number; x: [number, number]; series: Series[]; aria: string; ticks: { x: number; label: string }[];
+    ref?: number | null; marks?: Mark[]; endLabels?: boolean; unit?: string;
+    tipHead: (off: number) => string; tipVal: (v: number) => string;
+  };
+  type Group = [label: string, key: string, opts: [string, string][]];
+
+  const store = document.querySelector<HTMLElement>(".go-data");
+  if (store) {
+    const G = JSON.parse(store.textContent || "{}");
+    const EV = G.events, CV = G.curve;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const f2 = (v: number) => v.toFixed(2);
+    const f1 = (v: number) => v.toFixed(1);
+    const hhmm = (m: number) => { const x = ((Math.floor(m) % 1440) + 1440) % 1440; return pad(Math.floor(x / 60)) + ":" + pad(x % 60); };
+
+    // 三次开盘的当地钟点（分钟），对照小图的横轴用
+    const CLOCK: Record<string, number> = { sh: 9 * 60, eu: 8 * 60, ny: 9 * 60 + 30 };
+    const clockAt = (k: string, off: number) => hhmm(CLOCK[k] + off);
+
+    // ---------- 折线图：几条线共用一个横轴和纵轴，鼠标移上去显示这一刻每条线的数 ----------
+    const niceStep = (v: number) => {
+      const p = Math.pow(10, Math.floor(Math.log10(v))), r = v / p;
+      return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 2.5 ? 2.5 : r <= 5 ? 5 : 10) * p;
+    };
+    function chart(host: HTMLElement, o: Opt) {
+      const W = Math.max(260, Math.round(host.clientWidth)), H = o.h, narrow = W < 520;
+      const m = { l: 36, r: o.endLabels && !narrow ? 64 : 10, t: o.marks?.length ? 42 : 10, b: 24 };
+      const iw = W - m.l - m.r, ih = H - m.t - m.b, [x0, x1] = o.x;
+      let ymax = 0;
+      o.series.forEach(s => s.xs.forEach((x, i) => { const v = s.ys[i]; if (x >= x0 && x <= x1 && v != null && v > ymax) ymax = v; }));
+      const step = niceStep(ymax / 4), yTop = Math.ceil((ymax * 1.03) / step) * step;
+      const X = (x: number) => m.l + ((x - x0) / (x1 - x0)) * iw, Y = (y: number) => m.t + ih - (y / yTop) * ih;
+      const fy = (v: number) => (step < 1 ? v.toFixed(step < 0.5 ? 2 : 1) : String(v)) + (o.unit || "");
+      let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria}">`;
+      for (let v = 0; v <= yTop + 1e-9; v += step)
+        s += `<line class="${v === 0 ? "ax" : "g"}" x1="${m.l}" x2="${m.l + iw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tk" x="${m.l - 6}" y="${Y(v) + 3.5}" text-anchor="end">${fy(v)}</text>`;
+      if (o.ref != null && o.ref < yTop) s += `<line class="ref" x1="${m.l}" x2="${m.l + iw}" y1="${Y(o.ref)}" y2="${Y(o.ref)}"/>`;
+      o.ticks.forEach(t => {
+        const end = X(t.x) > m.l + iw - 14;
+        s += `<text class="tk" x="${X(t.x)}" y="${H - 7}" text-anchor="${end ? "end" : "middle"}">${t.label}</text><line class="ax" x1="${X(t.x)}" x2="${X(t.x)}" y1="${m.t + ih}" y2="${m.t + ih + 4}"/>`;
+      });
+      (o.marks || []).forEach(k => {
+        if (narrow && !k.key) return;
+        const yy = m.t - 8 - (k.row ?? 0) * 17, cx = X(k.x);   // 文字居中压在竖线正上方；第二行再高出一截，不和第一行挤
+        s += `<line class="mkl" x1="${cx}" x2="${cx}" y1="${yy + 3}" y2="${m.t + ih}" ${k.c ? `style="stroke:${k.c};${k.soft ? "" : "stroke-dasharray:none;"}opacity:.55"` : ""}/>`;
+        s += `<text class="mk" x="${cx}" y="${yy}" text-anchor="middle" ${k.c ? `style="fill:${k.c};${k.soft ? "font-weight:300;letter-spacing:1px;opacity:.8" : "font-weight:600"}"` : ""}>${k.t}</text>`;
+      });
+      o.series.forEach(se => {
+        // 一条细线；step 给了 K 线的长度就画成阶梯（每根 K 线一段平台），fill 再在线下面铺一层很淡的底色
+        const pts: [number, number][] = [];
+        let d = "", area = "";
+        const flush = () => {
+          if (!pts.length) return;
+          const line = pts.map(([x, y], i) => (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1)).join("");
+          d += line;
+          if (se.fill) area += line + `L${pts[pts.length - 1][0].toFixed(1)} ${Y(0)}L${pts[0][0].toFixed(1)} ${Y(0)}Z`;
+          pts.length = 0;
+        };
+        se.xs.forEach((x, i) => {
+          const v = se.ys[i];
+          if (x < x0 || x > x1 || v == null) return flush();
+          if (se.step) pts.push([X(x - se.step / 2), Y(v)], [X(x + se.step / 2), Y(v)]);
+          else pts.push([X(x), Y(v)]);
+        });
+        flush();
+        if (area) s += `<path d="${area}" style="fill:${se.c};opacity:.13"/>`;
+        s += `<path d="${d}" fill="none" style="stroke:${se.c};stroke-width:${se.w || 2};${se.dash ? "stroke-dasharray:" + se.dash + ";" : ""}stroke-linejoin:round;stroke-linecap:round"/>`;
+      });
+      if (o.endLabels && !narrow) {
+        const labs = o.series.map(se => {
+          let j = se.xs.length - 1;
+          while (j > 0 && (se.xs[j] > x1 || se.ys[j] == null)) j--;
+          return { se, y: Y(se.ys[j] as number) };
+        }).sort((a, b) => a.y - b.y);
+        for (let i = 1; i < labs.length; i++) if (labs[i].y - labs[i - 1].y < 15) labs[i].y = labs[i - 1].y + 15;
+        const over = labs.length ? labs[labs.length - 1].y - (m.t + ih - 2) : 0;
+        if (over > 0) labs.forEach(l => (l.y -= over));
+        labs.forEach(l => { s += `<text class="el" x="${m.l + iw + 7}" y="${l.y + 4}" style="fill:${l.se.c}">${l.se.label}</text>`; });
+      }
+      s += `<g class="hov" visibility="hidden"><line class="hair" y1="${m.t}" y2="${m.t + ih}"/>` + o.series.map(se => `<circle class="dot" r="4" style="fill:${se.c}"/>`).join("") + `</g>`;
+      s += `<rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent"/></svg>`;
+      host.innerHTML = s + `<div class="go-tip" hidden></div>`;
+      const svg = host.querySelector("svg")!, hov = svg.querySelector(".hov")!, hair = hov.querySelector("line")!, dots = hov.querySelectorAll("circle"), tip = host.querySelector<HTMLElement>(".go-tip")!;
+      const leave = () => { hov.setAttribute("visibility", "hidden"); tip.hidden = true; };
+      const move = (e: PointerEvent) => {
+        const r = svg.getBoundingClientRect(), px = ((e.clientX - r.left) * W) / r.width;
+        if (px < m.l - 4 || px > m.l + iw + 4) return leave();
+        const xv = Math.min(x1, Math.max(x0, x0 + ((px - m.l) / iw) * (x1 - x0)));
+        let hx: number | null = null;
+        tip.textContent = "";
+        const head = document.createElement("div"); head.className = "go-tip-h"; tip.appendChild(head);
+        o.series.forEach((se, k) => {
+          const dx = se.xs[1] - se.xs[0], i = Math.max(0, Math.min(se.xs.length - 1, Math.round((xv - se.xs[0]) / dx))), v = se.ys[i];
+          if (hx == null) { hx = se.xs[i]; head.textContent = o.tipHead(hx - dx / 2); }
+          dots[k].setAttribute("visibility", v != null ? "inherit" : "hidden");
+          if (v != null) { dots[k].setAttribute("cx", String(X(se.xs[i]))); dots[k].setAttribute("cy", String(Y(v))); }
+          const row = document.createElement("div"); row.className = "go-tip-r";
+          const key = document.createElement("i"); key.style.borderColor = se.c; if (se.dash) key.style.borderTopStyle = "dashed";
+          const b = document.createElement("b"); b.textContent = v != null ? o.tipVal(v) : "–";
+          const lab = document.createElement("span"); lab.textContent = se.label;
+          row.append(key, b, lab); tip.appendChild(row);
+        });
+        hair.setAttribute("x1", String(X(hx!))); hair.setAttribute("x2", String(X(hx!))); hov.setAttribute("visibility", "visible");
+        tip.hidden = false;
+        const sx = r.width / W, tw = tip.offsetWidth, cx = X(hx!) * sx;
+        tip.style.transform = `translate(${Math.round(cx + 14 + tw > r.width ? Math.max(0, cx - tw - 14) : cx + 14)}px, ${Math.round(m.t * sx + 6)}px)`;
+      };
+      svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move); svg.addEventListener("pointerleave", leave);
+    }
+    const swatch = (c: string, dash?: string) => `<svg width="20" height="8" aria-hidden="true"><line x1="1" x2="19" y1="4" y2="4" style="stroke:${c};stroke-width:2.2;stroke-linecap:round;${dash ? "stroke-dasharray:" + dash : ""}"/></svg>`;
+    const legendHTML = (series: Series[], ref: string) =>
+      series.map(s => `<li>${swatch(s.c, s.dash)}${s.label}${s.n ? ` <b>${s.n} 天</b>` : ""}</li>`).join("") + (ref ? `<li>${swatch("var(--faint)", "1 4")}${ref}</li>` : "");
+    // 宽度一变（改窗口大小、标签页从隐藏切到显示）就重画
+    const onWidth = (host: HTMLElement, draw: () => void) => {
+      let w = -1;
+      new ResizeObserver(() => { const n = Math.round(host.clientWidth); if (n && n !== w) { w = n; draw(); } }).observe(host);
+    };
+    // 一排分段按钮：点了就改 state，再重画
+    const segments = (root: HTMLElement, state: Record<string, string>, groups: Group[], draw: () => void) => {
+      const box = root.querySelector<HTMLElement>(".go-controls")!;
+      const paint = () => {
+        box.innerHTML = groups.map(([label, key, opts]) =>
+          `<div class="go-seg"><span>${label}</span><div role="group" aria-label="${label}">` +
+          opts.map(([v, t]) => `<button type="button" data-key="${key}" data-v="${v}" aria-pressed="${state[key] === v}">${t}</button>`).join("") + `</div></div>`).join("");
+      };
+      box.addEventListener("click", e => {
+        const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-key]");
+        if (!b) return;
+        state[b.dataset.key!] = b.dataset.v!;
+        paint(); draw();
+      });
+      paint();
+    };
+
+    // ---------- 24 小时曲线：每根 K 线一个数，K 线可选 5 分钟、15 分钟、30 分钟、1 小时 ----------
+    // kind = "by"：这根 K 线的最高减最低占当天全天波幅的百分之几（主图）
+    // kind = "hl"：当天的最高点、最低点出在这根 K 线里的概率。四种看法：合并（最高点或最低点，各根加起来约 200%）、
+    //   只看最高点、只看最低点（各自加起来 100%）、两条线一起
+    const mountCurve = (root: HTMLElement, kind: "by" | "hl") => {
+      const summerNow = /EDT|GMT-4/.test(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "short" }).format(new Date()));
+      const state: Record<string, string> = { season: summerNow ? "summer" : "winter", split: "all", base: "et", size: kind === "hl" ? "60" : "5", mode: "hl" };
+      const host = root.querySelector<HTMLElement>('[data-chart="curve"]')!;
+      const draw = () => {
+        const sn = state.season, shift = state.base === "bj" ? (sn === "winter" ? 13 : 12) * 60 : 0;   // 北京比美东早 13 小时（冬）/ 12 小时（夏）
+        const clock = (x: number) => hhmm(18 * 60 + x + shift);
+        const n = +state.size, wide = n > 5, by = CV.by[state.size];   // 5 分钟是平滑线，更长的 K 线是阶梯线
+        const xs = Array.from({ length: 1380 / n }, (_, i) => i * n + n / 2);
+        const mk = (ys: number[], label: string, c: string, w: number, fill: boolean, days?: number): Series =>
+          ({ label, c, w, fill, n: days, xs, ys, step: wide ? n : undefined });
+        const season = sn === "winter" ? "冬令时" : "夏令时";
+        const g = state.split === "all" ? sn : state.split + "_" + sn;   // 高低点图一次只看一个时期，不然四条线太乱
+        const both = state.mode === "both";   // 两条线叠在一起时不铺底色，否则混成灰
+        const one = (k: string, label: string, c: string) => mk(CV[k][state.size][g], label, c, both ? 1.8 : 1.6, !both);
+        const ss = kind === "hl"
+          ? both ? [one("hi", "最高点", "var(--go-gold)"), one("lo", "最低点", "var(--go-lo)")]
+            : state.mode === "hi" ? [one("hi", "最高点", "var(--go-gold)")]
+            : state.mode === "lo" ? [one("lo", "最低点", "var(--go-lo)")]
+            : [one("hl", "最高点或最低点", "var(--go-gold)")]
+          : state.split === "y24"
+            ? [mk(by["pre24_" + sn], "2010–23", "var(--muted-foreground)", 1.3, false, CV.n["pre24_" + sn]), mk(by["y24_" + sn], "2024–26", "var(--go-gold)", 1.8, true, CV.n["y24_" + sn])]
+            : [mk(by[sn], season, "var(--go-gold)", 1.6, true, CV.n[sn])];
+        const avg = (kind === "hl" ? (ss[0].ys as number[]) : (by[sn] as number[])).reduce((a, b) => a + b, 0) / (1380 / n), name = n === 60 ? "1 小时" : n + " 分钟";
+        const narrow = host.clientWidth < 520, ticks: { x: number; label: string }[] = [];
+        for (let h = 0; h <= 23; h += narrow ? 6 : 3) ticks.push({ x: h * 60, label: clock(h * 60) });
+        root.querySelector(".go-legend")!.innerHTML = legendHTML(ss, "平均一根");
+        chart(host, {
+          h: 320, x: [0, 1380], series: ss, ticks, unit: "%", endLabels: kind === "hl" ? both : state.split === "y24", ref: avg,
+          aria: kind === "hl" ? `黄金一天 23 小时里，当天最高点、最低点出在每根 ${name} K 线里的概率` : `黄金一天 23 小时里，每根 ${name} K 线占当天全天波幅的百分之几`,
+          marks: [
+            // 四条标记线都用比曲线深一号的金棕色，和金色的曲线是一个色系
+            { x: sn === "winter" ? 120 : 180, t: "上海开盘", c: "var(--go-bronze)", key: 1 },
+            { x: 540, t: "欧洲开盘", c: "var(--go-bronze)", key: 1 },
+            { x: 870, t: "美国数据", c: "var(--go-bronze)", soft: true, row: 1 },
+            { x: 930, t: "纽约开盘", c: "var(--go-bronze)", key: 1 },
+          ],
+          tipHead: x => {
+            const et = (v: number) => hhmm(18 * 60 + v), bj = (v: number) => hhmm(18 * 60 + v + (sn === "winter" ? 13 : 12) * 60);
+            const span = (f: (v: number) => string) => (wide ? `${f(x)}–${f(x + n)}` : f(x));
+            return state.base === "bj" ? `北京 ${span(bj)}（美东 ${span(et)}）` : `美东 ${span(et)}（北京 ${span(bj)}）`;
+          },
+          tipVal: v => f1(v) + "%",
+        });
+        const days = kind === "hl" ? `，${state.split === "all" ? "" : state.split === "y24" ? "2024–26 " : "2010–23 "}${season} ${CV.n[g]} 天` : "";
+        root.querySelector(".go-note")!.textContent = `横轴是${state.base === "bj" ? "北京" : "美东"}时间${days}。虚线是全天平均一根 ${name} K 线（${f1(avg)}%）。`;
+      };
+      segments(root, state, [
+        ...(kind === "hl" ? [["高低点", "mode", [["hl", "合并"], ["hi", "最高点"], ["lo", "最低点"], ["both", "两条线"]]] as Group] : []),
+        ["K 线", "size", [["5", "5 分钟"], ["15", "15 分钟"], ["30", "30 分钟"], ["60", "1 小时"]]],
+        ["季节", "season", [["winter", "冬令时"], ["summer", "夏令时"]]],
+        ["时期", "split", kind === "hl" ? [["all", "全部"], ["pre24", "2010–23"], ["y24", "2024–26"]] : [["all", "全部"], ["y24", "2024 前后"]]],
+        ["横轴", "base", [["et", "美东"], ["bj", "北京"]]],
+      ], draw);
+      onWidth(host, draw);
+    };
+    document.querySelectorAll<HTMLElement>('[data-go="day"], [data-go="hilo"]').forEach(r => mountCurve(r, r.dataset.go === "hilo" ? "hl" : "by"));
+
+    // ---------- 对照小图 ----------
+    const checks = document.querySelector<HTMLElement>('[data-go="checks"]');
+    if (checks) {
+      // 每张图下面一句结论，数字直接从曲线里取：v(哪一组, 离开盘多少分钟) = 这根 K 线是当天平均一根的几倍
+      type V = (g: string, off: number) => string;
+      const defs: { id: string; c: string; ev: string; subs: string[]; names: string[]; x: [number, number]; tick: (t: number) => string; read: (v: V) => string }[] = [
+        { id: "sh", c: "var(--go-sh)", ev: "sh", subs: ["open", "ctrl"], names: ["开市日", "春节、国庆休市"], x: [-60, 120] as [number, number], tick: (t: number) => clockAt("sh", t),
+          read: v => `是上海开盘造成的。开盘那根，开市日是当天平均一根的 ${v("open", 0)} 倍，休市日只有 ${v("ctrl", 0)} 倍，和别的整点差不多。开盘后一小时开市日比休市日高三成，两小时后基本没有差别。` },
+        { id: "eu", c: "var(--go-eu)", ev: "et03", subs: ["normal", "shift"], names: ["平时", "错开的几周"], x: [-60, 120] as [number, number], tick: (t: number) => pad(3 + t / 60) + ":00",
+          read: v => `是欧洲开盘造成的。平时最大的尖在美东 03:00（${v("normal", 0)} 倍）。错开的几周伦敦 08:00 是美东 04:00，最大的尖跟着挪到 04:00（${v("shift", 60)} 倍）。` },
+        { id: "ny", c: "var(--go-ny)", ev: "ny", subs: ["all", "ctrl"], names: ["平时", "美股休市"], x: [-90, 90] as [number, number], tick: (t: number) => clockAt("ny", t),
+          read: v => `09:30 的尖是美股开盘造成的。平时 ${v("all", 0)} 倍，美股休市的日子 ${v("ctrl", 0)} 倍，和前后几根差不多。08:30 的尖也没了，假日一般不发数据。10:00 的尖还在（${v("ctrl", 30)} 倍），这一刻还有伦敦下午定盘价。` },
+      ];
+      defs.forEach(d => {
+        const e = EV[d.ev], a = e.sub[d.subs[0]], b = e.sub[d.subs[1]], xs = e.off5.map((x: number) => x + 2.5);
+        const ss: Series[] = [{ label: d.names[0], c: d.c, n: a.n, xs, ys: a.rel5 }, { label: d.names[1], c: "var(--summary)", dash: "5 4", w: 1.8, n: b.n, xs, ys: b.rel5 }];
+        const ticks: { x: number; label: string }[] = []; for (let t = d.x[0]; t <= d.x[1]; t += 60) ticks.push({ x: t, label: d.tick(t) });
+        checks.querySelector(`[data-legend="${d.id}"]`)!.innerHTML = legendHTML(ss, "全天平均");
+        checks.querySelector(`[data-read="${d.id}"]`)!.textContent = d.read((g, off) => f2(e.sub[g].rel5[e.off5.indexOf(off)]));
+        const host = checks.querySelector<HTMLElement>(`[data-chart="${d.id}"]`)!;
+        onWidth(host, () => chart(host, { h: 200, x: d.x, series: ss, ticks, ref: 1, aria: d.names.join(" 对比 "),
+          tipHead: off => (d.id === "eu" ? "美东 " + hhmm(180 + off) : clockAt(d.ev, off)), tipVal: v => f2(v) + " 倍" }));
+      });
+    }
+  }
+</script>
