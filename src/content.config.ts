@@ -14,6 +14,8 @@ const posts = defineCollection({
       modDatetime: z.date().optional().nullable(),
       title: z.string(),
       featured: z.boolean().optional(),
+      // 精选里默认折叠：排在精选的最后，首页点箭头展开才看到
+      featuredFolded: z.boolean().optional(),
       // 文章的核心数字，显示在列表右侧，例如 stat: "89.8%"，statLabel: "至少突破一侧"
       stat: z.string().optional(),
       statLabel: z.string().optional(),

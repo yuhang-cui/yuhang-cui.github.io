@@ -1,0 +1,184 @@
+---
+title: "Gold's 23-Hour Day: The US Morning Makes the Range, 39% in the First Hour After the New York Open"
+description: "Sixteen years of 1-minute data on gold's trading day: how far it moves in a day, when each market opens, which hours make the range, and when the day's high and low are made. The first hour after the New York open covers 39% of the day's range, against 20.5% for any random hour."
+stat: "39.0%"
+statLabel: "of the day's range in the first hour after the New York open"
+pubDatetime: 2026-11-09T20:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import SessionMap from "@/components/SessionMap.astro";
+import TableTabs from "@/components/TableTabs.astro";
+import GoldOpens from "@/components/GoldOpens.astro";
+
+> **Bottom line**: gold's range is made in the US morning, **08:00 to 11:00 ET**. The first hour after the New York stock open covers **39%** of the day's range, against 20.5% for any random hour.
+>
+> The Shanghai open (21:00 ET, 20:00 in winter) is big for one 5-minute bar only, and the hour after it is about average. The Europe open at 03:00 ET is only slightly above average.
+>
+> 23:00 to 02:00 ET is the quietest stretch. The day's high or low is rarely made there.
+>
+> Since 2024 the Asia session has grown: the first hour after the Shanghai open went from 20.9% to **25.7%** of the day's range.
+>
+> <span class="takeaway">How I use it: to plan screen time. The US morning is where the range is made. The overnight session is quieter, and the hours around midnight ET can be skipped.</span>
+
+Gold trades around the world. GC opens at 18:00 ET and closes at 17:00 ET the next day, with a one-hour break.
+
+For a trader on US Eastern time, most of that day happens overnight: Asia trades through the evening and Europe opens at 03:00. The US morning is still where most of the range is made.
+
+All clock times here are ET. Shanghai has no daylight saving, so its open is 21:00 ET in summer and 20:00 ET in winter; the text uses summer time. The charts default to the current season.
+
+This post uses 16 years of 1-minute data to answer four questions: how far gold moves in a day, when each market opens, where in the day the range is made, and when the day's high and low are made.
+
+## The contract and the daily range
+
+<div class="exp-table">
+
+| | GC | MGC (micro) |
+|---|---:|---:|
+| Contract size | 100 oz | 10 oz |
+| 1 tick (0.1 point) | $10 | $1 |
+| 1 point | $100 | $10 |
+
+</div>
+
+The minimum move is 1 tick, which is 0.1 point; 1 point is a $1 move in the gold price. The two contracts trade the same hours at nearly the same price. The data here is GC, and the conclusions apply to MGC as well.
+
+The daily range from high to low (median):
+
+<div class="exp-table">
+
+| Period | % of price | Points | Top 10% of days exceed |
+|---|---:|---:|---:|
+| 2010–13 | 1.46% | 21 | 43 |
+| 2014–19 | 1.10% | 14 | 26 |
+| 2020–23 | 1.33% | 24 | 44 |
+| 2024–26 | 1.65% | 53 | 129 |
+
+</div>
+
+- **2026 so far**: the median is 2.23%, or 103 points. On a 100-point day, one GC contract swings $10,000 from high to low, and one MGC contract swings $1,000.
+- **Everything below is a share of the day's range**. The average 5-minute bar is 5.6% of the day's range: on a 100-point day that is 5.6 points, or $560 per GC contract.
+
+## When each market opens
+
+<TableTabs title="Trading hours of the main markets" tabs={["Sessions", "Notes"]}>
+<div class="tt-panel">
+
+The main markets' trading hours on one 24-hour line. The buttons change the time base.
+
+<SessionMap />
+
+</div>
+<div class="tt-panel">
+
+- **Gold trades almost around the clock**, with a one-hour break from 17:00 to 18:00 ET.
+- **Asia session** (from 18:00 ET): Tokyo opens at 20:00 and Shanghai at 21:00. Shanghai matters more, since China is the largest buyer of physical gold.
+- **Europe session** (from 03:00 ET): London and Frankfurt open together. London is the largest over-the-counter gold market.
+- **US session**: the New York stock market opens at 09:30. For gold, the economic data at 08:30 and 10:00 and the COMEX settlement at 13:30 matter more.
+- **Overlap**: London and New York overlap from 08:00 to 11:30 ET. Volume and range are concentrated there.
+- **Daylight saving**: the chart converts for today's date. Asia has no daylight saving, so Asian opens come an hour earlier on the ET clock in winter. Europe and the US switch a couple of weeks apart, and for those weeks Europe is off by an hour.
+
+</div>
+</TableTabs>
+
+## How the range is spread across the day
+
+Take each 5-minute bar's high minus low, divide it by that day's full high-to-low range, then average by time of day. That gives one 24-hour curve. Every bar has the same denominator, so different times of day can be compared directly. The average 5-minute bar is 5.6% of the day's range.
+
+The shares of separate bars or windows cannot be added up. Price goes back and forth, the windows overlap in price, and the total comes to far more than 100%.
+
+The baseline below is "any random hour": take one hour starting anywhere in the day, and on average it covers 20.5% of the day's range. Only a window above that is busier than usual.
+
+<GoldOpens />
+
+The bar size can be changed to 15 minutes, 30 minutes or 1 hour. The 5-minute view shows the exact moment of a spike. The 1-hour view shows whether that stretch of the day actually went somewhere.
+
+- **The US morning has the biggest range**: from 08:00 to 11:00 ET every 5-minute bar is around 10% of the day's range, nearly twice the average. The biggest is the 08:30 data bar at 16%, and the 09:30 stock-open bar is 12%. The first hour after the New York open covers 39.0% of the day's range, against 20.5% for any random hour.
+- **Shanghai is big for the opening bar only**: the 21:00 ET bar is 9%, and the next bar is back near average. The first hour covers 21.7% of the day's range, about the same as any random hour.
+- **The Europe opening bar is 7.5%** (03:00 ET). The hour after it covers 22.6%, only slightly above normal.
+- **Where the range is big, the net move is big too**: each hour's close-to-open move is about 46% of that hour's high-to-low range, and this barely changes across the 24 hours (45%–50%). So the hours with the biggest range are also the hours most likely to produce a real leg.
+
+### What changed since 2024
+
+Gold has been in a bull market since 2024, and more people are watching it. Here are the same numbers for the 687 trading days of 2024–2026 alone:
+
+<div class="exp-table">
+
+| | First hour as a share of the day's range | Day's high or low made in that hour |
+|---|---:|---:|
+| Shanghai | 20.9% → **25.7%** | 10.8% → **14.1%** |
+| Europe | 23.1% → **20.6%** | 8.1% → **4.5%** |
+| New York | 39.3% → **37.5%** | 20.4% → **21.1%** |
+| Any random hour | 20.5% → 20.3% | 8.3% → 8.0% |
+
+</div>
+
+<p class="table-note">Left of the arrow is 2010–2023, right is 2024–2026. Click "Pre/post 2024" on the chart to see both curves.</p>
+
+- **Shanghai**: the first hour went from 20.9% to 25.7% of the day's range. It used to match any random hour and is now a quarter above it. The whole Asia session (18:00 ET to the London open) went from 48.4% to 56.3%.
+- **Europe**: down from 23.1% to 20.6%, now the same as any random hour. Only 4.5% of days make their high or low in that hour.
+- **New York**: 39.3% and 37.5%, basically unchanged. It is still the biggest stretch of the day.
+
+## When the day's high and low are made
+
+Same time axis, a different measure: the chance that the day's high or low falls in a given bar. It answers when the day's extremes usually get set. The default is 1-hour bars, and the average bar is about 8.7%. The high and the low can also be viewed separately.
+
+<GoldOpens part="hilo" />
+
+- **The opening hour is the highest** (18:00 to 19:00 ET, 19%–23%): on a one-way day, the start of the day is one of the extremes.
+- **The US morning** (08:00 to 11:00 ET) is 17%–19% per hour, twice the average bar.
+- **The late Asia session is the lowest** (23:00 to 02:00 ET), at 2%–3% per hour.
+- **Viewed separately, the high and low lines nearly overlap**: they are spread across the hours in about the same way.
+- **By session**: the high is made in the Asia, Europe and US sessions 33% / 13% / 54% of the time, and the low 34% / 13% / 53%.
+- **Since 2024**: lows made in the Asia session rose from 32% to 43%. Highs made in the last hour before the close (16:00 to 17:00 ET) rose from 3.6% to 8.9%.
+
+## Checks and method
+
+<TableTabs title="Checking the three opens" tabs={["Controls", "Other windows", "Method"]}>
+<div class="tt-panel">
+
+For each open, find a set of days when it didn't happen or happened at a different clock time. Only if the spike disappears or moves with it does the open count as the cause. The grey dashed line is the control. The Shanghai chart's x-axis is Beijing time, and the other two are ET.
+
+**The spike on each opening bar is caused by that market's open**. When Shanghai is closed, the 09:00 Beijing spike disappears. When Europe's clock shifts, the spike moves with it. When US stocks are closed, the 09:30 spike disappears. After the open, Shanghai's effect lasts about two hours, and New York stays above its holiday level all morning.
+
+<GoldOpens part="checks" />
+
+</div>
+<div class="tt-panel">
+
+Does the conclusion change with the length of the window? Each cell is the window's high-to-low range as a share of the day's range.
+
+| Window | Shanghai | Europe | New York | Random window of the same length |
+|---|---:|---:|---:|---:|
+| First 30 minutes | 16.8% | 16.7% | 27.9% | 14.3% |
+| First hour | 21.7% | 22.6% | 39.0% | 20.5% |
+| First 2 hours | 26.9% | 30.0% | 49.3% | 29.7% |
+| First 3 hours | 29.9% | 35.2% | 54.2% | 37.0% |
+
+<p class="table-note">The longer the window, the less Shanghai stands out: after the first half hour, the Asia session is quieter than the day's average.</p>
+
+By full session (the lengths differ, so this is only a rough guide):
+
+| Session | Length | Share of the day's range | Day's high or low made here |
+|---|---:|---:|---:|
+| Asia (18:00 → 03:00 ET) | 9 hours | 49.8% | 64.2% |
+| Europe (03:00 → 08:00 ET) | 5 hours | 44.0% | 25.6% |
+| US (08:00 → 17:00 ET) | 9 hours | 78.0% | 89.6% |
+
+</div>
+<div class="tt-panel">
+
+- **Data**: cleaned 1-minute GC bars, 2010-06 to 2026-11, 3,945 trading days. See [how I cleaned it](/en/posts/data-cleaning/). A trading day runs from 18:00 ET the previous day to 17:00 ET.
+- **Daily range**: the day's high minus its low. The percentage uses the last close before the open as the denominator. The tables show medians.
+- **Curve**: each bar's high minus low ÷ that day's high minus low, averaged by ET clock time. The Shanghai open is fixed in Beijing time, which falls an hour apart on the ET clock between winter and summer, so winter and summer are drawn separately.
+- **Share of the day's range**: the high minus low inside a window ÷ that day's high minus low. Windows overlap in price, so the shares add up to more than 100%.
+- **Net move**: a bar's close minus its open, as an absolute value.
+- **Day's high or low made here**: at least one of the day's high and low falls inside the window. If the same price prints more than once, the first print counts.
+- **High/low curve**: the combined line is the share of days on which at least one of the day's high and low falls in the bar, and the bars add up to about 200%. Counted separately, the high and the low each add up to 100%.
+- **Any random hour**: start a window every 15 minutes through the day, take the same length, and average the results. Only a window above it is busier than usual.
+- **Control charts**: the y-axis is the 5-minute range divided by that day's average bar, which is the main chart on a different scale. The x-axis is aligned on the local opening time.
+- **Control groups**: China's closed days are the first to sixth day of the Lunar New Year and October 1–7 (145 days). The out-of-step weeks are the weeks when the US and Europe have switched clocks on different dates (274 days). US stock holidays are the US holidays on which gold closes early (87 days).
+
+</div>
+</TableTabs>

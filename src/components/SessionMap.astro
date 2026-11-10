@@ -2,17 +2,17 @@
 // 全球主要市场的开盘时段图：一条 24 小时的横线，每个市场一行，开盘时段上色、其余灰色；
 // 黄金期货（GC）每天休市的那一小时就是黄金那一行条里的灰色缺口，不另外标。顶上的按钮换时间基准（北京 / 伦敦 / 纽约 / 东京 / 本机）。
 // 各市场的时间按今天的夏令时状态用 Intl 换算，所以冬夏令时自动对。
-const BASES: [string, string][] = [
-  ["America/New_York", "纽约"],
-  ["Asia/Shanghai", "北京"],
-  ["Europe/London", "伦敦"],
-  ["Asia/Tokyo", "东京"],
-  ["local", "本机"],
-];
+import { useTranslations } from "@/i18n";
+
+// 界面文字在 i18n 的 sessionMap 里。默认的时间基准随语言走（中文版北京，英文版纽约），并排在按钮的第一个
+const s = useTranslations(Astro.currentLocale).sessionMap;
+const TZS = ["America/New_York", "Asia/Shanghai", "Europe/London", "Asia/Tokyo", "local"];
+const all = TZS.map((tz, i): [string, string] => [tz, s.bases[i]]);
+const BASES = [...all.filter(([tz]) => tz === s.defaultBase), ...all.filter(([tz]) => tz !== s.defaultBase)];
 ---
 
-<div class="sm" data-sm>
-  <div class="sm-base" role="group" aria-label="时间基准">
+<div class="sm" data-sm data-t={JSON.stringify(s)}>
+  <div class="sm-base" role="group" aria-label={s.baseAria}>
     {BASES.map(([tz, name], i) => <button type="button" data-tz={tz} aria-pressed={i === 0 ? "true" : "false"}>{name}</button>)}
   </div>
   <div class="sm-chart">
@@ -23,18 +23,20 @@ const BASES: [string, string][] = [
 </div>
 
 <script>
+  import { tplStr } from "@/i18n/format";
   type Seg = [string, string];                       // 当地时间 "HH:MM" 开、收；收 < 开 表示跨过午夜
-  type Market = { name: string; tz: string; segs: Seg[]; color: string; local: string; dark?: boolean; breaks?: Seg[]; noText?: boolean };
+  type Market = { tz: string; segs: Seg[]; color: string; dark?: boolean; breaks?: Seg[]; noText?: boolean };
   // dark：底色浅，字用深色；breaks：午休，画成浅一点的同色；noText：色块里不写时间（跨午夜会被切开，写了反而乱）
 
-  // 行的顺序按美东时间一天里出现的先后：黄金 18:00 开盘，然后东京、上海、伦敦、法兰克福、纽约
+  // 行的顺序按美东时间一天里出现的先后：黄金 18:00 开盘，然后东京、上海、伦敦、法兰克福、纽约。
+  // 每行的名字和当地时段的小字在 i18n 的 sessionMap.markets / locals 里，顺序和这里一致
   const MARKETS: Market[] = [
-    { name: "黄金期货 GC", tz: "America/New_York", segs: [["18:00", "17:00"]], color: "#c9a227", local: "18:00–次日 17:00 美东", dark: true },
-    { name: "东京 TSE", tz: "Asia/Tokyo", segs: [["09:00", "11:30"], ["12:30", "15:30"]], breaks: [["11:30", "12:30"]], noText: true, color: "#d9813f", local: "09:00–15:30 当地" },
-    { name: "上海 SSE", tz: "Asia/Shanghai", segs: [["09:30", "11:30"], ["13:00", "15:00"]], breaks: [["11:30", "13:00"]], noText: true, color: "#c0392b", local: "09:30–15:00 当地" },
-    { name: "伦敦 LSE", tz: "Europe/London", segs: [["08:00", "16:30"]], color: "#2f6fb3", local: "08:00–16:30 当地" },
-    { name: "法兰克福 Xetra", tz: "Europe/Berlin", segs: [["09:00", "17:30"]], color: "#7aa6d6", local: "09:00–17:30 当地", dark: true },
-    { name: "纽约 NYSE", tz: "America/New_York", segs: [["09:30", "16:00"]], color: "#3f9a6e", local: "09:30–16:00 当地" },
+    { tz: "America/New_York", segs: [["18:00", "17:00"]], color: "#c9a227", dark: true },
+    { tz: "Asia/Tokyo", segs: [["09:00", "11:30"], ["12:30", "15:30"]], breaks: [["11:30", "12:30"]], noText: true, color: "#d9813f" },
+    { tz: "Asia/Shanghai", segs: [["09:30", "11:30"], ["13:00", "15:00"]], breaks: [["11:30", "13:00"]], noText: true, color: "#c0392b" },
+    { tz: "Europe/London", segs: [["08:00", "16:30"]], color: "#2f6fb3" },
+    { tz: "Europe/Berlin", segs: [["09:00", "17:30"]], color: "#7aa6d6", dark: true },
+    { tz: "America/New_York", segs: [["09:30", "16:00"]], color: "#3f9a6e" },
   ];
 
   const LOCAL_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -82,12 +84,15 @@ const BASES: [string, string][] = [
     return out;
   };
 
+  // 站内切换页面不会重新加载脚本，所以挂在 astro:page-load 上：首次打开和每次切换进来都跑一遍
+  document.addEventListener("astro:page-load", () => {
   const root = document.querySelector<HTMLElement>("[data-sm]");
   if (root) {
     const axis = root.querySelector<HTMLElement>("[data-axis]")!;
     const rows = root.querySelector<HTMLElement>("[data-rows]")!;
     const note = root.querySelector<HTMLElement>("[data-note]")!;
     const pct = (min: number) => `${(min / 1440) * 100}%`;
+    const T = JSON.parse(root.dataset.t || "{}");   // 界面文字
 
     const render = (baseTz: string) => {
       const now = Date.now();
@@ -102,10 +107,10 @@ const BASES: [string, string][] = [
       }
 
       rows.innerHTML = "";
-      for (const m of MARKETS) {
+      MARKETS.forEach((m, i) => {
         const row = document.createElement("div");
         row.className = "sm-row";
-        row.innerHTML = `<div class="sm-name">${m.name}<small>${m.local}</small></div><div class="sm-track"></div>`;
+        row.innerHTML = `<div class="sm-name">${T.markets[i]}<small>${T.locals[i]}</small></div><div class="sm-track"></div>`;
         const track = row.querySelector<HTMLElement>(".sm-track")!;
         for (const seg of m.segs) {
           for (const [s, e] of toBase(m.tz, seg, tz, now)) {
@@ -127,17 +132,17 @@ const BASES: [string, string][] = [
             el.style.left = pct(s);
             el.style.width = pct(e - s);
             el.style.background = m.color;
-            el.title = `午休 ${label(s)}–${label(e)}`;
+            el.title = `${T.lunch} ${label(s)}–${label(e)}`;
             track.appendChild(el);
           }
         }
         rows.appendChild(row);
-      }
+      });
 
-      note.textContent = `横轴是${baseTz === "local" ? "本机" : root.querySelector<HTMLElement>(`[data-tz="${baseTz}"]`)!.textContent}时间，浅色代表午休，灰色代表没开盘。`;
+      note.textContent = tplStr(T.note, { zone: root.querySelector<HTMLElement>(`[data-tz="${baseTz}"]`)!.textContent ?? "" });
     };
 
-    let base = "America/New_York";
+    let base: string = T.defaultBase;
     root.querySelectorAll<HTMLButtonElement>("[data-tz]").forEach(b =>
       b.addEventListener("click", () => {
         base = b.dataset.tz!;
@@ -147,4 +152,5 @@ const BASES: [string, string][] = [
     );
     render(base);
   }
+  });
 </script>

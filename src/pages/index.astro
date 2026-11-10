@@ -15,8 +15,12 @@ const t = useTranslations(locale);
 
 const posts = await getPostsByLocale(locale);
 const sortedPosts = getSortedPosts(posts);
-const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
-// 精选默认只摊开最新的 3 篇，标题旁的箭头展开其余
+const featured = sortedPosts.filter(({ data }) => data.featured);
+// 精选默认只摊开最新的 3 篇，标题旁的箭头展开其余；featuredFolded 的排在最后，默认折叠
+const featuredPosts = [
+  ...featured.filter(({ data }) => !data.featuredFolded),
+  ...featured.filter(({ data }) => data.featuredFolded),
+];
 // “最新”列出全部文章，精选的文章也在里面
 const recentPosts = sortedPosts;
 const homePath = getRelativeLocaleUrl(locale, "");
