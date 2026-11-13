@@ -189,6 +189,8 @@ export interface UIStrings {
     label: string;
     zone: string;
     zones: string[];
+    base: string;
+    bases: string[];
     sessionNames: Record<string, string[]>;
     sessFrom: string;
     sessTo: string;

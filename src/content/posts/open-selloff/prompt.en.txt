@@ -1,0 +1,19 @@
+I have a CSV of cleaned 1-minute ES futures bars (Databento's ES.c.0 continuous contract, with columns ts_event, open, high, low, close, instrument_id; timestamps in UTC). Please write Python code that finds the days with a "relentless opening selloff" and measures whether, after the selloff ends, the rest of the day turns into a trading range, a trend resumption or a reversal. Rules:
+1. Convert timestamps to US Eastern time (US/Eastern) and keep RTH only, 09:30–16:15. Build 5-minute bars from the 1-minute bars, 81 bars a day.
+2. A relentless opening selloff is a run of bars that starts between bar 1 and bar 10 and ends by bar 22 at the latest, and meets all of these:
+   - the first bar's high is the highest high of the run, and the last bar's low is the lowest low of the run;
+   - if the run is shorter than 10 bars, every bar must be a bear bar;
+   - bear bars (close < open) make up at least two thirds; no bull bar's body is more than 10% of the whole drop (first bar's high − last bar's low);
+   - at least 8 bars in a row (or the whole run, if it's shorter than 8) with no bull bar whose body is more than 10% of the whole drop;
+   - at least three quarters of the bars have a high below the previous bar's high;
+   - once the run has fallen 20% of the whole drop, no bar may close more than 20% of the whole drop above the lowest low so far, and no high may be more than 35% above it;
+   - the drop within the first 20 bars is at least 60% of that year's median of "daily range ÷ open" across all days.
+   When several cuts on the same day qualify, use the one that falls the most.
+3. Express every distance below as a fraction of this leg: 0 is the leg's low, 1 is where the leg started (its high), and negative numbers are new lows.
+4. Sort days into three groups by the close: a close more than 0.25 legs below the leg's low is "trend resumption", a close that gets back at least 80% of the leg is "reversal", and anything in between is "trading range". Print the share of each group, then the shares with cutoffs of 0 / 0.8, −0.5 / 0.8, −0.25 / 0.7 and −0.25 / 1.0. For each group, print the share that makes a new low, the medians of how much further down, the biggest bounce, the close and the leg's size, and the share where the day's low is the leg's low.
+5. From the end of the leg to the close: the share that makes a new low; the shares going ≥0.25, ≥0.5 and ≥1 legs further down, and the median; how many bars after the leg ends the first new low comes (median, and the shares within 6 and 12 bars); the median biggest bounce and the shares reaching ≥0.5, ≥0.8 and ≥1 legs; among days that bounce past 80%, the shares that still close above 80% and that fall back below half; and when the day's low comes.
+6. Testing the low: after the leg ends, a bounce of ≥0.3 legs followed by a return to within 0.1 legs of the low counts as a test. If it then breaks more than 0.1 legs below the low, it's "broken"; otherwise "held". Print the shares and the median close of each group.
+7. What you can see 1 hour (12 bars) after the leg ends: whether there's a new low within the hour, whether the bounce reaches 0.5 legs, whether the new low goes 0.25 legs or more. Print the three-group shares for each case.
+8. The next day (on the same contract, with no missing days in between): the shares closing up and down, range ÷ that year's median, the share breaking today's low, and the baseline share of next days closing up across all days.
+9. For the 58 bars after the leg ends, the position of each bar's close: the 25th, 50th and 75th percentiles per bar and the share "still above the low", written to JSON for the chart.
+Please add comments to every step explaining why it's done that way.

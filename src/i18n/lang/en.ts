@@ -197,12 +197,15 @@ export default {
   barAlarm: {
     label: "Bar close alarm",
     zone: "Time shown",
-    zones: ["US Eastern · ES", "Beijing · China index futures", "Germany · DAX", "Tokyo · Nikkei 225", "London · FTSE 100", "World time · this computer"],
-    sessionNames: { us: ["RTH"], cn: ["Morning", "Afternoon"], de: ["Day"], jp: ["Day", "Night"], uk: ["Day"], world: ["Day"] },
+    zones: ["US Eastern · ES", "Beijing · China index futures", "Germany · DAX", "Tokyo · Nikkei 225", "London · FTSE 100", "World time · this computer", "World time · Gold"],
+    base: "Time base",
+    bases: ["Local", "Beijing", "London", "New York"],
+    sessionNames: { us: ["RTH"], gold: ["Asia session", "Europe session", "US session"], cn: ["Morning", "Afternoon"], de: ["Day"], jp: ["Day", "Night"], uk: ["Day"], world: ["Day"] },
     sessFrom: "{{name}} start",
     sessTo: "{{name}} end",
     marketNotes: {
       us: "ES / MES: 09:30–16:15 US Eastern, following the US cash open and close.",
+      gold: "Gold futures (GC / MGC): 23 hours a day with a one-hour daily break; Monday's trading day starts on Sunday evening, and the week ends at Friday's close. Three sessions, each starting when its own market opens: the Asia session when CME reopens at 18:00 New York time, the Europe session at the 08:00 London open, and the US session at 08:00 New York time, running to the 17:00 New York close. UK and US daylight saving time are handled separately, so the weeks when they're out of step are right too. Times are shown in the base picked above; Local is this computer's time zone ({{tz}}). If you change the hours in Settings, they stay fixed on that base's clock and no longer follow daylight saving time.",
       cn: "China index futures: 09:30–11:30 and 13:00–15:00. The gap is the exchange's 90-minute lunch break.",
       de: "DAX: 09:00–17:30 German time. The futures trade almost around the clock, but most volume comes while Xetra cash trading is open.",
       jp: "Nikkei 225 futures: day session 08:45–15:45, night session 17:00 to 06:00 next day. The night session is long because it covers European and US hours.",
@@ -578,18 +581,17 @@ export default {
     counter: "{{i}} / {{n}}",
     hint: "← → to switch",
   },
-  /** 强抛售之后的路径图 */
-  // 待翻译：中文先定稿，英文版之后再写
+  /** Path after a relentless opening selloff */
   selloff: {
-    label: "开局连绵抛售走完之后，价格走到哪",
-    hero: "{{n}} 天，这段抛售的最低点之后 58 根 5 分钟 K 线（4 小时 50 分）",
-    legStart: "这段抛售的起点",
-    legEnd: "这段抛售的最低点",
-    tipHead: "抛售走完之后 {{m}} 分钟",
-    median: "中位数",
-    band: "中间一半的日子",
-    inside: "还在最低点之上",
-    note: "纵轴是收盘价相对这段抛售的位置：0 是这段的最低点，100% 是回到这段的起点，负数是跌出了新低。实线是中位数，阴影是中间一半的日子。",
+    label: "Where price goes after a relentless opening selloff ends",
+    hero: "{{n}} days: the 58 five-minute bars after the selloff's low (4 hours 50 minutes)",
+    legStart: "Where the selloff started",
+    legEnd: "The selloff's low",
+    tipHead: "{{m}} minutes after the selloff ends",
+    median: "Median",
+    band: "Middle half of days",
+    inside: "Still above the low",
+    note: "The y-axis is the close relative to the selloff: 0 is the selloff's low, 100% is back to where it started, and negative numbers are new lows. The solid line is the median and the shading is the middle half of days.",
   },
   /** S&P 500 price index vs total return */
   spxTr: {

@@ -1339,6 +1339,13 @@ a.tag-pill:hover {
 .ba-grid input[type="time"] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); font-size: 14px; color: var(--foreground); }
 .ba-grid .ba-check { display: flex; align-items: center; gap: 8px; }
 .ba-flat { position: relative; max-height: 360px; padding-top: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); overflow-y: auto; } /* 世界时间：不分组，一个能滚动的框 */
+/* 黄金：时钟下面一排时间基准按钮；每段 K 线放进能滚动的框 */
+.ba-base { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ba-base[hidden] { display: none; }
+.ba-base button { padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); font-size: 13px; color: var(--summary); cursor: pointer; }
+.ba-base button:hover { border-color: var(--muted-foreground); color: var(--foreground); }
+.ba-base button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-weight: 600; }
+.ba-scroll { position: relative; max-height: 300px; overflow-y: auto; }
 .ba-sess { display: contents; } /* 交易时段的输入框由脚本按市场生成，直接排进设置的网格 */
 @media (max-width: 560px) {
   .ba-clock { font-size: 34px; }

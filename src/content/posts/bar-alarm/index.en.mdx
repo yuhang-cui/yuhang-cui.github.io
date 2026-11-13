@@ -1,6 +1,6 @@
 ---
 title: "Bar Close Alarm: No More Drifting Off While Waiting for a Setup"
-description: "A small tool that runs in the browser: it beeps before each bar closes. Pick the trading hours of US ES, China index futures, DAX, Nikkei 225 or FTSE 100, or a round-the-clock \"world time\" mode on your computer's own time zone; you can turn off any of the next few bars or mute it for a while."
+description: "A small tool that runs in the browser: it beeps before each bar closes. Pick the trading hours of US ES, China index futures, DAX, Nikkei 225 or FTSE 100, a round-the-clock \"world time\" mode on your computer's own time zone, or gold split into Asia, Europe and US sessions. You can turn off any of the next few bars or mute it for a while."
 pubDatetime: 2026-10-20T20:00:00+08:00
 tags: [Tools]
 featured: true
@@ -31,7 +31,7 @@ So I needed an alarm that goes off right before each 5-minute bar closes. For ex
    - "Skip next bar" (or press N on the keyboard) skips only the next alarm;
    - "Skip next 2" and "Skip next 3" work the same way;
    - "Mute 15 min / 30 min" is handy for the slow midday stretch;
-   - the list is grouped into morning, midday, afternoon and the last bars, and the current session opens automatically; click any bar to turn it off on its own, for example if you only want an alarm before bar 18 closes. World time has no groups: the bars run from 1 to the last one.
+   - the list is grouped into morning, midday, afternoon and the last bars, and the current session opens automatically; click any bar to turn it off on its own, for example if you only want an alarm before bar 18 closes. World time has no groups: the bars run from 1 to the last one. Gold has three groups: Asia, Europe and US.
 4. **If you change something by mistake**: hit "Restore all" (or press R).
 
 ## Settings
@@ -52,10 +52,21 @@ Some people trade several markets and keep switching between them; switch to a m
 - **You can set your own hours**: say you are in Beijing and trade something open from 7 a.m. to 9 p.m. Set Day start to 07:00 and Day end to 21:00 in Settings. Bar 1 is 07:00–07:05 and the last bar is 20:55–21:00, numbered straight through with no morning or afternoon groups. Set both to 00:00 for the full day.
 - **Bar size and lead time** are set in Settings, the same as for the other markets.
 
+## Gold
+
+Gold futures (GC / MGC) trade 23 hours a day, and people trade them from every time zone. Pick "World time · Gold" in the drop-down:
+
+- **Three sessions**: the Asia session starts when CME reopens at 18:00 New York time, the Europe session at the 08:00 London open, and the US session at 08:00 New York time, running to the 17:00 New York close. These are the same sessions as in [Gold's 23-hour day](/en/posts/gold-sessions/).
+- **Each city keeps its own daylight saving time**: each session starts on its own city's clock. The UK and the US switch clocks a few weeks apart, and in those weeks the London open is 04:00 New York time, so the boundary moves with it.
+- **You pick the time base**: four buttons under the clock, Local, Beijing, London and New York. The bars are the same; only the time zone they're shown in changes. Local is the default, and the one you click is remembered.
+- **Three groups in the list**: one each for Asia, Europe and US, with bars numbered from 1 again in each session. On the 5-minute chart that's 276 bars a day, usually 108 in Asia, 60 in Europe and 108 in the US. Each group is a scrolling box that follows the current bar.
+- **When it's quiet**: the daily one-hour break from 17:00 to 18:00 New York time. Monday's trading day starts at 18:00 New York time on Sunday, and it stays quiet from the Friday 17:00 close through the weekend.
+- **Changing the hours**: do it in Settings, in the clock of the base you've picked. Once changed, the hours stay fixed on that base's clock and no longer follow daylight saving time; each base keeps its own set.
+
 ## A few details
 
-- **Times are the selected market's local time**, with daylight saving time handled automatically. I'm in China and my computer runs on Beijing time, but with US Eastern selected it still rings on US Eastern time. World time is the exception: it uses the computer's own time zone.
-- **With an exchange selected, it only rings Monday through Friday** (world time rings every day). It doesn't skip exchange holidays (like Thanksgiving) automatically, so just hit "Pause" on those days.
+- **Times are the selected market's local time**, with daylight saving time handled automatically. I'm in China and my computer runs on Beijing time, but with US Eastern selected it still rings on US Eastern time. World time and gold are the exceptions: world time uses the computer's own time zone, and gold uses the base you pick.
+- **With an exchange selected, it only rings Monday through Friday** (world time rings every day; gold rings from 18:00 New York time on Sunday to 17:00 on Friday). It doesn't skip exchange holidays (like Thanksgiving) automatically, so just hit "Pause" on those days.
 - **It rings on time even in a background tab**: browsers slow down timers in background tabs, so the next few beeps are scheduled ahead of time on the browser's audio clock instead of relying on timers. If the computer wakes from sleep or you switch headphones, the schedule corrects itself.
 - **Settings and skipped bars are stored only in this computer's browser** and aren't uploaded anywhere.
 
@@ -63,10 +74,10 @@ Some people trade several markets and keep switching between them; switch to a m
 
 <ResearchCard title="Bar close alarm" prompt={prompt} code={code} codeLabel="HTML">
 
-- **Time**: the selected market's local time zone (for example America/New_York for US Eastern), or the computer's own time zone for world time; converted with the browser's built-in Intl, so daylight saving time is handled automatically.
-- **Bars**: counted from the session open. For US Eastern, bar 1 is 09:30–09:35, bar 2 is 09:35–09:40, and so on up to the RTH close (16:15 by default): 81 bars a day on the 5-minute chart.
+- **Time**: the selected market's local time zone (for example America/New_York for US Eastern), the computer's own time zone for world time, or the chosen base for gold; converted with the browser's built-in Intl, so daylight saving time is handled automatically.
+- **Bars**: counted from the session open. For US Eastern, bar 1 is 09:30–09:35, bar 2 is 09:35–09:40, and so on up to the RTH close (16:15 by default): 81 bars a day on the 5-minute chart. For gold, each session counts from its own start.
 - **Alarm time**: bar close − lead time. The default is 1 minute before the close, so bar 1 rings at 09:34.
-- **Trading days**: Monday to Friday for exchanges, every day for world time; exchange holidays aren't skipped.
+- **Trading days**: Monday to Friday for exchanges, with gold's Monday starting at 18:00 New York time on Sunday, and every day for world time; exchange holidays aren't skipped.
 - **Sound**: two short beeps (880 Hz and 1175 Hz), with the next 3 alarms scheduled ahead of time on the browser's audio clock so they ring on time even in a background tab.
 - **Skipping**: only the bars you pick are skipped; muting for 15 / 30 minutes silences every alarm in that window.
 - **Prompt and code**: a simplified version that keeps only the timed alarm and "Skip next bar". Save it as an .html file and open it in a browser. The grouped list, muting and system notifications are left out.

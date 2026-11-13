@@ -8,7 +8,9 @@ import { useTranslations } from "@/i18n";
 
 const s = useTranslations(Astro.currentLocale).barAlarm;
 // 市场的顺序和 s.zones 的名字一一对应（具体时区和时段写在下面的脚本里）
-const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
+const MARKETS = ["us", "cn", "de", "jp", "uk", "world", "gold"];
+// 黄金的时间基准：本机、北京、伦敦、纽约（和 s.bases 的名字一一对应）
+const BASES = ["local", "Asia/Shanghai", "Europe/London", "America/New_York"];
 ---
 
 <section class="bx ba" aria-label={s.label} data-s={JSON.stringify(s)}>
@@ -18,6 +20,9 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
         {MARKETS.map((m, i) => <option value={m}>{s.zones[i]}</option>)}
       </select>
       <p class="ba-clock" aria-live="off">--:--:--</p>
+      <div class="ba-base" role="group" aria-label={s.base} hidden>
+        {BASES.map((b, i) => <button type="button" data-base={b}>{s.bases[i]}</button>)}
+      </div>
     </div>
     <div class="ba-actions">
       <button type="button" class="ba-gear" aria-expanded="false" aria-controls="ba-settings" aria-label={s.settings} title={s.settings}>
@@ -71,23 +76,36 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
 <script>
   type S = Record<string, any>;
   type Session = [string, string]; // 当地时间的开始、结束；结束早于开始就是跨过午夜（东京夜盘）
-  type Settings = { tf: number; lead: number; vol: number; notify: boolean; market: string; sessions: Record<string, Session[]> };
+  type Settings = { tf: number; lead: number; vol: number; notify: boolean; market: string; sessions: Record<string, Session[]>; base: string };
   type Saved = { settings: Settings; skipped: number[]; muteUntil: number; running: boolean };
 
   // 每个市场：当地时区 + 默认交易时段（只算周一到周五开始的时段，不含交易所假日）
   // 世界时间用这台电脑的时区
   const LOCAL_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const MARKETS: Record<string, { tz: string; sessions: Session[]; everyDay?: boolean }> = {
+  // 黄金的分段按“谁开盘”定，每个起点用它自己城市的时间（[时区, 时刻, 相对交易日差几天]），夏令时各自处理；
+  // 显示用用户选的时间基准。交易日按纽约算：周一的交易日从周日纽约 18:00 开始
+  type Anchor = [string, string, number];
+  const MARKETS: Record<string, { tz: string; sessions: Session[]; everyDay?: boolean; anchors?: Anchor[] }> = {
     us: { tz: "America/New_York", sessions: [["09:30", "16:15"]] }, // ES / MES 日盘
     cn: { tz: "Asia/Shanghai", sessions: [["09:30", "11:30"], ["13:00", "15:00"]] }, // 中金所股指期货，中午休市
     de: { tz: "Europe/Berlin", sessions: [["09:00", "17:30"]] }, // DAX，Xetra 开盘时段
     jp: { tz: "Asia/Tokyo", sessions: [["08:45", "15:45"], ["17:00", "06:00"]] }, // 日经 225：日盘、夜盘
     uk: { tz: "Europe/London", sessions: [["08:00", "16:30"]] }, // 富时 100，伦敦交易所开盘时段
     world: { tz: LOCAL_TZ, sessions: [["00:00", "00:00"]], everyDay: true }, // 世界时间：开始等于结束就是全天 24 小时，周末也响
+    gold: {
+      tz: "America/New_York",
+      sessions: [],
+      anchors: [
+        ["America/New_York", "18:00", -1], // 亚盘时段：CME 休市一小时后重新开盘（前一天晚上）
+        ["Europe/London", "08:00", 0], // 欧盘时段：伦敦开盘
+        ["America/New_York", "08:00", 0], // 美盘时段：纽约早上 8 点
+        ["America/New_York", "17:00", 0], // 收盘
+      ],
+    },
   };
 
   const KEY = "bar-alarm-v1";
-  const DEFAULTS: Settings = { tf: 5, lead: 60, vol: 0.6, notify: false, market: "us", sessions: {} };
+  const DEFAULTS: Settings = { tf: 5, lead: 60, vol: 0.6, notify: false, market: "us", sessions: {}, base: "local" };
 
   // —— 本机存储：读写失败（隐私模式等）就当没有 ——
   function load(): Saved {
@@ -99,6 +117,7 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
         // 旧版只存了美东日盘的 from / to
         if (from && to && !settings.sessions.us) settings.sessions.us = [[from, to]];
         if (!MARKETS[settings.market]) settings.market = DEFAULTS.market;
+        if (!BASES.includes(settings.base)) settings.base = DEFAULTS.base;
         return { settings, skipped: v.skipped || [], muteUntil: v.muteUntil || 0, running: !!v.running };
       }
     } catch {}
@@ -140,14 +159,60 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
   };
 
   type Bar = { n: number; sess: number; open: number; close: number; alarm: number; day: string; ymd: [number, number, number] };
+  const BASES = ["local", "Asia/Shanghai", "Europe/London", "America/New_York"];
   const GROUP_MIN = 120; // 每 2 小时一组：美东 5 分钟图正好是第 1–24、25–48、49–72 根，剩下的归最后一组
 
-  const sessionsOf = (st: Settings) => st.sessions[st.market] || MARKETS[st.market].sessions;
+  // 页面上显示时间用的时区：黄金按选的基准，其他市场按当地
+  const viewTz = (st: Settings) => (MARKETS[st.market].anchors ? (st.base === "local" ? LOCAL_TZ : st.base) : MARKETS[st.market].tz);
+  // 自己改过的时段按市场存；黄金按基准分开存，因为是按那个基准的时间填的
+  const sessKey = (st: Settings) => (MARKETS[st.market].anchors ? `gold@${viewTz(st)}` : st.market);
+  const hhmm = (zone: string, ms: number) => {
+    const p = parts(zone, ms);
+    return `${pad(p.h)}:${pad(p.mi)}`;
+  };
+  // 黄金某个交易日的分界点（真实时刻）：亚盘、欧盘、美盘的起点和收盘
+  const edgesOn = (anchors: Anchor[], y: number, mo: number, d: number) => anchors.map(([z, t, off]) => toMs(z, y, mo, d, hm(t) + off * 1440));
+  // 默认时段；黄金换算成当前基准的时间（按眼下这个交易日，夏令时切换前后会差一小时）
+  function defaultSessions(st: Settings): Session[] {
+    const m = MARKETS[st.market];
+    if (!m.anchors) return m.sessions;
+    const p = parts(m.tz, Date.now() + 7 * 3600000); // 纽约 17:00 以后算下一个交易日
+    const e = edgesOn(m.anchors, p.y, p.mo, p.d).map(ms => hhmm(viewTz(st), ms));
+    return e.slice(0, -1).map((a, i) => [a, e[i + 1]]);
+  }
+  const sessionsOf = (st: Settings) => st.sessions[sessKey(st)] || defaultSessions(st);
 
   // 当地某个交易日（周一到周五）开始的全部 K 线，按时段先后排；跨午夜的时段一直算到第二天
   function barsOn(st: Settings, y: number, mo: number, d: number): Bar[] {
-    const zone = MARKETS[st.market].tz;
+    const m = MARKETS[st.market];
+    const zone = viewTz(st);
     const out: Bar[] = [];
+    const push = (sess: number, a: number, b: number) => {
+      for (let close = a + st.tf * 60000, i = 1; close <= b; close += st.tf * 60000, i++)
+        out.push({ n: i, sess, open: close - st.tf * 60000, close, alarm: close - st.lead * 1000, day: `${mo}/${d}`, ymd: [y, mo, d] });
+    };
+    // 黄金：每段从自己的起点算到下一段的起点
+    if (m.anchors && !st.sessions[sessKey(st)]) {
+      const e = edgesOn(m.anchors, y, mo, d);
+      for (let i = 0; i + 1 < e.length; i++) push(i, e[i], e[i + 1]);
+      return out;
+    }
+    // 黄金改过时段：按基准时间一段接一段排，整段的中点落在哪天，就算哪天的交易日（北京是当天早上开始，纽约是前一天晚上）
+    if (m.anchors) {
+      const list = sessionsOf(st);
+      let cur = hm(list[0][0]);
+      const spans = list.map(([from, to]) => {
+        let a = hm(from);
+        while (a < cur) a += 1440;
+        let b = hm(to);
+        while (b <= a) b += 1440;
+        cur = b;
+        return [a, b];
+      });
+      const shift = (spans[0][0] + cur) / 2 >= 1440 ? -1440 : 0;
+      spans.forEach(([a, b], i) => push(i, toMs(zone, y, mo, d, a + shift), toMs(zone, y, mo, d, b + shift)));
+      return out;
+    }
     sessionsOf(st).forEach(([from, to], sess) => {
       const a = hm(from);
       let b = hm(to);
@@ -201,6 +266,10 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
       field("notify").checked = state.settings.notify;
       const marketSel = $<HTMLSelectElement>(".ba-zone");
 
+      // 黄金的时间基准按钮；“本机”悬停时显示这台电脑的时区
+      const baseRow = $<HTMLElement>(".ba-base");
+      baseRow.querySelector<HTMLElement>('[data-base="local"]')!.title = LOCAL_TZ;
+
       // 交易时段的输入框：按当前市场有几段就放几对（开始、结束）
       const sessBox = $<HTMLElement>(".ba-sess");
       const sessName = (i: number) => s.sessionNames[state.settings.market][i];
@@ -212,7 +281,10 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
       }
       function useMarket() {
         marketSel.value = state.settings.market;
-        tz = MARKETS[state.settings.market].tz;
+        tz = viewTz(state.settings);
+        const gold = !!MARKETS[state.settings.market].anchors;
+        baseRow.hidden = !gold;
+        baseRow.querySelectorAll<HTMLButtonElement>("[data-base]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.base === state.settings.base)));
         renderSessions();
         // 下面的小字：先说这个市场的时段为什么长这样，再接通用说明
         $(".ba-mnote").textContent = s.marketNotes[state.settings.market].replace("{{tz}}", LOCAL_TZ) + " ";
@@ -323,15 +395,17 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
         // 美东沿用“早盘 / 午盘 / 晚盘 / 收盘前”；其他市场每段按 2 小时再分组，名字是“日盘 2”这样
         // 世界时间不分组：从第 1 根排到最后一根，放在一个能滚动的框里
         const flat = !!MARKETS[st.market].everyDay;
+        // 黄金：亚盘、欧盘、美盘各一组，组里是能滚动的框
+        const whole = !!MARKETS[st.market].anchors;
         const named = st.market === "us" && sessionsOf(st).length === 1;
         const chunkOf = (b: Bar) => {
           const first = bars.find(x => x.sess === b.sess)!;
           return Math.floor((b.open - first.open) / (GROUP_MIN * 60000));
         };
-        const groupOf = (b: Bar) => (named ? `0-${Math.min(groupNames.length - 1, chunkOf(b))}` : `${b.sess}-${chunkOf(b)}`);
+        const groupOf = (b: Bar) => (named ? `0-${Math.min(groupNames.length - 1, chunkOf(b))}` : `${b.sess}-${whole ? 0 : chunkOf(b)}`);
 
         // 换了一天或改了设置才重建分组，平时只更新每格的状态，展开 / 收起不会被打断
-        const key = `${y}-${mo}-${d}|${st.tf}|${st.lead}|${st.market}|${JSON.stringify(sessionsOf(st))}`;
+        const key = `${y}-${mo}-${d}|${st.tf}|${st.lead}|${st.market}|${tz}|${JSON.stringify(sessionsOf(st))}`;
         const tile = (b: Bar) => `<button type="button" class="ba-tile is-new" data-close="${b.close}" title="${s.ringAt.replace("{{t}}", at(b.alarm))}">
                   <span class="ba-n">${s.bar.replace("{{n}}", String(b.n))}</span><span class="ba-tag"></span>
                   <span class="ba-win">${clock(b.open)}–${clock(b.close)}</span>
@@ -363,18 +437,10 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
               const tiles = g.map(tile).join("");
               return `<details class="ba-group" data-g="${k}">
                 <summary><span class="ba-gname">${name}</span><span class="ba-gmeta">${meta}${last ? ` · ${s.lastHint}` : ""}</span><span class="ba-gcount"></span></summary>
-                <div class="ba-tiles">${tiles}</div>
+                ${whole ? `<div class="ba-scroll"><div class="ba-tiles">${tiles}</div></div>` : `<div class="ba-tiles">${tiles}</div>`}
               </details>`;
             })
             .join("");
-        }
-
-        // 世界时间：到了新的一根，把框滚到这一根（只滚框，不动整页）
-        if (flat && head.close !== flatHead) {
-          flatHead = head.close;
-          const box = list.querySelector<HTMLElement>(".ba-flat");
-          const cur = box?.querySelector<HTMLElement>(`[data-close="${head.close}"]`);
-          if (box && cur) box.scrollTop = Math.max(0, cur.offsetTop - 12);
         }
 
         // 到了新的时段：只展开这一段，其他收起
@@ -385,6 +451,14 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
             el.open = el.dataset.g === g;
             el.classList.toggle("is-active", el.open);
           });
+        }
+
+        // 世界时间和黄金：到了新的一根，把框滚到这一根（只滚框，不动整页；要在展开以后才量得到位置）
+        if ((flat || whole) && head.close !== flatHead) {
+          flatHead = head.close;
+          const cur = list.querySelector<HTMLElement>(`[data-close="${head.close}"]`);
+          const box = cur?.closest<HTMLElement>(".ba-flat, .ba-scroll");
+          if (box && cur) box.scrollTop = Math.max(0, cur.offsetTop - 12);
         }
 
         const byClose = new Map(bars.map(b => [b.close, b]));
@@ -537,13 +611,24 @@ const MARKETS = ["us", "cn", "de", "jp", "uk", "world"];
         };
         // 改了时段才单独存这个市场的时段；清空的格子用默认值
         if (/^(from|to)\d$/.test(t.name))
-          state.settings.sessions[state.settings.market] = MARKETS[state.settings.market].sessions.map(([a, b], i) => [
+          state.settings.sessions[sessKey(state.settings)] = defaultSessions(state.settings).map(([a, b], i) => [
             field(`from${i}`).value || a,
             field(`to${i}`).value || b,
           ]);
         if (t.name === "notify" && t.checked && "Notification" in window && Notification.permission === "default")
           await Notification.requestPermission();
         unschedule(); // 音量、周期变了都要按新设置重排
+        persist();
+        render();
+      });
+
+      // 换时间基准：K 线还是那些，只是换个时区显示（改过的时段按基准分开存，所以也可能换一套）
+      baseRow.addEventListener("click", e => {
+        const b = (e.target as HTMLElement).closest<HTMLElement>("[data-base]");
+        if (!b || b.dataset.base === state.settings.base) return;
+        state.settings.base = b.dataset.base!;
+        useMarket();
+        unschedule();
         persist();
         render();
       });
