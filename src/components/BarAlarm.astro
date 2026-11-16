@@ -82,7 +82,7 @@ const BASES = ["local", "Asia/Shanghai", "Europe/London", "America/New_York"];
   // 每个市场：当地时区 + 默认交易时段（只算周一到周五开始的时段，不含交易所假日）
   // 世界时间用这台电脑的时区
   const LOCAL_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  // 黄金的分段按“谁开盘”定，每个起点用它自己城市的时间（[时区, 时刻, 相对交易日差几天]），夏令时各自处理；
+  // 黄金的分段和 TradingView 上的 Gold Bar Count 指标一样，按“谁开盘”定，每个起点用它自己城市的时间（[时区, 时刻, 相对交易日差几天]），夏令时各自处理；
   // 显示用用户选的时间基准。交易日按纽约算：周一的交易日从周日纽约 18:00 开始
   type Anchor = [string, string, number];
   const MARKETS: Record<string, { tz: string; sessions: Session[]; everyDay?: boolean; anchors?: Anchor[] }> = {
@@ -96,9 +96,10 @@ const BASES = ["local", "Asia/Shanghai", "Europe/London", "America/New_York"];
       tz: "America/New_York",
       sessions: [],
       anchors: [
-        ["America/New_York", "18:00", -1], // 亚盘时段：CME 休市一小时后重新开盘（前一天晚上）
-        ["Europe/London", "08:00", 0], // 欧盘时段：伦敦开盘
-        ["America/New_York", "08:00", 0], // 美盘时段：纽约早上 8 点
+        ["America/New_York", "18:00", -1], // 亚洲早盘：CME 休市一小时后重新开盘（前一天晚上）
+        ["Asia/Shanghai", "09:00", 0], // 亚盘：北京 09:00
+        ["Europe/London", "08:00", 0], // 欧盘：伦敦开盘
+        ["America/New_York", "09:30", 0], // 美盘：纽约股市开盘，一直数到收盘（指标在 16:00 后另数盘后，这里不分）
         ["America/New_York", "17:00", 0], // 收盘
       ],
     },
@@ -118,6 +119,9 @@ const BASES = ["local", "Asia/Shanghai", "Europe/London", "America/New_York"];
         if (from && to && !settings.sessions.us) settings.sessions.us = [[from, to]];
         if (!MARKETS[settings.market]) settings.market = DEFAULTS.market;
         if (!BASES.includes(settings.base)) settings.base = DEFAULTS.base;
+        // 黄金以前不是分四段：那时存的自定义时段段数对不上，丢掉
+        for (const k in settings.sessions)
+          if (k.startsWith("gold@") && settings.sessions[k].length !== MARKETS.gold.anchors!.length - 1) delete settings.sessions[k];
         return { settings, skipped: v.skipped || [], muteUntil: v.muteUntil || 0, running: !!v.running };
       }
     } catch {}
@@ -170,7 +174,7 @@ const BASES = ["local", "Asia/Shanghai", "Europe/London", "America/New_York"];
     const p = parts(zone, ms);
     return `${pad(p.h)}:${pad(p.mi)}`;
   };
-  // 黄金某个交易日的分界点（真实时刻）：亚盘、欧盘、美盘的起点和收盘
+  // 黄金某个交易日的分界点（真实时刻）：每段的起点和收盘
   const edgesOn = (anchors: Anchor[], y: number, mo: number, d: number) => anchors.map(([z, t, off]) => toMs(z, y, mo, d, hm(t) + off * 1440));
   // 默认时段；黄金换算成当前基准的时间（按眼下这个交易日，夏令时切换前后会差一小时）
   function defaultSessions(st: Settings): Session[] {
@@ -395,7 +399,7 @@ const BASES = ["local", "Asia/Shanghai", "Europe/London", "America/New_York"];
         // 美东沿用“早盘 / 午盘 / 晚盘 / 收盘前”；其他市场每段按 2 小时再分组，名字是“日盘 2”这样
         // 世界时间不分组：从第 1 根排到最后一根，放在一个能滚动的框里
         const flat = !!MARKETS[st.market].everyDay;
-        // 黄金：亚盘、欧盘、美盘各一组，组里是能滚动的框
+        // 黄金：每段一组，组里是能滚动的框
         const whole = !!MARKETS[st.market].anchors;
         const named = st.market === "us" && sessionsOf(st).length === 1;
         const chunkOf = (b: Bar) => {

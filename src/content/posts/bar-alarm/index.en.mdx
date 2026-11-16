@@ -1,6 +1,6 @@
 ---
 title: "Bar Close Alarm: No More Drifting Off While Waiting for a Setup"
-description: "A small tool that runs in the browser: it beeps before each bar closes. Pick the trading hours of US ES, China index futures, DAX, Nikkei 225 or FTSE 100, a round-the-clock \"world time\" mode on your computer's own time zone, or gold split into Asia, Europe and US sessions. You can turn off any of the next few bars or mute it for a while."
+description: "A small tool that runs in the browser: it beeps before each bar closes. Pick the trading hours of US ES, China index futures, DAX, Nikkei 225 or FTSE 100, a round-the-clock \"world time\" mode on your computer's own time zone, or gold split into Early Asia, Asia, Europe and US sessions. You can turn off any of the next few bars or mute it for a while."
 pubDatetime: 2026-10-20T20:00:00+08:00
 tags: [Tools]
 featured: true
@@ -31,7 +31,7 @@ So I needed an alarm that goes off right before each 5-minute bar closes. For ex
    - "Skip next bar" (or press N on the keyboard) skips only the next alarm;
    - "Skip next 2" and "Skip next 3" work the same way;
    - "Mute 15 min / 30 min" is handy for the slow midday stretch;
-   - the list is grouped into morning, midday, afternoon and the last bars, and the current session opens automatically; click any bar to turn it off on its own, for example if you only want an alarm before bar 18 closes. World time has no groups: the bars run from 1 to the last one. Gold has three groups: Asia, Europe and US.
+   - the list is grouped into morning, midday, afternoon and the last bars, and the current session opens automatically; click any bar to turn it off on its own, for example if you only want an alarm before bar 18 closes. World time has no groups: the bars run from 1 to the last one. Gold has four groups: Early Asia, Asia, Europe and US.
 4. **If you change something by mistake**: hit "Restore all" (or press R).
 
 ## Settings
@@ -54,14 +54,25 @@ Some people trade several markets and keep switching between them; switch to a m
 
 ## Gold
 
-Gold futures (GC / MGC) trade 23 hours a day, and people trade them from every time zone. Pick "World time · Gold" in the drop-down:
+Gold futures (GC / MGC) trade 23 hours a day. Pick "World time · Gold" in the drop-down and the day is split into four sessions, each counted from bar 1:
 
-- **Three sessions**: the Asia session starts when CME reopens at 18:00 New York time, the Europe session at the 08:00 London open, and the US session at 08:00 New York time, running to the 17:00 New York close. These are the same sessions as in [Gold's 23-hour day](/en/posts/gold-sessions/).
-- **Each city keeps its own daylight saving time**: each session starts on its own city's clock. The UK and the US switch clocks a few weeks apart, and in those weeks the London open is 04:00 New York time, so the boundary moves with it.
-- **You pick the time base**: four buttons under the clock, Local, Beijing, London and New York. The bars are the same; only the time zone they're shown in changes. Local is the default, and the one you click is remembered.
-- **Three groups in the list**: one each for Asia, Europe and US, with bars numbered from 1 again in each session. On the 5-minute chart that's 276 bars a day, usually 108 in Asia, 60 in Europe and 108 in the US. Each group is a scrolling box that follows the current bar.
-- **When it's quiet**: the daily one-hour break from 17:00 to 18:00 New York time. Monday's trading day starts at 18:00 New York time on Sunday, and it stays quiet from the Friday 17:00 close through the weekend.
-- **Changing the hours**: do it in Settings, in the clock of the base you've picked. Once changed, the hours stay fixed on that base's clock and no longer follow daylight saving time; each base keeps its own set.
+<div class="exp-table">
+
+| Session | Starts at | Bars on the 5-minute chart |
+| :--- | :--- | :--- |
+| Early Asia | 18:00 New York, when CME reopens | 24 in winter, 36 in summer |
+| Asia | 09:00 Beijing | 84 in winter, 72 in summer |
+| Europe | 08:00 London | 78 |
+| US | 09:30 New York, to the 17:00 close | 90 |
+
+</div>
+
+These are the same sessions as my Gold Bar Count indicator on TradingView, so the numbers on the chart match the bar numbers here. The one difference is after 16:00 New York time: the indicator starts again from 1 for after-hours, while this keeps counting the US session up to bar 90. [Gold's 23-hour day](/en/posts/gold-sessions/) starts its US session at 08:00 New York time, which is different from here.
+
+- **Each city keeps its own daylight saving time**: each session starts on its own city's clock. The UK and the US switch clocks a few weeks apart, and in those weeks the Europe session has 66 bars.
+- **You pick the time base**: four buttons under the clock, Local, Beijing, London and New York. The bars are the same; only the time zone they're shown in changes.
+- **When it's quiet**: the daily break from 17:00 to 18:00 New York time. Monday's trading day starts at 18:00 New York time on Sunday, and it stays quiet from the Friday 17:00 close through the weekend.
+- **Changing the hours**: do it in Settings, in the clock of the base you've picked. Once changed, the hours stay fixed on that clock and no longer follow daylight saving time.
 
 ## A few details
 
