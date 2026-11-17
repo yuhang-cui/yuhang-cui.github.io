@@ -16,13 +16,14 @@ const t = useTranslations(locale);
 const posts = await getPostsByLocale(locale);
 const sortedPosts = getSortedPosts(posts);
 const featured = sortedPosts.filter(({ data }) => data.featured);
-// 精选默认只摊开最新的 3 篇，标题旁的箭头展开其余；featuredFolded 的排在最后，默认折叠
+// 精选默认只摊开最新的 3 篇，列表下面一行“展开其余 N 篇”展开其余；featuredFolded 的排在最后，默认折叠
 const featuredPosts = [
   ...featured.filter(({ data }) => !data.featuredFolded),
   ...featured.filter(({ data }) => data.featuredFolded),
 ];
 // “最新”列出全部文章，精选的文章也在里面
 const recentPosts = sortedPosts;
+const expandText = t.home.featuredExpand.replace("{{n}}", String(featuredPosts.length - 3));
 const homePath = getRelativeLocaleUrl(locale, "");
 ---
 
@@ -46,27 +47,29 @@ const homePath = getRelativeLocaleUrl(locale, "");
         >
           <h2 class="section-title">
             {t.home.featured}<span class="section-count">{featuredPosts.length}</span>
-            {featuredPosts.length > 3 && (
-              <button
-                type="button"
-                class="featured-toggle"
-                aria-expanded="false"
-                aria-controls="featured-list"
-                aria-label={t.home.featuredExpand}
-                data-expand={t.home.featuredExpand}
-                data-collapse={t.home.featuredCollapse}
-              >
-                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-                  <path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-            )}
           </h2>
           <ul id="featured-list" class="post-cards">
             {featuredPosts.map(data => (
               <Card variant="h3" {...data} noTransition boxed />
             ))}
           </ul>
+          {featuredPosts.length > 3 && (
+            <div class="featured-fold">
+              <button
+                type="button"
+                class="featured-toggle"
+                aria-expanded="false"
+                aria-controls="featured-list"
+                data-expand={expandText}
+                data-collapse={t.home.featuredCollapse}
+              >
+                <span>{expandText}</span>
+                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                  <path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
+          )}
         </section>
       )
     }
@@ -100,10 +103,8 @@ const homePath = getRelativeLocaleUrl(locale, "");
       toggle.addEventListener("click", () => {
         const open = featured.toggleAttribute("data-collapsed") === false;
         toggle.setAttribute("aria-expanded", String(open));
-        toggle.setAttribute(
-          "aria-label",
-          (open ? toggle.dataset.collapse : toggle.dataset.expand) ?? ""
-        );
+        toggle.querySelector("span")!.textContent =
+          (open ? toggle.dataset.collapse : toggle.dataset.expand) ?? "";
       });
     }
     const indexLayout = (document.querySelector("#main-content") as HTMLElement)

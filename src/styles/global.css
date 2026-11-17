@@ -138,23 +138,28 @@
 .post-item--card:hover {
   background: #efece6;
 }
-/* 精选的折叠：标题旁一个下拉箭头，收起时只露出前 3 篇 */
+/* 精选的折叠：列表下面一行，左边“展开其余 N 篇”，右边一条横线；收起时只露出前 3 篇 */
+.featured-fold {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.featured-fold::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
 .featured-toggle {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  margin-left: 2px;
-  align-self: center;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--card);
+  gap: 4px;
+  padding: 4px 0;
+  font-size: 15px;
   color: var(--muted-foreground);
   cursor: pointer;
 }
 .featured-toggle:hover {
-  border-color: var(--muted-foreground);
   color: var(--foreground);
 }
 .featured-toggle svg {

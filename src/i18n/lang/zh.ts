@@ -34,8 +34,8 @@ export default {
     featured: "精选",
     recentPosts: "最新",
     allPosts: "全部文章",
-    featuredExpand: "展开全部精选",
-    featuredCollapse: "收起精选",
+    featuredExpand: "展开其余 {{n}} 篇",
+    featuredCollapse: "收起",
   },
   footer: {
     copyright: "版权所有",
