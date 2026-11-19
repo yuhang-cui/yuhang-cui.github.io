@@ -120,6 +120,39 @@ Gold has been in a bull market since 2024, and more people are watching it. Here
 - **Europe**: down from 23.1% to 20.6%, now the same as any random hour. Only 4.5% of days make their high or low in that hour.
 - **New York**: 39.3% and 37.5%, basically unchanged. It is still the biggest stretch of the day.
 
+### Does the A-share open at 09:30 Beijing time matter?
+
+I found no effect.
+
+Clock times in this section are Beijing time, because these events are fixed on the Beijing clock. 09:30 in Beijing is 21:30 ET in summer and 20:30 ET in winter.
+
+On days when China is open, the 09:30 minute has a range 26% above the five minutes before it, which looks like the A-share open. But on days when China is closed and A-shares do not trade, the same minute is also 26% higher. The ratio of the two is 0.99, with a 95% interval of 0.90 to 1.10.
+
+Round hours and half hours move a little anyway. On closed days 10:00 is 22% higher and 11:00 is 36% higher, and neither has a Chinese event. The 26% at 09:30 is an ordinary half-hour bump.
+
+Here are the Asia-session times side by side. Each cell is that minute's range divided by the average of the five minutes before it, so 1.26 means 26% higher:
+
+<div class="exp-table">
+
+| Beijing time | What happens | China open | China closed |
+|---|---|---:|---:|
+| 09:00 | Shanghai gold futures open | 3.02 | 1.55 |
+| 09:30 | A-shares open | 1.26 | 1.26 |
+| 10:00 | Nothing | 1.32 | 1.22 |
+| 10:30 | Shanghai futures resume after a 15-minute break | 1.57 | 1.11 |
+| 13:00 | A-shares open for the afternoon | 1.51 | 1.47 |
+| 13:30 | Shanghai futures open for the afternoon | 2.30 | 1.20 |
+
+</div>
+
+<p class="table-note">3,800 open days. Closed days are the first to sixth day of the Lunar New Year and October 1–7, 145 days in total.</p>
+
+The gap only shows at the three Shanghai futures times: 09:00, 10:30 and 13:30. At the A-share times, 09:30 and 13:00, closed days look the same as open days. In Shanghai, gold trades on the futures exchange, so it follows the futures clock.
+
+Three caveats. There are only 145 closed days, so the intervals are wide. 09:30 is also the Hong Kong stock open. I split the closed days by whether Hong Kong was open, and only 41 of them have Hong Kong closed too, which is too few to separate the two. On open days the 09:30 bump was 16% in 2010–15, reached 41% in 2021–23 and is 27% in 2024–26. There are too few closed days to split by year, so I can't say whether that change has anything to do with A-shares.
+
+So the Asia-session times to watch are 09:00 and then 13:30 Beijing time. There is no need to wait for 09:30.
+
 ## When the day's high and low are made
 
 Same time axis, a different measure: the chance that the day's high or low falls in a given bar. It answers when the day's extremes usually get set. The default is 1-hour bars, and the average bar is about 8.7%. The high and the low can also be viewed separately.
@@ -178,6 +211,7 @@ By full session (the lengths differ, so this is only a rough guide):
 - **High/low curve**: the combined line is the share of days on which at least one of the day's high and low falls in the bar, and the bars add up to about 200%. Counted separately, the high and the low each add up to 100%.
 - **Any random hour**: start a window every 15 minutes through the day, take the same length, and average the results. Only a window above it is busier than usual.
 - **Control charts**: the y-axis is the 5-minute range divided by that day's average bar, which is the main chart on a different scale. The x-axis is aligned on the local opening time.
+- **The 09:30 section**: average across days first, then divide one minute's average range by the average of the five minutes before it. The interval is a 95% interval from resampling days 2,000 times.
 - **Control groups**: China's closed days are the first to sixth day of the Lunar New Year and October 1–7 (145 days). The out-of-step weeks are the weeks when the US and Europe have switched clocks on different dates (274 days). US stock holidays are the US holidays on which gold closes early (87 days).
 
 </div>
