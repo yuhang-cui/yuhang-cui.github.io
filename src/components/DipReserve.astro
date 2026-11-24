@@ -1,0 +1,651 @@
+---
+// 定投时留一部分钱等回撤再加仓，和每月全投比。四个部分，各放一处：
+// part="path"：一条路径。选数据、每月留多少、跌多少再投、起止年月；上面三个数，下面一张图分上下两块：
+//   上块和上一篇那张定投图一个画法：两边的总资产各一条线，虚线是累计投入，线尾写名字，鼠标移上去看每个月的数；
+//   两条线只差 1% 左右，几乎重合，所以下块单独画留钱比全投多或少多少，领先最多和落后最多的月份直接标在线上。
+//   手里的现金、离最高点跌了多少、这个月有没有加仓，都放在提示框里
+// part="roll"：把每个月都当起点投满 N 年，留钱比全投多或少多少；上面是赢的比例、平均、最好、最差
+// part="wait"：存下的钱要等多久才投出去，等到的价格是不是更便宜
+// part="fwd"：每个月投进去的一块钱，之后几年的年化，按买的时候离最高点跌了多少分组
+// 规则：每月预算 A，其中 s 存成现金，其余照常买；每月买的那天看一眼离历史最高点跌了多少，跌到 X 以上就把现金全部买进去。
+// 两边总投入相同、起止相同，现金不算利息，期末没投出去的按面值算。和 量化/code/定投回撤加仓.py 的算法一样，两边核对过。
+// 数据都在 public/data 里，页面加载后取、在浏览器里算：
+//   spx-tr.json：Shiller 月度标普，按当月均价买，市值和回撤都用全收益（股息再投资）算；
+//   dca.json：IVV、QQQ 日线复权价，每月第一个交易日买，回撤按日线收盘的历史最高点算，从 2000 年 6 月起。
+import { useTranslations } from "@/i18n";
+
+type Props = { part?: "path" | "roll" | "wait" | "fwd" };
+const { part = "path" } = Astro.props;
+const s = useTranslations(Astro.currentLocale).dipRes;
+const base = import.meta.env.BASE_URL;
+---
+
+<section class="bx dr" data-dr={part} data-spx={`${base}data/spx-tr.json`} data-etf={`${base}data/dca.json`} aria-label={s.labels[part]}>
+  <div class="bx-controls dr-controls"></div>
+  {part === "path" && <p class="dr-plan"></p>}
+  <div class="dr-stats"></div>
+  {(part === "path" || part === "roll") && (
+    <div class="fn-chart dr-chart">
+      <svg></svg>
+      <div class="fn-tip" hidden></div>
+    </div>
+  )}
+  {part === "fwd" && <div class="dr-rows"></div>}
+  <p class="fn-note dr-note"></p>
+  <script type="application/json" class="dr-t" set:html={JSON.stringify(s)} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+
+  // 一套数据：从第 ym0 个月（年×12+月−1）起，每月一个买入价 lv（全收益 / 复权价）和买的那天离历史最高点跌了多少 dd
+  type DS = { ym0: number; lv: Float64Array; dd: Float64Array; n: number };
+  type Key = "spx" | "ivv" | "qqq";
+  type Strings = Record<string, any>;
+  const KEYS: Key[] = ["spx", "ivv", "qqq"];
+
+  // ---------- 取数据（同一页的几张卡片共用一次） ----------
+  let cache: Promise<Record<Key, DS>> | null = null;
+  function fromShiller(j: { start: number[]; tr: number[] }): DS {
+    const lv = Float64Array.from(j.tr), dd = new Float64Array(lv.length);
+    let m = 0;
+    for (let i = 0; i < lv.length; i++) { m = Math.max(m, lv[i]); dd[i] = 1 - lv[i] / m; }
+    return { ym0: j.start[0] * 12 + j.start[1] - 1, lv, dd, n: lv.length };
+  }
+  function fromEtf(j: Record<string, number[]>, k: string): DS {
+    const days = j.days, px = j[k], lv: number[] = [], dd: number[] = [];
+    let m = 0, last = -1, first = -1, ym0 = -1;
+    for (let i = 0; i < days.length; i++) {
+      m = Math.max(m, px[i]);
+      const d = new Date(days[i] * 86400000), ym = d.getUTCFullYear() * 12 + d.getUTCMonth();
+      if (ym === last) continue;                      // 只要每月第一个交易日
+      last = ym;
+      if (first < 0) { first = ym; continue; }        // 第一个月（2000 年 5 月）不完整，跳过
+      if (ym0 < 0) ym0 = ym;
+      lv.push(px[i]); dd.push(1 - px[i] / m);
+    }
+    return { ym0, lv: Float64Array.from(lv), dd: Float64Array.from(dd), n: lv.length };
+  }
+  function load(root: HTMLElement) {
+    if (!cache) cache = Promise.all([fetch(root.dataset.spx!).then(r => r.json()), fetch(root.dataset.etf!).then(r => r.json())])
+      .then(([a, b]) => ({ spx: fromShiller(a), ivv: fromEtf(b, "IVV"), qqq: fromEtf(b, "QQQ") }));
+    return cache;
+  }
+
+  // ---------- 两种做法 ----------
+  // 只要终值：留钱比全投多或少多少（比例，和每月金额无关）
+  function diffEnd(d: DS, i0: number, n: number, s: number, X: number) {
+    const { lv, dd } = d;
+    let up = 0, us = 0, cash = 0;
+    for (let k = i0; k < i0 + n; k++) {
+      const p = lv[k];
+      up += 1 / p; us += (1 - s) / p; cash += s;
+      if (dd[k] >= X && cash > 0) { us += cash / p; cash = 0; }
+    }
+    const L = lv[i0 + n - 1];
+    return (us * L + cash) / (up * L) - 1;
+  }
+  // 整条路径：每个月两边的总资产、手里的现金、这个月投出去多少
+  function path(d: DS, i0: number, n: number, A: number, s: number, X: number) {
+    const plain = new Float64Array(n), strat = new Float64Array(n), cashA = new Float64Array(n), dep = new Float64Array(n);
+    let up = 0, us = 0, cash = 0, times = 0;
+    for (let k = 0; k < n; k++) {
+      const p = d.lv[i0 + k];
+      up += A / p; us += (A * (1 - s)) / p; cash += A * s;
+      if (d.dd[i0 + k] >= X && cash > 0) { us += cash / p; dep[k] = cash; cash = 0; times++; }
+      plain[k] = up * p; strat[k] = us * p + cash; cashA[k] = cash;
+    }
+    return { plain, strat, cash: cashA, dep, times, n };
+  }
+
+  // ---------- 格式 ----------
+  let SYM = "$";
+  const MINUS = "−";
+  const money = (v: number) => (v < 0 ? MINUS : "") + SYM + Math.round(Math.abs(v)).toLocaleString("en-US");
+  const short = (v: number) => (v >= 1e6 ? SYM + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + "M" : v >= 1e3 ? SYM + Math.round(v / 1e3) + "k" : SYM + Math.round(v));
+  const pct = (v: number, dp = 1) => (v < 0 ? MINUS : "") + (Math.abs(v) * 100).toFixed(dp) + "%";
+  const spct = (v: number, dp = 2) => (v > 0 ? "+" : v < 0 ? MINUS : "") + (Math.abs(v) * 100).toFixed(dp) + "%";
+  const ymParts = (ym: number) => ({ y: Math.floor(ym / 12), m: (ym % 12) + 1 });
+
+  function niceStep(raw: number) {
+    const p = Math.pow(10, Math.floor(Math.log10(raw))), r = raw / p;
+    return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 2.5 ? 2.5 : r <= 5 ? 5 : 10) * p;
+  }
+  // 含 0 的刻度：从 lo 到 hi，大约 n 格
+  function ticks(lo: number, hi: number, n: number) {
+    const step = niceStep(Math.max(1e-9, (hi - lo) / n));
+    const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step, out: number[] = [];
+    for (let v = a; v <= b + step / 2; v += step) out.push(Math.abs(v) < step / 1e6 ? 0 : v);
+    return out;
+  }
+  // 横轴的年份刻度：跨度越长，隔得越远
+  function yearTicks(ymA: number, ymB: number) {
+    const span = (ymB - ymA) / 12, step = span > 100 ? 20 : span > 50 ? 10 : span > 24 ? 5 : span > 10 ? 2 : 1;
+    const out: number[] = [];
+    for (let y = Math.ceil(ymA / 12); y * 12 <= ymB; y++) if (y % step === 0 || step === 1) out.push(y);
+    return out;
+  }
+  const svgNS = (svg: SVGSVGElement, W: number, H: number) => {
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", String(W)); svg.setAttribute("height", String(H));
+  };
+  // 提示框：几行"色块 + 名字 + 数"，放在十字线左边或右边
+  function tipShow(tip: HTMLElement, head: string, rows: [string, string, string][], xPx: number, yPx: number, wPx: number) {
+    tip.replaceChildren();
+    const h = document.createElement("p"); h.className = "fn-tip-h"; h.textContent = head; tip.append(h);
+    for (const [c, label, v] of rows) {
+      const p = document.createElement("p"); p.className = "fn-tip-r";
+      const i = document.createElement("i"); if (c) i.style.background = c; else i.style.visibility = "hidden";
+      const b = document.createElement("b"); b.textContent = v;
+      p.append(i, document.createTextNode(label), b); tip.append(p);
+    }
+    tip.hidden = false;
+    const tw = tip.offsetWidth;
+    tip.style.left = `${xPx + 14 + tw > wPx ? Math.max(0, xPx - 14 - tw) : xPx + 14}px`;
+    tip.style.top = `${Math.max(0, yPx - 30)}px`;
+  }
+
+  // ---------- 控件：一排分段按钮；年月下拉框 ----------
+  type Seg = [label: string, key: string, opts: [string, string, boolean?][]];
+  function segHTML(st: Record<string, any>, segs: Seg[]) {
+    return segs.map(([label, key, opts]) =>
+      `<div class="dr-seg">${label ? `<span>${label}</span>` : ""}<div class="bx-switch" role="group" aria-label="${label || key}">` +
+      opts.map(([v, txt, off]) => `<button type="button" data-key="${key}" data-v="${v}" aria-pressed="${String(st[key]) === v}"${off ? " disabled" : ""}>${txt}</button>`).join("") +
+      `</div></div>`).join("");
+  }
+  const curSeg: Seg = ["", "cur", [["usd", "$"], ["cny", "¥"]]];
+
+  // ---------- part="path" ----------
+  function mountPath(root: HTMLElement, D: Record<Key, DS>, t: Strings) {
+    const st: Record<string, any> = { ds: "ivv", s: "0.2", X: "0.1", cur: "usd" };
+    const box = root.querySelector<HTMLElement>(".dr-controls")!;
+    const svg = root.querySelector<SVGSVGElement>(".dr-chart svg")!, tip = root.querySelector<HTMLElement>(".dr-chart .fn-tip")!;
+    let a = 0, b = 0;   // 起止：在这套数据里的第几个月
+    const defaults = () => { const d = D[st.ds as Key]; b = d.n - 1; a = st.ds === "spx" ? 1957 * 12 + 2 - d.ym0 : 0; };
+    defaults();
+    const sel = (cls: string, from: number, to: number, cur: number, fmt: (v: number) => string) =>
+      `<select class="${cls}">` + Array.from({ length: to - from + 1 }, (_, i) => from + i).map(v => `<option value="${v}"${v === cur ? " selected" : ""}>${fmt(v)}</option>`).join("") + `</select>`;
+    const paint = () => {
+      const d = D[st.ds as Key], A = ymParts(d.ym0 + a), B = ymParts(d.ym0 + b), F = ymParts(d.ym0), L = ymParts(d.ym0 + d.n - 1);
+      const mOpts = (y: number) => [y === F.y ? F.m : 1, y === L.y ? L.m : 12];
+      const [am0, am1] = mOpts(A.y), [bm0, bm1] = mOpts(B.y);
+      box.innerHTML =
+        segHTML(st, [[t.data, "ds", KEYS.map(k => [k, t.sets[k]] as [string, string])]]) +
+        segHTML(st, [[t.reserve, "s", [["0.1", "10%"], ["0.2", "20%"], ["0.3", "30%"]]], [t.trigger, "X", [["0.1", "10%"], ["0.2", "20%"]]]]) +
+        `<label class="bx-range"><span>${t.start}</span>${sel("dr-ya", F.y, L.y, A.y, String)}${sel("dr-ma", am0, am1, A.m, v => t.months[v - 1])}</label>` +
+        `<label class="bx-range"><span>${t.end}</span>${sel("dr-yb", F.y, L.y, B.y, String)}${sel("dr-mb", bm0, bm1, B.m, v => t.months[v - 1])}</label>` +
+        segHTML(st, [curSeg]);
+    };
+    const pick = (y: number, m: number) => { const d = D[st.ds as Key]; return Math.max(0, Math.min(d.n - 1, y * 12 + m - 1 - d.ym0)); };
+    box.addEventListener("click", e => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-key]");
+      if (!btn || btn.disabled) return;
+      const k = btn.dataset.key!;
+      st[k] = btn.dataset.v!;
+      if (k === "ds") defaults();
+      paint(); draw();
+    });
+    box.addEventListener("change", e => {
+      const q = (c: string) => +box.querySelector<HTMLSelectElement>(c)!.value;
+      const el = e.target as HTMLElement;
+      if (el.matches(".dr-ya, .dr-ma")) a = pick(q(".dr-ya"), q(".dr-ma"));
+      if (el.matches(".dr-yb, .dr-mb")) b = pick(q(".dr-yb"), q(".dr-mb"));
+      if (b < a) { if (el.matches(".dr-ya, .dr-ma")) b = a; else a = b; }
+      paint(); draw();
+    });
+    const draw = () => {
+      const d = D[st.ds as Key], s = +st.s, X = +st.X, A = st.cur === "cny" ? 3000 : 500;
+      SYM = st.cur === "cny" ? "¥" : "$";
+      const n = b - a + 1, r = path(d, a, n, A, s, X);
+      const pe = r.plain[n - 1], se = r.strat[n - 1], diff = se - pe, rel = se / pe - 1;
+      root.querySelector(".dr-plan")!.textContent = tplStr(st.ds === "spx" ? t.planSpx : t.plan, { a: money(A * (1 - s)), b: money(A * s), x: pct(X, 0) });
+      const stat = (cls: string, k: string, v: string, sub: string) =>
+        `<div class="dr-stat ${cls}"><p class="bx-hero-k">${cls ? `<i></i>` : ""}${k}</p><p class="dr-v">${v}</p><p class="bx-hero-n">${sub}</p></div>`;
+      root.querySelector(".dr-stats")!.innerHTML =
+        stat("is-plain", t.plain, money(pe), tplStr(t.plainN, { inv: money(A * n), n })) +
+        stat("is-strat", t.strat, money(se), tplStr(t.stratN, { cash: money(r.cash[n - 1]), k: r.times })) +
+        stat("", t.diff, (diff > 0 ? "+" : "") + money(diff), tplStr(rel >= 0 ? t.more : t.less, { p: pct(Math.abs(rel), 2) }));
+      root.querySelector(".dr-note")!.textContent = t.pathNote;
+
+      // ---- 图分上下两块：上块是两边的总资产和累计投入，下块是留钱比全投多或少多少 ----
+      const W = Math.max(300, Math.round(svg.parentElement!.clientWidth)), narrow = W < 520;
+      const M = { l: 56, r: 44, t: 12, b: 24 }, gapH = 34;
+      const H = narrow ? 370 : 440, free = H - M.t - M.b - gapH;
+      const h1 = Math.round(free * 0.7), h2 = free - h1;
+      const top1 = M.t, top2 = top1 + h1 + gapH, iw = W - M.l - M.r;
+      const X0 = (k: number) => M.l + (n > 1 ? (k / (n - 1)) * iw : iw / 2);
+      const inv = Array.from({ length: n }, (_, k) => A * (k + 1));
+      const gap = Array.from({ length: n }, (_, k) => r.strat[k] / r.plain[k] - 1);
+      let vMax = A * n; for (let k = 0; k < n; k++) vMax = Math.max(vMax, r.plain[k], r.strat[k]);
+      const t1 = ticks(0, vMax, 4), hi1 = t1[t1.length - 1];
+      const Y1 = (v: number) => top1 + (1 - v / hi1) * h1;
+      let lo2 = Math.min(0, ...gap), hi2 = Math.max(0, ...gap);
+      if (hi2 - lo2 < 0.002) { lo2 -= 0.001; hi2 += 0.001; }
+      const t2 = ticks(lo2, hi2, 2); lo2 = t2[0]; hi2 = t2[t2.length - 1];
+      const Y2 = (v: number) => top2 + (1 - (v - lo2) / (hi2 - lo2)) * h2;
+      const line = (ys: ArrayLike<number>, Y: (v: number) => number) => Array.from(ys, (v, k) => (k ? "L" : "M") + X0(k).toFixed(1) + "," + Y(v).toFixed(1)).join("");
+      const area = (ys: ArrayLike<number>, Y: (v: number) => number, base: number) => line(ys, Y) + `L${X0(n - 1).toFixed(1)},${Y(base).toFixed(1)}L${X0(0).toFixed(1)},${Y(base).toFixed(1)}Z`;
+      const grid = (v: number, y: number, label: string) =>
+        `<line class="${v === 0 ? "fn-axis" : "fn-grid"}" x1="${M.l}" x2="${W - M.r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"/><text x="${M.l - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end">${label}</text>`;
+      const yrs = yearTicks(d.ym0 + a, d.ym0 + b);
+      const fmt2 = (v: number) => (v > 0 ? "+" : v < 0 ? MINUS : "") + (Math.abs(v) * 100).toFixed(Math.abs(hi2 - lo2) < 0.03 ? 1 : 0) + "%";
+      // 上块：累计投入（虚线）、留钱、全投。两条线离得很近，线尾的名字上下错开，免得叠在一起
+      let s1 = t1.map(v => grid(v, Y1(v), short(v))).join("");
+      s1 += `<path class="dr-line is-inv" d="${line(inv, Y1)}"/><path class="dr-line is-strat" d="${line(r.strat, Y1)}"/><path class="dr-line is-plain" d="${line(r.plain, Y1)}"/>`;
+      let yP = Y1(pe), yS = Y1(se);
+      if (Math.abs(yP - yS) < 14) { const mid = (yP + yS) / 2, up = yP <= yS; yP = mid + (up ? -7 : 7); yS = mid + (up ? 7 : -7); }
+      s1 += `<text class="dr-end is-plain" x="${W - M.r + 6}" y="${(yP + 4).toFixed(1)}">${t.plainShort}</text><text class="dr-end is-strat" x="${W - M.r + 6}" y="${(yS + 4).toFixed(1)}">${t.stratShort}</text>`;
+      // 下块：留钱比全投多或少多少；领先最多和落后最多的两个月，直接标在线上
+      s1 += `<text class="dr-cap" x="${M.l}" y="${top2 - 9}">${t.gapAxis}</text>` + t2.map(v => grid(v, Y2(v), fmt2(v))).join("");
+      s1 += `<path class="dr-area" d="${area(gap, Y2, 0)}"/><path class="dr-line is-gap" d="${line(gap, Y2)}"/>`;
+      let kHi = 0, kLo = 0;
+      for (let k = 1; k < n; k++) { if (gap[k] > gap[kHi]) kHi = k; if (gap[k] < gap[kLo]) kLo = k; }
+      const mark = (k: number, tpl: string, above: boolean) => {
+        const x = X0(k), y = Y2(gap[k]), toLeft = x > M.l + iw / 2, P = ymParts(d.ym0 + a + k);
+        const ty = above ? Math.max(top2 + 11, y - 3) : Math.min(top2 + h2 - 4, y + 13);
+        return `<circle class="dr-mark" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2"/>` +
+          `<text class="dr-lab" x="${(x + (toLeft ? -8 : 8)).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${toLeft ? "end" : "start"}">${tplStr(tpl, { y: P.y, m: P.m, p: pct(Math.abs(gap[k])) })}</text>`;
+      };
+      if (gap[kHi] > 0.0005) s1 += mark(kHi, t.lead, true);
+      if (gap[kLo] < -0.0005) s1 += mark(kLo, t.lag, false);
+      s1 += yrs.map(y => { const k = y * 12 - (d.ym0 + a); return k < 0 || k > n - 1 ? "" : `<text x="${X0(k).toFixed(1)}" y="${H - 6}" text-anchor="middle">${y}</text>`; }).join("");
+      s1 += `<line class="fn-rule" y1="${top1}" y2="${top2 + h2}"/><circle class="fn-dot dr-dot is-strat" r="4"/><circle class="fn-dot dr-dot is-plain" r="4"/><circle class="fn-dot dr-dot is-gap" r="3.5"/>`;
+      svgNS(svg, W, H);
+      svg.innerHTML = s1;
+      const rule = svg.querySelector(".fn-rule")!, dS = svg.querySelector(".dr-dot.is-strat")!, dP = svg.querySelector(".dr-dot.is-plain")!, dG = svg.querySelector(".dr-dot.is-gap")!;
+      const cs = getComputedStyle(root), cP = cs.getPropertyValue("--dr-plain").trim(), cS = cs.getPropertyValue("--dr-strat").trim(), cI = cs.getPropertyValue("--dr-inv").trim();
+      const show = (e: PointerEvent) => {
+        const rect = svg.getBoundingClientRect(), px = ((e.clientX - rect.left) / rect.width) * W;
+        const k = Math.max(0, Math.min(n - 1, Math.round(((px - M.l) / iw) * (n - 1))));
+        const x = X0(k);
+        rule.setAttribute("x1", String(x)); rule.setAttribute("x2", String(x));
+        dP.setAttribute("cx", String(x)); dP.setAttribute("cy", String(Y1(r.plain[k])));
+        dS.setAttribute("cx", String(x)); dS.setAttribute("cy", String(Y1(r.strat[k])));
+        dG.setAttribute("cx", String(x)); dG.setAttribute("cy", String(Y2(gap[k])));
+        svg.classList.add("is-hover");
+        const P = ymParts(d.ym0 + a + k), dk = r.strat[k] - r.plain[k];
+        const rows: [string, string, string][] = [
+          [cI, t.invested, money(inv[k])],
+          [cP, t.plain, money(r.plain[k])],
+          [cS, t.strat, money(r.strat[k])],
+          ["", t.viewGap, (dk > 0 ? "+" : "") + money(dk) + " · " + spct(gap[k])],
+          ["", t.cash, money(r.cash[k])],
+          ["", t.dd, d.dd[a + k] < 0.0005 ? "0%" : MINUS + (d.dd[a + k] * 100).toFixed(1) + "%"],
+        ];
+        if (r.dep[k] > 0) rows.push([cS, tplStr(t.deploy, { v: money(r.dep[k]) }), ""]);
+        tipShow(tip, tplStr(t.ym, P), rows, (x / W) * rect.width, ((e.clientY - rect.top) / rect.height) * H, rect.width);
+      };
+      const hide = () => { svg.classList.remove("is-hover"); tip.hidden = true; };
+      svg.onpointermove = show; svg.onpointerdown = show; svg.onpointerleave = hide;
+    };
+    paint(); draw();
+    let w0 = -1;
+    new ResizeObserver(() => { const w = Math.round(svg.parentElement!.clientWidth); if (w && w !== w0) { w0 = w; draw(); } }).observe(svg.parentElement!);
+  }
+
+  // ---------- part="roll" ----------
+  function mountRoll(root: HTMLElement, D: Record<Key, DS>, t: Strings) {
+    const st: Record<string, any> = { ds: "spx", s: "0.2", X: "0.1", h: "30" };
+    const box = root.querySelector<HTMLElement>(".dr-controls")!;
+    const svg = root.querySelector<SVGSVGElement>(".dr-chart svg")!, tip = root.querySelector<HTMLElement>(".dr-chart .fn-tip")!;
+    const fits = (h: string) => D[st.ds as Key].n >= +h * 12;
+    const paint = () => {
+      box.innerHTML =
+        segHTML(st, [[t.data, "ds", KEYS.map(k => [k, t.sets[k]] as [string, string])]]) +
+        segHTML(st, [[t.reserve, "s", [["0.1", "10%"], ["0.2", "20%"], ["0.3", "30%"]]], [t.trigger, "X", [["0.1", "10%"], ["0.2", "20%"]]]]) +
+        segHTML(st, [[t.horizon, "h", ["5", "10", "20", "30"].map(h => [h, tplStr(t.years, { n: h }), !fits(h)] as [string, string, boolean])]]);
+    };
+    box.addEventListener("click", e => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-key]");
+      if (!btn || btn.disabled) return;
+      st[btn.dataset.key!] = btn.dataset.v!;
+      if (!fits(st.h)) st.h = ["30", "20", "10", "5"].find(fits)!;   // 2000 年起的数据不够 30 年，自动换成 20 年
+      paint(); draw();
+    });
+    const draw = () => {
+      const d = D[st.ds as Key], n = +st.h * 12, s = +st.s, X = +st.X;
+      const m = d.n - n + 1, diffs = new Float64Array(m);
+      for (let i = 0; i < m; i++) diffs[i] = diffEnd(d, i, n, s, X);
+      // 存的钱当月就投出去时两边一模一样，差距只是计算误差：差不到 0.0001% 算打平，不算赢（和 Python 脚本一致）
+      let win = 0, tie = 0, sum = 0, best = 0, worst = 0;
+      for (let i = 0; i < m; i++) { const v = diffs[i]; if (v > 1e-6) win++; else if (v >= -1e-6) tie++; sum += v; if (i === 0 || v > diffs[best]) best = i; if (i === 0 || v < diffs[worst]) worst = i; }
+      const ymTxt = (i: number) => tplStr(t.ym, ymParts(d.ym0 + i));
+      const stat = (big: boolean, k: string, v: string, sub: string) => `<div class="dr-stat${big ? " is-big" : ""}"><p class="bx-hero-k">${k}</p><p class="dr-v">${v}</p><p class="bx-hero-n">${sub}</p></div>`;
+      root.querySelector(".dr-stats")!.innerHTML =
+        stat(true, t.rollWin, pct(win / m), tplStr(t.rollWinN, { n: m, w: win }) + (tie ? tplStr(t.rollTie, { t: tie }) : "")) +
+        stat(false, t.rollMean, spct(sum / m), "") +
+        stat(false, t.rollBest, spct(diffs[best]), ymTxt(best)) +
+        stat(false, t.rollWorst, spct(diffs[worst]), ymTxt(worst));
+      root.querySelector(".dr-note")!.textContent = tplStr(t.rollNote, { h: st.h });
+
+      const W = Math.max(300, Math.round(svg.parentElement!.clientWidth)), narrow = W < 520;
+      const M = { l: 56, r: 12, t: 12, b: 24 }, H = narrow ? 230 : 270, ih = H - M.t - M.b, iw = W - M.l - M.r;
+      let lo = Math.min(0, ...diffs), hi = Math.max(0, ...diffs);
+      if (hi - lo < 0.002) { lo -= 0.001; hi += 0.001; }
+      const tk = ticks(lo, hi, 4); lo = tk[0]; hi = tk[tk.length - 1];
+      const Xp = (i: number) => M.l + (m > 1 ? (i / (m - 1)) * iw : iw / 2), Y = (v: number) => M.t + (1 - (v - lo) / (hi - lo)) * ih;
+      const ln = Array.from(diffs, (v, i) => (i ? "L" : "M") + Xp(i).toFixed(1) + "," + Y(v).toFixed(1)).join("");
+      const dp = hi - lo < 0.03 ? 1 : 0;
+      let s1 = tk.map(v => `<line class="${v === 0 ? "fn-axis" : "fn-grid"}" x1="${M.l}" x2="${W - M.r}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text x="${M.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${(v > 0 ? "+" : v < 0 ? MINUS : "") + (Math.abs(v) * 100).toFixed(dp)}%</text>`).join("");
+      s1 += `<path class="dr-area" d="${ln}L${Xp(m - 1).toFixed(1)},${Y(0).toFixed(1)}L${Xp(0).toFixed(1)},${Y(0).toFixed(1)}Z"/><path class="dr-line is-strat" d="${ln}"/>`;
+      s1 += yearTicks(d.ym0, d.ym0 + m - 1).map(y => { const i = y * 12 - d.ym0; return i < 0 || i > m - 1 ? "" : `<text x="${Xp(i).toFixed(1)}" y="${H - 6}" text-anchor="middle">${y}</text>`; }).join("");
+      s1 += `<line class="fn-rule" y1="${M.t}" y2="${M.t + ih}"/><circle class="fn-dot dr-dot is-strat" r="4"/>`;
+      svgNS(svg, W, H);
+      svg.innerHTML = s1;
+      const rule = svg.querySelector(".fn-rule")!, dot = svg.querySelector(".dr-dot")!;
+      const cS = getComputedStyle(root).getPropertyValue("--dr-strat").trim();
+      const show = (e: PointerEvent) => {
+        const rect = svg.getBoundingClientRect(), px = ((e.clientX - rect.left) / rect.width) * W;
+        const i = Math.max(0, Math.min(m - 1, Math.round(((px - M.l) / iw) * (m - 1)))), x = Xp(i);
+        rule.setAttribute("x1", String(x)); rule.setAttribute("x2", String(x));
+        dot.setAttribute("cx", String(x)); dot.setAttribute("cy", String(Y(diffs[i])));
+        svg.classList.add("is-hover");
+        tipShow(tip, tplStr(t.rollTip, { ...ymParts(d.ym0 + i), h: st.h }), [[cS, t.gapAxis, spct(diffs[i])]], (x / W) * rect.width, ((e.clientY - rect.top) / rect.height) * H, rect.width);
+      };
+      const hide = () => { svg.classList.remove("is-hover"); tip.hidden = true; };
+      svg.onpointermove = show; svg.onpointerdown = show; svg.onpointerleave = hide;
+    };
+    paint(); draw();
+    let w0 = -1;
+    new ResizeObserver(() => { const w = Math.round(svg.parentElement!.clientWidth); if (w && w !== w0) { w0 = w; draw(); } }).observe(svg.parentElement!);
+  }
+
+  // ---------- part="wait" ----------
+  // 每个月存下的那笔钱，等到下一个离最高点跌 X 以上的月份投出去：等了几个月、到手价比存钱那个月高还是低
+  function waitStats(d: DS, X: number) {
+    const { lv, dd, n } = d, nh = new Int32Array(n);
+    let nxt = -1, inDD = 0;
+    for (let i = n - 1; i >= 0; i--) { if (dd[i] >= X) { nxt = i; inDD++; } nh[i] = nxt; }
+    const w: number[] = [];
+    let never = 0, pricier = 0, cheaper = 0, maxW = -1, maxAt = 0;
+    for (let i = 0; i < n; i++) {
+      if (nh[i] < 0) { never++; continue; }
+      const k = nh[i] - i; w.push(k);
+      if (k > maxW) { maxW = k; maxAt = i; }
+      if (k > 0) { if (lv[nh[i]] > lv[i]) pricier++; else if (lv[nh[i]] < lv[i]) cheaper++; }
+    }
+    const sorted = [...w].sort((x, y) => x - y), L = sorted.length;
+    const median = L % 2 ? sorted[(L - 1) / 2] : (sorted[L / 2 - 1] + sorted[L / 2]) / 2;
+    return { share: inDD / n, mean: w.reduce((x, y) => x + y, 0) / L, median, over2: w.filter(k => k > 24).length / L, max: maxW, maxAt, pricier: pricier / Math.max(1, pricier + cheaper), never };
+  }
+  function mountWait(root: HTMLElement, D: Record<Key, DS>, t: Strings) {
+    const st: Record<string, any> = { ds: "spx", X: "0.1" };
+    const box = root.querySelector<HTMLElement>(".dr-controls")!;
+    const paint = () => {
+      box.innerHTML = segHTML(st, [[t.data, "ds", KEYS.map(k => [k, t.sets[k]] as [string, string])]]) + segHTML(st, [[t.trigger, "X", [["0.1", "10%"], ["0.2", "20%"]]]]);
+    };
+    box.addEventListener("click", e => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-key]");
+      if (!btn) return;
+      st[btn.dataset.key!] = btn.dataset.v!; paint(); draw();
+    });
+    const draw = () => {
+      const d = D[st.ds as Key], X = +st.X, w = waitStats(d, X), x = pct(X, 0);
+      const mo = (v: number) => tplStr(t.monthsN, { n: Number.isInteger(v) ? v : v.toFixed(1) });
+      const tile = (k: string, v: string, sub: string) => `<div class="dr-tile"><p class="bx-hero-k">${k}</p><p class="dr-v">${v}</p><p class="bx-hero-n">${sub}</p></div>`;
+      root.querySelector(".dr-stats")!.innerHTML = `<div class="dr-tiles">` +
+        tile(tplStr(t.wait.share, { x }), pct(w.share), t.waitSub.share) +
+        tile(t.wait.mean, mo(w.mean), t.waitSub.mean) +
+        tile(t.wait.median, mo(w.median), t.waitSub.median) +
+        tile(t.wait.over2, pct(w.over2), t.waitSub.over2) +
+        tile(t.wait.max, mo(w.max), tplStr(t.waitSub.max, { from: tplStr(t.ym, ymParts(d.ym0 + w.maxAt)) })) +
+        tile(t.wait.pricier, pct(w.pricier, 0), t.waitSub.pricier) + `</div>`;
+      root.querySelector(".dr-note")!.textContent = tplStr(t.waitNote, { x, n: w.never });
+    };
+    paint(); draw();
+  }
+
+  // ---------- part="fwd" ----------
+  function fwdStats(d: DS, years: number) {
+    const n = years * 12, B = [0.05, 0.1, 0.2, Infinity], sum = [0, 0, 0, 0], cnt = [0, 0, 0, 0];
+    let all = 0, allN = 0;
+    for (let i = 0; i + n < d.n; i++) {
+      const r = Math.pow(d.lv[i + n] / d.lv[i], 1 / years) - 1, k = B.findIndex(b => d.dd[i] < b);
+      sum[k] += r; cnt[k]++; all += r; allN++;
+    }
+    return { rows: sum.map((v, k) => ({ v: cnt[k] ? v / cnt[k] : NaN, n: cnt[k] })), all: all / allN, allN };
+  }
+  function mountFwd(root: HTMLElement, D: Record<Key, DS>, t: Strings) {
+    const st: Record<string, any> = { ds: "spx", y: "10" };
+    const box = root.querySelector<HTMLElement>(".dr-controls")!;
+    const paint = () => {
+      box.innerHTML = segHTML(st, [[t.data, "ds", KEYS.map(k => [k, t.sets[k]] as [string, string])]]) +
+        segHTML(st, [[t.after, "y", ["1", "3", "5", "10"].map(y => [y, tplStr(t.years, { n: y })] as [string, string])]]);
+    };
+    box.addEventListener("click", e => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-key]");
+      if (!btn) return;
+      st[btn.dataset.key!] = btn.dataset.v!; paint(); draw();
+    });
+    const draw = () => {
+      const f = fwdStats(D[st.ds as Key], +st.y), vals = [...f.rows.map(r => r.v).filter(v => isFinite(v)), f.all];
+      const lo = Math.min(0, ...vals), hi = Math.max(0, ...vals) * 1.08, pos = (v: number) => ((v - lo) / (hi - lo)) * 100;
+      const row = (label: string, v: number, n: number, cls: string) => {
+        const a = Math.min(pos(0), pos(v)), w = Math.abs(pos(v) - pos(0));
+        return `<div class="dr-row ${cls}"><span class="dr-row-k">${label}</span><span class="dr-track">` +
+          (isFinite(v) ? `<i class="dr-bar" style="left:${a}%;width:${w}%"></i>` : "") +
+          `<i class="dr-ref" style="left:${pos(f.all)}%"></i></span><b>${isFinite(v) ? pct(v) : "—"}</b><span class="dr-row-n">${tplStr(t.fwdN, { n })}</span></div>`;
+      };
+      root.querySelector(".dr-stats")!.innerHTML = `<p class="bx-hero-k dr-fwd-h">${tplStr(t.fwdHead, { n: st.y })}</p>`;
+      root.querySelector(".dr-rows")!.innerHTML = f.rows.map((r, k) => row(t.fwdRows[k], r.v, r.n, "")).join("") + row(t.fwdAll, f.all, f.allN, "is-all");
+      root.querySelector(".dr-note")!.textContent = tplStr(t.fwdNote, { n: st.y });
+    };
+    paint(); draw();
+  }
+
+  // 站内切换页面不会重新加载脚本，所以挂在 astro:page-load 上：首次打开和每次切换进来都跑一遍
+  document.addEventListener("astro:page-load", async () => {
+    const roots = Array.from(document.querySelectorAll<HTMLElement>(".dr")).filter(r => !r.dataset.ready);
+    if (!roots.length) return;
+    const D = await load(roots[0]);
+    for (const root of roots) {
+      root.dataset.ready = "1";
+      const t = JSON.parse(root.querySelector(".dr-t")!.textContent || "{}") as Strings;
+      const part = root.dataset.dr;
+      if (part === "path") mountPath(root, D, t);
+      else if (part === "roll") mountRoll(root, D, t);
+      else if (part === "wait") mountWait(root, D, t);
+      else if (part === "fwd") mountFwd(root, D, t);
+    }
+  });
+</script>
+
+<style is:global>
+  .dr {
+    --dr-plain: #016dac;
+    --dr-strat: #c46a1b;
+    --dr-inv: #8a8680;
+  }
+  [data-theme="dark"] .dr {
+    --dr-plain: #5595c8;
+    --dr-strat: #cc7631;
+    --dr-inv: #9c988f;
+  }
+  .dr .bx-controls {
+    margin-bottom: 12px;
+  }
+  .dr-seg {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    font-size: 14px;
+    color: var(--faint);
+  }
+  .dr-seg > span {
+    flex: none;
+    white-space: nowrap;
+  }
+  .dr .bx-switch {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+  .dr .bx-switch button[disabled] {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .dr .bx-range select {
+    padding-right: 6px;
+  }
+  .dr-plan {
+    margin-bottom: 16px !important;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--summary);
+  }
+  .dr-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 20px;
+    margin-bottom: 14px;
+  }
+  .dr[data-dr="roll"] .dr-stats {
+    grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr));
+    align-items: end;
+  }
+  .dr[data-dr="wait"] .dr-stats,
+  .dr[data-dr="fwd"] .dr-stats {
+    display: block;
+  }
+  .dr-stat .bx-hero-k {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .dr-stat .bx-hero-k i {
+    display: inline-block;
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+  }
+  .dr-stat.is-plain .bx-hero-k i { background: var(--dr-plain); }
+  .dr-stat.is-strat .bx-hero-k i { background: var(--dr-strat); }
+  .dr-v {
+    margin-top: 2px !important;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+  .dr-stat.is-big .dr-v {
+    font-size: 40px;
+    line-height: 1.05;
+  }
+  .dr-line {
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .dr-line.is-strat { stroke: var(--dr-strat); }
+  .dr-line.is-plain { stroke: var(--dr-plain); }
+  .dr-line.is-inv { stroke: var(--dr-inv); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  .dr-line.is-gap { stroke: var(--dr-strat); stroke-width: 1.5; }
+  .fn-chart text.dr-end { font-size: 12px; font-weight: 600; }
+  .fn-chart text.dr-end.is-plain { fill: var(--dr-plain); }
+  .fn-chart text.dr-end.is-strat { fill: var(--dr-strat); }
+  .dr-area { fill: var(--dr-strat); opacity: 0.12; }
+  .dr-mark { fill: var(--dr-strat); stroke: var(--card); stroke-width: 2; }
+  .fn-chart text.dr-lab { fill: var(--foreground); font-size: 12px; font-weight: 600; }
+  .fn-chart text.dr-thr-t { fill: var(--dr-strat); font-size: 11px; }
+  .fn-chart text.dr-cap { fill: var(--summary); font-size: 11.5px; }
+  .dr .fn-dot { stroke: var(--card); stroke-width: 2; }
+  .dr-dot.is-strat { fill: var(--dr-strat); }
+  .dr-dot.is-plain { fill: var(--dr-plain); }
+  .dr-dot.is-gap { fill: var(--dr-strat); }
+  .dr-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 20px;
+  }
+  .dr-tile {
+    padding: 12px 0 14px;
+    border-top: 1px solid var(--border);
+  }
+  .dr-fwd-h {
+    margin-bottom: 10px !important;
+  }
+  .dr-rows {
+    display: grid;
+    gap: 9px;
+  }
+  .dr-row {
+    display: grid;
+    grid-template-columns: 9.5em minmax(0, 1fr) 4em 5.5em;
+    align-items: center;
+    gap: 12px;
+    font-size: 13.5px;
+    color: var(--prose);
+  }
+  .dr-row b {
+    text-align: right;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .dr-row-n {
+    font-size: 12px;
+    color: var(--faint);
+  }
+  .dr-track {
+    position: relative;
+    height: 12px;
+  }
+  .dr-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--dr-strat) 16%, transparent);
+    border-right: 2px solid var(--dr-strat);
+  }
+  .dr-row.is-all {
+    padding-top: 9px;
+    border-top: 1px solid var(--border);
+    color: var(--summary);
+  }
+  .dr-row.is-all .dr-bar {
+    background: color-mix(in srgb, var(--dr-inv) 16%, transparent);
+    border-right-color: var(--dr-inv);
+  }
+  .dr-ref {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    border-left: 1px dashed var(--dr-inv);
+  }
+  @media (max-width: 560px) {
+    .dr .bx-switch button {
+      padding: 5px 9px;
+      font-size: 13px;
+    }
+    .dr-seg {
+      gap: 6px;
+      font-size: 13px;
+    }
+    .dr-stats {
+      grid-template-columns: 1fr 1fr;
+    }
+    .dr[data-dr="roll"] .dr-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .dr-stats .dr-stat:last-child:nth-child(3),
+    .dr[data-dr="roll"] .dr-stats .dr-stat.is-big {
+      grid-column: 1 / -1;
+    }
+    .dr-v {
+      font-size: 20px;
+    }
+    .dr-tiles {
+      grid-template-columns: 1fr 1fr;
+    }
+    .dr-row {
+      grid-template-columns: 7.5em minmax(0, 1fr) 3.6em;
+      gap: 8px;
+      font-size: 12.5px;
+    }
+    .dr-row-n {
+      display: none;
+    }
+  }
+</style>

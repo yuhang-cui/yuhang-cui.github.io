@@ -1,0 +1,165 @@
+---
+title: "Gold Breaking the Prior Day's High or Low: 84.5% of Days Break at Least One Side"
+description: "A backtest on 3,752 gold futures (GC) trading days from 2010 to 2026: does today break yesterday's high or low? Counting the full 23-hour day, 84.5% of days break at least one side, lower than 89.6% for ES. When yesterday closed in its top 20%, today breaks the high 85.8% of the time."
+stat: "84.5%"
+statLabel: "gold breaks at least one side of the prior day"
+pubDatetime: 2026-11-14T09:00:00+08:00
+tags: [Research]
+lang: en
+---
+
+import BreakoutExplorer from "@/components/BreakoutExplorer.astro";
+import ResearchCard from "@/components/ResearchCard.astro";
+import prompt from "./prompt.en.txt?raw";
+import code from "./breakout.en.py?raw";
+
+> **Sample**: gold futures (GC), 2010 to 2026, 3,752 trading days. A day is the full 23-hour day.
+>
+> **Result**: **84.5%** of days break at least one side of the prior day's high or low, lower than 89.6% for ES. Yesterday's high gets broken **49.0%** of the time, the low **45.4%**, and neither side **15.5%**.
+>
+> When yesterday closed in its top 20%, today breaks the high **85.8%** of the time. When it closed in the bottom 20%, today breaks the low **81.5%** of the time.
+>
+> <span class="takeaway">How I use it: whichever end yesterday closed near, I watch that side of the prior day's range first. If neither side has broken by the New York stock open, most of the time neither breaks later.</span>
+
+I already tested on ES [whether the prior day's high or low gets broken](/en/posts/prior-day-high-low/): 89.6% of days broke at least one side. Here I run the same rules on gold.
+
+Gold has no split between RTH and an overnight session. A day runs from 18:00 ET to 17:00 ET the next day, 23 hours in all. So gold's prior day high and low are the high and low of yesterday's 23 hours.
+
+<BreakoutExplorer inst="gc" defaultRef="gcDay" />
+
+## Result: 84.5%, lower than ES
+
+Out of 3,752 trading days, **84.5%** broke at least one side of yesterday's range. Yesterday's high was broken **49.0%** of the time, the low **45.4%**. By year, it ranges from 80.0% to 88.6%.
+
+ES uses RTH only and gold uses the full day, so the two numbers can't be compared directly. So I ran both markets both ways:
+
+<div class="exp-table">
+
+| Basis | ES | Gold |
+|---|---:|---:|
+| Full day, 18:00 ET to 17:00 ET the next day | 88.1% | **84.5%** |
+| New York session only, ES 09:30–16:15, gold 09:30–16:00 | **89.6%** | 87.7% |
+
+</div>
+
+<p class="table-note">The table shows the share of days that broke at least one side. Bold marks the basis each of the two posts uses.</p>
+
+On the full day, gold is 3.6 percentage points lower. On the New York session only, it's 1.9 points lower. I haven't figured out why it's lower.
+
+## The rest: more inside days than ES
+
+Neither side broken is 15.5%, more than ES. On the same full-day basis, ES is 11.9%.
+
+Both sides broken is 9.9%, about one day in ten. ES on the full-day basis is 11.9%.
+
+## Direction bias: weaker than ES
+
+Up only is **39.1%**, down only **35.5%**, a gap of only 3.6 points. ES has a 12-point gap. Of the 17 calendar years from 2010 to 2026, 9 had more downside breaks than upside. For ES, only 2022 did.
+
+In years with a big rally or selloff, the direction follows the full-year move. In years without a big move, it doesn't line up:
+
+<div class="exp-table">
+
+| Year | Gold full-year change | Up only | Down only |
+|---|---:|---:|---:|
+| 2013 | −28.1% | 33.9% | 39.1% |
+| 2015 | −10.4% | 31.7% | 40.5% |
+| 2020 | +25.0% | 47.6% | 33.3% |
+| 2025 | +64.0% | 48.7% | 30.3% |
+| 2021 | −4.1% | 41.1% | 33.3% |
+| 2023 | +13.1% | 36.6% | 39.2% |
+
+</div>
+
+<p class="table-note">Full-year change: from the open on the year's first trading day to the close on its last. The continuous contract isn't back-adjusted, so this is approximate.</p>
+
+2021 was down for the year, yet upside breaks were more common. 2023 was up 13.1%, and downside breaks were more common.
+
+## By year: little to do with volatility
+
+For ES, the hit rate follows volatility. 2017 had the lowest volatility and also the lowest hit rate. Gold doesn't work that way:
+
+<div class="exp-table">
+
+| Year | Median daily range | At least one side |
+|---|---:|---:|
+| 2013 | 1.64% | 80.4% |
+| 2014 | 1.16% | 80.0% |
+| 2017 | 0.99% | 87.3% |
+| 2025 | 1.62% | 88.6% |
+
+</div>
+
+2013 was volatile and had the second-lowest hit rate. 2017 was quiet and had the fifth-highest. The lowest were the three years from 2013 to 2015, all just above 80%. The highest were 2025 and 2020, both above 88%.
+
+## The wider yesterday's range, the harder it is to break
+
+For ES, the narrower the overnight range, [the more often it breaks](/en/posts/eth-breakout/). Gold has no overnight session, so I use something else you know before the open: yesterday's range against the average of the 8 days before it, wide or narrow.
+
+<div class="exp-table">
+
+| Yesterday's range ÷ prior 8-day average | Days | At least one side | Both sides | Neither |
+|---|---:|---:|---:|---:|
+| Under 0.75 | 1,138 | 95.2% | 19.9% | 4.8% |
+| 0.75 to 1.25 | 1,733 | 83.7% | 7.6% | 16.3% |
+| Over 1.25 | 873 | 72.2% | 1.4% | 27.8% |
+
+</div>
+
+When yesterday was narrow, today almost always breaks one side, and one day in five breaks both. When yesterday was wide, more than a quarter of days stay inside yesterday's range all day.
+
+## Today usually breaks the side yesterday closed near
+
+I split the days into five buckets by where yesterday's close sat within yesterday's range:
+
+<div class="exp-table">
+
+| Yesterday's close position | Days | High broken | Low broken | Neither |
+|---|---:|---:|---:|---:|
+| Bottom 20% | 658 | 12.0% | **81.5%** | 13.8% |
+| 20% to 40% | 814 | 29.7% | 62.0% | 18.7% |
+| Middle 20% | 668 | 44.2% | 46.1% | 20.7% |
+| 60% to 80% | 750 | 64.4% | 31.6% | 14.9% |
+| Top 20% | 862 | **85.8%** | 13.7% | 10.2% |
+
+</div>
+
+When yesterday closed in its top 20%, today breaks yesterday's high 85.8% of the time. When it closed in the bottom 20%, today breaks yesterday's low 81.5% of the time. When it closed in the middle, the two sides are about even, and neither breaking is most common.
+
+ES on the full-day basis shows the same thing: 85.6% and 83.8%. On RTH only it's weaker, 76.0% and 69.7%, because there's an overnight session in between.
+
+## Which session the break comes in
+
+Gold's day spans three sessions: [Asia, Europe and the US](/en/posts/gold-sessions/). Of the 3,171 days with a break, the first break came in the Asia session **55.4%** of the time, Europe 18.9%, and the US 25.7%.
+
+By the New York stock open (21:30 Beijing time, 22:30 in winter), 73.3% of days have already broken at least one side. Of the days with neither side broken by then, only **42.0%** go on to break.
+
+Since 2024, the share of first breaks in the Asia session has risen to 62.8%, from 53.8% before.
+
+## Definition and how to reproduce it
+
+<ResearchCard title="Gold breaking the prior day's high or low" prompt={prompt} code={code}>
+
+- **Data**: cleaned 1-minute GC bars, 2010-06 to 2026-11, 3,945 trading days. See [how I cleaned it](/en/posts/data-cleaning/).
+- **A trading day**: from 18:00 ET the previous day to 17:00 ET (before September 2015 the close was 17:15). Bars after 18:00 belong to the next day. For example, the session that opens Sunday at 18:00 belongs to Monday.
+- **Which day is "yesterday"**: the most recent gold trading day before today. Monday's yesterday is the previous Friday.
+- **Skipped days**: if yesterday was removed during cleaning (half days on US holidays, the two days of a roll, etc.), today doesn't count, and I don't search further back. 193 days were skipped, leaving 3,752.
+- **Upside breakout**: today's high is **strictly above** yesterday's high, i.e. at least 1 tick (0.1 point) higher. Exactly equal doesn't count. A Monday gap open above yesterday's high counts as a breakout.
+- **Downside breakout**: today's low is strictly below yesterday's low.
+- **Four outcomes**: up only, down only, both sides, neither. High broken = up only + both sides, and the same for the low.
+- **New York session only**: 09:30–16:00 ET. Today's high and low in this window against yesterday's high and low in the same window. Other rules unchanged.
+- **ES RTH**: 09:30–16:15 ET, the basis of [the ES post](/en/posts/prior-day-high-low/).
+- **ES full day**: ES also counted as a day from 18:00 ET to 17:00 ET the next day. Other rules are the same as for ES RTH. Days with an incomplete overnight session are excluded, leaving 3,760.
+- **Daily range**: the day's high minus low, divided by the previous day's close.
+- **Yesterday's range ÷ prior 8-day average**: yesterday's high minus low, divided by its average over the 8 trading days before yesterday.
+- **Yesterday's close position**: yesterday's close minus yesterday's low, divided by yesterday's high minus yesterday's low. 0 is a close at the low, 1 a close at the high.
+- **Three sessions**: Asia runs from 18:00 ET to 08:00 London time, Europe to 08:00 New York time, and the US to 17:00, the same as [the gold sessions post](/en/posts/gold-sessions/). In Beijing time during US daylight saving, that is 06:00–15:00, 15:00–20:00 and 20:00–05:00 the next day.
+
+</ResearchCard>
+
+## Limitations
+
+- It only checks whether price broke, not how far. One tick beyond counts. So this number tells you yesterday's high or low will get tested, not how far a breakout will run.
+- 193 days were skipped, all holidays and days around rolls. The results don't describe them.
+- I haven't figured out why gold is lower than ES. I tried yesterday's range width and yesterday's close position. Together they explain only 0.4 of the 3.6 percentage points.
+- Gold's New York session is my own choice, following the stock market's 09:30 to 16:00. Gold has no official RTH.

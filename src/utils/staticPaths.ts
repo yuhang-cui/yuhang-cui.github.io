@@ -30,9 +30,10 @@ export async function postStaticPaths(locale: Locale) {
 export async function categoryStaticPaths(locale: Locale, paginate: PaginateFunction) {
   const posts = await getPostsByLocale(locale);
   return CATEGORIES.flatMap(category => {
+    // 有 series 序号的系列文章按序号排在最前面，其余的照旧按时间从新到旧
     const tagPosts = getSortedPosts(
       posts.filter(({ data }) => slugifyAll(data.tags).includes(category.slug))
-    );
+    ).sort((a, b) => (a.data.series ?? Infinity) - (b.data.series ?? Infinity));
     return paginate(tagPosts, {
       params: { tag: category.slug },
       props: { category },

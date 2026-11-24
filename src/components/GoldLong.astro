@@ -1,0 +1,317 @@
+---
+// 黄金长期收益一文的两张图：
+// part="price"：1971 年 8 月以来每月金价，一条是名义金价，一条按 CPI 折成数据最后一个月的美元。
+//   1980 年 1 月的高点和扣掉通胀后重新回到这个高度的月份直接标在线上。
+// part="dca"：每月定投黄金和标普500（全收益），可选起止年月和币种。上面三个数，下面两条总资产曲线加一条累计投入的虚线。
+// 两边都按当月均价买，不算费用；年化是内部收益率（IRR）。和 量化/code/黄金长期收益.py 的算法一样。
+// 数据：public/data/gold-long.json，1971-08 起每月一行：世界银行金价、Shiller 标普全收益、美国 CPI。
+import { useTranslations } from "@/i18n";
+
+type Props = { part?: "price" | "dca" };
+const { part = "dca" } = Astro.props;
+const s = useTranslations(Astro.currentLocale).goldLong;
+const base = import.meta.env.BASE_URL;
+---
+
+<section class="bx gl" data-gl={part} data-src={`${base}data/gold-long.json`} aria-label={s.labels[part]}>
+  {part === "dca" && <div class="bx-controls gl-controls"></div>}
+  {part === "dca" && <div class="gl-stats"></div>}
+  <div class="fn-chart gl-chart">
+    <svg></svg>
+    <div class="fn-tip" hidden></div>
+  </div>
+  <p class="fn-note gl-note"></p>
+  <script type="application/json" class="gl-t" set:html={JSON.stringify(s)} />
+</section>
+
+<script>
+  import { tplStr } from "@/i18n/format";
+
+  type Data = { start: number[]; asOf: string; gold: number[]; sp: number[]; cpi: number[] };
+  type Strings = Record<string, any>;
+  let cache: Promise<Data> | null = null;
+  const load = (src: string) => (cache ??= fetch(src).then(r => r.json()));
+
+  // ---------- 格式 ----------
+  let SYM = "$";
+  const MINUS = "−";
+  const money = (v: number) => SYM + Math.round(v).toLocaleString("en-US");
+  const short = (v: number) => (v >= 1e6 ? SYM + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + "M" : v >= 1e3 ? SYM + Math.round(v / 1e3) + "k" : SYM + Math.round(v));
+  const pct = (v: number) => (v < 0 ? MINUS : "") + (Math.abs(v) * 100).toFixed(1) + "%";
+  const ymParts = (ym: number) => ({ y: Math.floor(ym / 12), m: (ym % 12) + 1 });
+
+  function niceStep(raw: number) {
+    const p = Math.pow(10, Math.floor(Math.log10(raw))), r = raw / p;
+    return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 2.5 ? 2.5 : r <= 5 ? 5 : 10) * p;
+  }
+  function ticks(hi: number, n: number) {
+    const step = niceStep(Math.max(1e-9, hi / n)), out: number[] = [];
+    for (let v = 0; v <= Math.ceil(hi / step) * step + step / 2; v += step) out.push(v);
+    return out;
+  }
+  function yearTicks(ymA: number, ymB: number) {
+    const span = (ymB - ymA) / 12, step = span > 50 ? 10 : span > 24 ? 5 : span > 10 ? 2 : 1, out: number[] = [];
+    for (let y = Math.ceil(ymA / 12); y * 12 <= ymB; y++) if (y % step === 0) out.push(y);
+    return out;
+  }
+  function tipShow(tip: HTMLElement, head: string, rows: [string, string, string][], xPx: number, yPx: number, wPx: number) {
+    tip.replaceChildren();
+    const h = document.createElement("p"); h.className = "fn-tip-h"; h.textContent = head; tip.append(h);
+    for (const [c, label, v] of rows) {
+      const p = document.createElement("p"); p.className = "fn-tip-r";
+      const i = document.createElement("i"); if (c) i.style.background = c; else i.style.visibility = "hidden";
+      const b = document.createElement("b"); b.textContent = v;
+      p.append(i, document.createTextNode(label), b); tip.append(p);
+    }
+    tip.hidden = false;
+    const tw = tip.offsetWidth;
+    tip.style.left = `${xPx + 14 + tw > wPx ? Math.max(0, xPx - 14 - tw) : xPx + 14}px`;
+    tip.style.top = `${Math.max(0, yPx - 30)}px`;
+  }
+
+  // 第 0 到第 n−1 个月各投 1 块，第 n 个月的市值是 end：求月收益率 r，换成年化。
+  // 第 k 个月投的 1 块到第 n 个月值 (1+r)^(n−k)，所有投入的终值加起来等于 end
+  function irr(n: number, end: number) {
+    let lo = -0.05, hi = 0.05;
+    for (let it = 0; it < 100; it++) {
+      const r = (lo + hi) / 2;
+      let fv = 0, f = 1 + r;
+      for (let k = 0; k < n; k++) { fv += f; f *= 1 + r; }
+      if (fv < end) lo = r; else hi = r;
+    }
+    return Math.pow(1 + (lo + hi) / 2, 12) - 1;
+  }
+
+  // 画布和几条通用的线
+  function frame(svg: SVGSVGElement, H: number, M: { l: number; r: number; t: number; b: number }) {
+    const W = Math.max(300, Math.round(svg.parentElement!.clientWidth));
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", String(W)); svg.setAttribute("height", String(H));
+    return { W, iw: W - M.l - M.r, ih: H - M.t - M.b };
+  }
+  // 线尾的名字：离得太近就上下错开
+  function endLabels(items: { y: number; cls: string; txt: string }[], x: number) {
+    items.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < items.length; i++) if (items[i].y - items[i - 1].y < 14) items[i].y = items[i - 1].y + 14;
+    return items.map(o => `<text class="gl-end ${o.cls}" x="${x}" y="${(o.y + 4).toFixed(1)}">${o.txt}</text>`).join("");
+  }
+  function hover(svg: SVGSVGElement, W: number, H: number, M: { l: number }, iw: number, n: number, tip: HTMLElement, onK: (k: number) => [string, [string, string, string][], number]) {
+    const rule = svg.querySelector(".fn-rule")!;
+    const show = (e: PointerEvent) => {
+      const rect = svg.getBoundingClientRect(), px = ((e.clientX - rect.left) / rect.width) * W;
+      const k = Math.max(0, Math.min(n - 1, Math.round(((px - M.l) / iw) * (n - 1))));
+      const [head, rows, x] = onK(k);
+      rule.setAttribute("x1", String(x)); rule.setAttribute("x2", String(x));
+      svg.classList.add("is-hover");
+      tipShow(tip, head, rows, (x / W) * rect.width, ((e.clientY - rect.top) / rect.height) * H, rect.width);
+    };
+    svg.onpointermove = show; svg.onpointerdown = show;
+    svg.onpointerleave = () => { svg.classList.remove("is-hover"); tip.hidden = true; };
+  }
+  const onResize = (svg: SVGSVGElement, draw: () => void) => {
+    let w0 = -1;
+    new ResizeObserver(() => { const w = Math.round(svg.parentElement!.clientWidth); if (w && w !== w0) { w0 = w; draw(); } }).observe(svg.parentElement!);
+  };
+
+  // ---------- part="price" ----------
+  function mountPrice(root: HTMLElement, d: Data, t: Strings) {
+    const svg = root.querySelector<SVGSVGElement>("svg")!, tip = root.querySelector<HTMLElement>(".fn-tip")!;
+    const n = d.gold.length, ym0 = d.start[0] * 12 + d.start[1] - 1, cEnd = d.cpi[n - 1];
+    const real = d.gold.map((g, k) => (g * cEnd) / d.cpi[k]);
+    // 1980 年 1 月的高点，和扣掉通胀后第一次回到这个高度的月份
+    const kPk = 1980 * 12 - ym0;
+    let kBack = -1;
+    for (let k = kPk + 1; k < n; k++) if (real[k] >= real[kPk]) { kBack = k; break; }
+    const E = ymParts(ym0 + n - 1);
+    root.querySelector(".gl-note")!.textContent = tplStr(t.priceNote, E);
+    const draw = () => {
+      SYM = "$";
+      const M = { l: 56, r: 64, t: 14, b: 24 }, H = svg.parentElement!.clientWidth < 520 ? 280 : 340;
+      const { W, iw, ih } = frame(svg, H, M);
+      const tk = ticks(Math.max(...real, ...d.gold), 4), hi = tk[tk.length - 1];
+      const X = (k: number) => M.l + (k / (n - 1)) * iw, Y = (v: number) => M.t + (1 - v / hi) * ih;
+      const line = (ys: number[]) => ys.map((v, k) => (k ? "L" : "M") + X(k).toFixed(1) + "," + Y(v).toFixed(1)).join("");
+      let s1 = tk.map(v => `<line class="${v === 0 ? "fn-axis" : "fn-grid"}" x1="${M.l}" x2="${W - M.r}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text x="${M.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("");
+      s1 += `<path class="gl-line is-nom" d="${line(d.gold)}"/><path class="gl-line is-real" d="${line(real)}"/>`;
+      s1 += endLabels([{ y: Y(real[n - 1]), cls: "is-real", txt: t.realShort }, { y: Y(d.gold[n - 1]), cls: "is-nom", txt: t.nomShort }], W - M.r + 6);
+      // 标出 1980 年的高点和回到这个高度的月份，中间连一条虚线
+      const yPk = Y(real[kPk]);
+      s1 += `<line class="gl-ref" x1="${X(kPk).toFixed(1)}" x2="${X(kBack >= 0 ? kBack : n - 1).toFixed(1)}" y1="${yPk.toFixed(1)}" y2="${yPk.toFixed(1)}"/>`;
+      s1 += `<circle class="gl-mark" cx="${X(kPk).toFixed(1)}" cy="${yPk.toFixed(1)}" r="3.2"/><text class="gl-lab" x="${(X(kPk) + 8).toFixed(1)}" y="${(yPk - 7).toFixed(1)}">${tplStr(t.peak, { v: money(real[kPk]) })}</text>`;
+      if (kBack >= 0) {
+        const P = ymParts(ym0 + kBack), x = X(kBack);
+        s1 += `<circle class="gl-mark" cx="${x.toFixed(1)}" cy="${Y(real[kBack]).toFixed(1)}" r="3.2"/><text class="gl-lab" x="${(x - 8).toFixed(1)}" y="${(yPk - 7).toFixed(1)}" text-anchor="end">${tplStr(t.back, { ...P, n: Math.round((kBack - kPk) / 12) })}</text>`;
+      }
+      s1 += yearTicks(ym0, ym0 + n - 1).map(y => { const k = y * 12 - ym0; return k < 0 ? "" : `<text x="${X(k).toFixed(1)}" y="${H - 6}" text-anchor="middle">${y}</text>`; }).join("");
+      s1 += `<line class="fn-rule" y1="${M.t}" y2="${M.t + ih}"/><circle class="fn-dot gl-dot is-real" r="4"/><circle class="fn-dot gl-dot is-nom" r="4"/>`;
+      svg.innerHTML = s1;
+      const dR = svg.querySelector(".gl-dot.is-real")!, dN = svg.querySelector(".gl-dot.is-nom")!;
+      const cs = getComputedStyle(root), cR = cs.getPropertyValue("--gl-gold").trim(), cN = cs.getPropertyValue("--gl-nom").trim();
+      hover(svg, W, H, M, iw, n, tip, k => {
+        const x = X(k);
+        dR.setAttribute("cx", String(x)); dR.setAttribute("cy", String(Y(real[k])));
+        dN.setAttribute("cx", String(x)); dN.setAttribute("cy", String(Y(d.gold[k])));
+        return [tplStr(t.ym, ymParts(ym0 + k)), [[cN, t.nom, money(d.gold[k])], [cR, tplStr(t.real, E), money(real[k])]], x];
+      });
+    };
+    draw(); onResize(svg, draw);
+  }
+
+  // ---------- part="dca" ----------
+  function mountDca(root: HTMLElement, d: Data, t: Strings) {
+    const svg = root.querySelector<SVGSVGElement>("svg")!, tip = root.querySelector<HTMLElement>(".fn-tip")!;
+    const box = root.querySelector<HTMLElement>(".gl-controls")!;
+    const N = d.gold.length, ym0 = d.start[0] * 12 + d.start[1] - 1;
+    let a = 0, b = N - 1, cur = "usd";
+    const F = ymParts(ym0), L = ymParts(ym0 + N - 1);
+    const sel = (cls: string, from: number, to: number, v0: number, fmt: (v: number) => string) =>
+      `<select class="${cls}">` + Array.from({ length: to - from + 1 }, (_, i) => from + i).map(v => `<option value="${v}"${v === v0 ? " selected" : ""}>${fmt(v)}</option>`).join("") + `</select>`;
+    const paint = () => {
+      const A = ymParts(ym0 + a), B = ymParts(ym0 + b);
+      const mr = (y: number) => [y === F.y ? F.m : 1, y === L.y ? L.m : 12];
+      const [am0, am1] = mr(A.y), [bm0, bm1] = mr(B.y);
+      box.innerHTML =
+        `<label class="bx-range"><span>${t.start}</span>${sel("gl-ya", F.y, L.y, A.y, String)}${sel("gl-ma", am0, am1, A.m, v => t.months[v - 1])}</label>` +
+        `<label class="bx-range"><span>${t.end}</span>${sel("gl-yb", F.y, L.y, B.y, String)}${sel("gl-mb", bm0, bm1, B.m, v => t.months[v - 1])}</label>` +
+        `<div class="bx-switch" role="group" aria-label="${t.cur}">` +
+        [["usd", "$500"], ["cny", "¥3000"]].map(([v, txt]) => `<button type="button" data-v="${v}" aria-pressed="${cur === v}">${txt}</button>`).join("") + `</div>`;
+    };
+    const pick = (y: number, m: number) => Math.max(0, Math.min(N - 1, y * 12 + m - 1 - ym0));
+    box.addEventListener("click", e => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-v]");
+      if (!btn) return;
+      cur = btn.dataset.v!; paint(); draw();
+    });
+    box.addEventListener("change", e => {
+      const q = (c: string) => +box.querySelector<HTMLSelectElement>(c)!.value, el = e.target as HTMLElement;
+      if (el.matches(".gl-ya, .gl-ma")) a = pick(q(".gl-ya"), q(".gl-ma"));
+      if (el.matches(".gl-yb, .gl-mb")) b = pick(q(".gl-yb"), q(".gl-mb"));
+      if (b - a < 12) { if (el.matches(".gl-ya, .gl-ma")) b = Math.min(N - 1, a + 12); a = Math.max(0, b - 12); }
+      paint(); draw();
+    });
+    root.querySelector(".gl-note")!.textContent = t.dcaNote;
+    const draw = () => {
+      const amt = cur === "cny" ? 3000 : 500;
+      SYM = cur === "cny" ? "¥" : "$";
+      // 第 a 到第 b−1 个月各买一次，看第 b 个月的市值（和 Python 一样：最后一个月只估值不再买）
+      const n = b - a, g = new Float64Array(n + 1), p = new Float64Array(n + 1), inv = new Float64Array(n + 1);
+      let ug = 0, us = 0;
+      for (let k = 0; k <= n; k++) {
+        const i = a + k;
+        if (k < n) { ug += amt / d.gold[i]; us += amt / d.sp[i]; }
+        g[k] = ug * d.gold[i]; p[k] = us * d.sp[i]; inv[k] = amt * Math.min(k + 1, n);
+      }
+      const rg = irr(n, g[n] / amt), rp = irr(n, p[n] / amt);
+      const stat = (cls: string, k: string, v: string, sub: string) =>
+        `<div class="gl-stat ${cls}"><p class="bx-hero-k">${cls ? "<i></i>" : ""}${k}</p><p class="gl-v">${v}</p><p class="bx-hero-n">${sub}</p></div>`;
+      root.querySelector(".gl-stats")!.innerHTML =
+        stat("is-gold", t.gold, money(g[n]), tplStr(t.irrN, { r: pct(rg), x: (g[n] / (amt * n)).toFixed(1) })) +
+        stat("is-sp", t.sp, money(p[n]), tplStr(t.irrN, { r: pct(rp), x: (p[n] / (amt * n)).toFixed(1) })) +
+        stat("", t.invested, money(amt * n), tplStr(t.monthsN, { n }));
+
+      const M = { l: 56, r: 64, t: 12, b: 24 }, H = svg.parentElement!.clientWidth < 520 ? 300 : 380;
+      const { W, iw, ih } = frame(svg, H, M);
+      let vMax = 0; for (let k = 0; k <= n; k++) vMax = Math.max(vMax, g[k], p[k], inv[k]);
+      const tk = ticks(vMax, 4), hi = tk[tk.length - 1];
+      const X = (k: number) => M.l + (k / n) * iw, Y = (v: number) => M.t + (1 - v / hi) * ih;
+      const line = (ys: Float64Array) => Array.from(ys, (v, k) => (k ? "L" : "M") + X(k).toFixed(1) + "," + Y(v).toFixed(1)).join("");
+      let s1 = tk.map(v => `<line class="${v === 0 ? "fn-axis" : "fn-grid"}" x1="${M.l}" x2="${W - M.r}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text x="${M.l - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("");
+      s1 += `<path class="gl-line is-inv" d="${line(inv)}"/><path class="gl-line is-sp" d="${line(p)}"/><path class="gl-line is-real" d="${line(g)}"/>`;
+      s1 += endLabels([{ y: Y(g[n]), cls: "is-real", txt: t.goldShort }, { y: Y(p[n]), cls: "is-sp", txt: t.spShort }], W - M.r + 6);
+      s1 += yearTicks(ym0 + a, ym0 + b).map(y => { const k = y * 12 - (ym0 + a); return k < 0 || k > n ? "" : `<text x="${X(k).toFixed(1)}" y="${H - 6}" text-anchor="middle">${y}</text>`; }).join("");
+      s1 += `<line class="fn-rule" y1="${M.t}" y2="${M.t + ih}"/><circle class="fn-dot gl-dot is-sp" r="4"/><circle class="fn-dot gl-dot is-real" r="4"/>`;
+      svg.innerHTML = s1;
+      const dG = svg.querySelector(".gl-dot.is-real")!, dP = svg.querySelector(".gl-dot.is-sp")!;
+      const cs = getComputedStyle(root), cG = cs.getPropertyValue("--gl-gold").trim(), cP = cs.getPropertyValue("--gl-sp").trim(), cI = cs.getPropertyValue("--gl-nom").trim();
+      hover(svg, W, H, M, iw, n + 1, tip, k => {
+        const x = X(k);
+        dG.setAttribute("cx", String(x)); dG.setAttribute("cy", String(Y(g[k])));
+        dP.setAttribute("cx", String(x)); dP.setAttribute("cy", String(Y(p[k])));
+        return [tplStr(t.ym, ymParts(ym0 + a + k)), [[cI, t.invested, money(inv[k])], [cG, t.gold, money(g[k])], [cP, t.sp, money(p[k])], ["", t.goldPx, "$" + Math.round(d.gold[a + k]).toLocaleString("en-US")]], x];
+      });
+    };
+    paint(); draw(); onResize(svg, draw);
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>(".gl")) {
+    const t = JSON.parse(root.querySelector(".gl-t")!.textContent!) as Strings;
+    load(root.dataset.src!).then(d => (root.dataset.gl === "price" ? mountPrice : mountDca)(root, d, t));
+  }
+</script>
+
+<style is:global>
+  .gl {
+    --gl-gold: #b07a10;
+    --gl-sp: #016dac;
+    --gl-nom: #8a8680;
+  }
+  [data-theme="dark"] .gl {
+    --gl-gold: #d39b2a;
+    --gl-sp: #5595c8;
+    --gl-nom: #9c988f;
+  }
+  .gl .bx-controls {
+    margin-bottom: 14px;
+  }
+  .gl .bx-range select {
+    padding-right: 6px;
+  }
+  .gl-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 20px;
+    margin-bottom: 14px;
+  }
+  .gl-stat .bx-hero-k {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .gl-stat .bx-hero-k i {
+    display: inline-block;
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+  }
+  .gl-stat.is-gold .bx-hero-k i { background: var(--gl-gold); }
+  .gl-stat.is-sp .bx-hero-k i { background: var(--gl-sp); }
+  .gl-v {
+    margin-top: 2px !important;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+  .gl-line {
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .gl-line.is-real { stroke: var(--gl-gold); }
+  .gl-line.is-sp { stroke: var(--gl-sp); }
+  .gl-line.is-nom { stroke: var(--gl-nom); stroke-width: 1.5; }
+  .gl-line.is-inv { stroke: var(--gl-nom); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  .gl-ref { stroke: var(--gl-gold); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.7; }
+  .fn-chart text.gl-end { font-size: 12px; font-weight: 600; }
+  .fn-chart text.gl-end.is-real { fill: var(--gl-gold); }
+  .fn-chart text.gl-end.is-sp { fill: var(--gl-sp); }
+  .fn-chart text.gl-end.is-nom { fill: var(--gl-nom); }
+  .gl-mark { fill: var(--gl-gold); stroke: var(--card); stroke-width: 2; }
+  .fn-chart text.gl-lab { fill: var(--foreground); font-size: 12px; font-weight: 600; }
+  .gl .fn-dot { stroke: var(--card); stroke-width: 2; }
+  .gl-dot.is-real { fill: var(--gl-gold); }
+  .gl-dot.is-sp { fill: var(--gl-sp); }
+  .gl-dot.is-nom { fill: var(--gl-nom); }
+  @media (max-width: 560px) {
+    .gl-stats {
+      grid-template-columns: 1fr 1fr;
+    }
+    .gl-stats .gl-stat:last-child {
+      grid-column: 1 / -1;
+    }
+    .gl-v {
+      font-size: 20px;
+    }
+  }
+</style>

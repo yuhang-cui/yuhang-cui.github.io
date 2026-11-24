@@ -20,6 +20,8 @@ const posts = defineCollection({
       stat: z.string().optional(),
       statLabel: z.string().optional(),
       draft: z.boolean().optional(),
+      // 系列文章的序号，例如 series: 1。分类页里有序号的文章按序号从小到大排在最前面，其余的照旧按时间排
+      series: z.number().optional(),
       tags: z.array(z.string()).default(["others"]),
       ogImage: image().or(z.string()).optional(),
       description: z.string(),

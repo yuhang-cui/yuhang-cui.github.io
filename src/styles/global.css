@@ -212,8 +212,9 @@ a.tag-pill:hover {
 .cat-teal   { --cat-bg: #d6ece8; --cat-fg: #1d5a53; --cat-dot: #3d9a8e; }
 .cat-gray   { --cat-bg: #ebe8e2; --cat-fg: #4a4741; --cat-dot: #9b968d; }
 .cat-pink   { --cat-bg: #f4e0e8; --cat-fg: #6b2a46; --cat-dot: #c45f8a; }
+.cat-brown  { --cat-bg: #e8dcd3; --cat-fg: #4e3526; --cat-dot: #96705a; }
 
-/* ===== 分类页：6 张横向卡片，左边名称和说明，右边篇数和箭头 ===== */
+/* ===== 分类页：每个分类一张横向卡片，左边名称和说明，右边篇数和箭头 ===== */
 .cat-list {
   display: grid;
   gap: 12px;
@@ -1026,6 +1027,29 @@ a.tag-pill:hover {
   font-size: 13px;
   color: var(--faint);
 }
+/* 大数字右边：单看一边，高点被突破 / 低点被突破 */
+.bx-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 32px;
+}
+.bx-sides {
+  display: flex;
+  gap: 32px;
+}
+.bx-side-k {
+  font-size: 13px;
+  color: var(--summary);
+}
+.bx-side-v {
+  margin-top: 2px !important;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--foreground);
+}
 .bx-bar {
   display: flex;
   gap: 2px;
@@ -1076,6 +1100,22 @@ a.tag-pill:hover {
 .bx-tile-n {
   font-size: 12px;
   color: var(--faint);
+}
+/* 黄金：第一次突破出在亚盘 / 欧盘 / 美盘。颜色和时段图一致：亚盘红、欧盘蓝、美盘绿 */
+.bx .bx-asia { background: color-mix(in srgb, #c0392b 80%, white); }
+.bx .bx-eu { background: color-mix(in srgb, #2f6fb3 80%, white); }
+.bx .bx-us { background: color-mix(in srgb, #3f9a6e 80%, white); }
+.bx-view > .bx-firstbar {
+  margin-top: 0;
+}
+.bx-tiles-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.bx-tile-k span {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--faint);
+  white-space: nowrap;
 }
 
 .bx-sub {
@@ -1128,6 +1168,9 @@ a.tag-pill:hover {
   grid-template-columns: 104px minmax(0, 1fr) 48px;  /* 英文“Overnight H/L”也放得下一行 */
   padding: 5px 4px;
 }
+.bx-cmps-gold .bx-cmp {
+  grid-template-columns: 96px minmax(0, 1fr) 48px;
+}
 .bx-cmp .bx-bar {
   height: 18px;
 }
@@ -1149,6 +1192,19 @@ a.tag-pill:hover {
   }
   .bx-hero-v {
     font-size: 34px;
+  }
+  .bx-tiles-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .bx-tiles-3 .bx-tile {
+    padding: 8px 9px;
+  }
+  .bx-tiles-3 .bx-tile-k {
+    flex-wrap: wrap;
+  }
+  .bx-tiles-3 .bx-tile-k span {
+    flex-basis: 100%;
+    margin-left: 15px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

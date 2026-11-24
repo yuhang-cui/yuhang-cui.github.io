@@ -5,16 +5,15 @@
 export type Category = {
   slug: string;
   name: string;
-  color: "blue" | "purple" | "orange" | "yellow" | "teal" | "pink";
+  color: "blue" | "purple" | "orange" | "yellow" | "teal" | "pink" | "brown";
 };
 
 export const CATEGORIES: Category[] = [
   { slug: "research", name: "Research", color: "blue" },
-  { slug: "market-cycle", name: "Market Cycle", color: "purple" },
   { slug: "strategies", name: "Strategies", color: "orange" },
-  { slug: "practice", name: "Practice", color: "yellow" },
   { slug: "tools", name: "Tools", color: "teal" },
   { slug: "thinking", name: "Thinking", color: "pink" },
+  { slug: "invest", name: "Invest", color: "brown" },
 ];
 
 export function getCategory(slug: string): Category | undefined {

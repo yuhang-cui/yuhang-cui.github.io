@@ -1,0 +1,165 @@
+---
+title: "DCA Series 03: Is It Better to Wait for a Bigger Dip Before Buying?"
+description: "$500 a month, part of it set aside and invested only once the market is 10% or 20% below its high. I run every month of the S&P 500 since 1871 as a start: over 30 years, none of the 1,511 starts beat investing it all every month."
+stat: "0%"
+statLabel: "30-year starts where holding back for dips beat investing it all"
+pubDatetime: 2026-11-13T20:00:00+08:00
+tags: [Invest]
+series: 3
+lang: en
+---
+
+import DipReserve from "@/components/DipReserve.astro";
+import TableTabs from "@/components/TableTabs.astro";
+
+> No. Set aside $100 of every $500 and invest it once the market is 10% below its high. Over 30 years, none of the **1,511** start months since 1871 beat investing it all every month. On average it ends **2.2%** lower.
+>
+> Hold back 10%, 20% or 30% a month, and after 30 years you end up 1.1%, 2.2% or 3.2% lower on average. Wait for a 20% drop instead, and it is 2.4%, 4.8% or 7.2%.
+>
+> The reason is that the money has to wait. Cash set aside waits 17.5 months on average before it is invested. Of the money that waited, 57% went in at a higher price than in the month it was saved.
+>
+> <span class="takeaway">What to do: when you have the money, invest it on schedule. No need to hold it back waiting for a drop.</span>
+
+The last post looked at buying a fixed amount on a fixed day each month. Many people go one step further: buy a little less normally and more after a drop. Is that a better deal?
+
+For a fair comparison, both sides have to put in the same money each month. If you keep buying as usual and add extra cash after a drop, you have invested more, so of course you end up with more. So in this post part of each month's money is set aside and invested after a drop.
+
+The data is the S&P 500 since 1871, 1,870 months in all.
+
+## 1. The two approaches
+
+<div class="exp-table">
+
+| Held back each month | Invested first | Set aside |
+|:---|---:|---:|
+| 10% | $450 | $50 |
+| 20% | $400 | $100 |
+| 30% | $350 | $150 |
+
+</div>
+
+Take 20% as the example:
+
+- Invest it all every month: buy with the full $500.
+- Hold back for dips: buy $400 each month and set aside the other $100. On each month's buying day, check the market. If it is 10% or more below its all-time high, invest all the cash set aside.
+
+The cash earns no interest. Whatever is still uninvested at the end counts at face value in the total.
+
+## 2. One path: buying IVV from 2000, holding back ends 1.25% lower
+
+First the stretch used in the last post: buying IVV on the first trading day of each month, June 2000 to October 2026. You can change how much is held back, how big a drop triggers the buy, and the start and end months, and switch to the S&P 500 from 1871 or to QQQ. Hover over the chart to see what each side holds each month and how much cash has built up.
+
+<DipReserve part="path" />
+
+After a little over 26 years, investing it all ends at $964,317 and holding back at $952,270, $12,047 lower.
+
+Holding back starts out ahead. June 2000 was right near a high. The first cash set aside went in during the decline half a year later, and by the end of 2000 holding back led by 1.7%.
+
+It fell furthest behind from 2012 to 2018. In those 7 years the first trading day of the month was never 10% below the high. The cash built up to $8,400 and only went in in January 2019. In October 2018 it was 1.7% behind, the worst of the whole stretch.
+
+In the two big drops of April 2020 and May 2022 the cash went in both times. The gap shrank to about 1.1%, but what had been lost before was not made back.
+
+Right now $4,100 is still waiting. Since June 2023 the first trading day of every month has been less than 10% below the high. On 8 April 2025 the market was 18.8% down, but on the first trading days of April and May it was only a little over 8% down, so nothing triggered. It did drop, just not on a buying day.
+
+## 3. Every month as a start: over 30 years, holding back never won
+
+One path is one start. Below, every month since 1871 is a start, held for 5, 10, 20 and 30 years, and compared each time.
+
+<DipReserve part="roll" />
+
+Hold back 20%, invest after a 10% drop: over 5 years, holding back wins from 27% of starts. Over 10 years 19%, over 20 years 5%, over 30 years 0. The longer you invest, the less it keeps up.
+
+When it wins, it does not win by much. Over 10 years, holding back wins by at most 0.9% and loses by up to 9.8%.
+
+How much you hold back does not change how often it wins, only how much lower it ends. The shortfall is proportional to the share held back.
+
+When can holding back win? When the market barely rises for a decade. For the 326 starts where holding back won over 10 years, the S&P averaged 4.0% annualised over that decade. For the starts where it lost, 10.9%. The winning starts cluster in 1880–1912, 1964–1969 and 1999–2002.
+
+<TableTabs title="Since 1871: holding back for dips vs investing it all every month" tabs={["Invest after a 10% drop", "Invest after a 20% drop"]}>
+<div class="tt-panel">
+
+| Years invested | Starts where holding back won | Hold back 10%: average shortfall | Hold back 20%: average shortfall | Hold back 30%: average shortfall |
+|:---|---:|---:|---:|---:|
+| 5 years | 27.2% | 0.77% | 1.54% | 2.30% |
+| 10 years | 18.6% | 0.97% | 1.95% | 2.92% |
+| 20 years | 4.9% | 1.02% | 2.05% | 3.07% |
+| 30 years | 0% | 1.08% | 2.16% | 3.24% |
+
+</div>
+<div class="tt-panel">
+
+| Years invested | Starts where holding back won | Hold back 10%: average shortfall | Hold back 20%: average shortfall | Hold back 30%: average shortfall |
+|:---|---:|---:|---:|---:|
+| 5 years | 33.5% | 1.24% | 2.48% | 3.72% |
+| 10 years | 26.2% | 1.85% | 3.70% | 5.56% |
+| 20 years | 4.5% | 2.15% | 4.31% | 6.46% |
+| 30 years | 0% | 2.40% | 4.81% | 7.21% |
+
+</div>
+</TableTabs>
+
+<p class="table-note">The share of starts where holding back won does not depend on how much is held back, so it gets one column. The average shortfall is against the total of investing it all every month.</p>
+
+## 4. Why it loses: the money has to wait
+
+### How long the cash set aside waits
+
+<DipReserve part="wait" />
+
+Since 1871, only 31% of months were 10% or more below the high. In the other nearly seven in ten months, the cash set aside had to wait.
+
+It waited 17.5 months on average. Half the money waited at least 10 months, and more than a quarter waited over 2 years. The longest was the sum set aside in July 1949: it waited 99 months and only went in in October 1957. Over 8 years, long enough for a child to start primary school.
+
+And the price it finally got was usually higher. Of the money that waited, 57% went in at a higher price than in the month it was saved, a median 4.5% higher. The 10% drop is measured from the high, and the high keeps moving up while the money waits.
+
+Waiting for a 20% drop takes longer: 52 months on average, with 62% getting a higher price, a median 11.3% higher.
+
+### Buying after a drop: how much more each dollar earns
+
+<DipReserve part="fwd" />
+
+Money invested during a drop does earn a little more afterwards, but not reliably. Since 1871, money invested 10%–20% below the high returned 10.6% annualised over the next 10 years. Money invested within 5% of the high returned 9.0%. Money invested more than 20% below the high returned only 9.4%, the same as the average across all months.
+
+Since 2000 it has been the other way round. With IVV, money invested within 5% of the high returned 11.1% annualised over 10 years. Money invested 10%–20% below the high returned 9.0%.
+
+Investing during a drop earns at most one or two percentage points more a year. But that money first waits a year and a half on average, and the market rises during that time. The little extra it earns does not make up for the year and a half of waiting.
+
+## 5. If the money for buying the dip is extra
+
+If the money invested during a drop is extra, say you spent a bit less during that time, then you have saved more, and investing it is of course better than not.
+
+But for the same extra sum, investing it now still beats holding it for a drop. That is what the sections above calculate.
+
+## 6. Checks and method
+
+<TableTabs title="Checks and method" tabs={["Another dataset", "Method"]}>
+<div class="tt-panel">
+
+Starts from June 2000 on, holding back 20%, run on two S&P datasets. The monthly data is the series from 1871.
+
+| | 10% drop: starts won | 10% drop: average shortfall | 20% drop: starts won | 20% drop: average shortfall |
+|:---|---:|---:|---:|---:|
+| Monthly data, 10 years | 4.5% | 1.91% | 32.8% | 4.63% |
+| IVV daily, 10 years | 0.5% | 1.83% | 28.3% | 1.56% |
+| Monthly data, 20 years | 0% | 1.65% | 0% | 3.96% |
+| IVV daily, 20 years | 0% | 1.59% | 0% | 0.99% |
+
+- Investing after a 10% drop, the two datasets are almost identical.
+- Investing after a 20% drop, the monthly data looks worse. It uses the monthly average price, which smooths out a crash within a single month. In March 2020 and October 2022 the daily data was more than 20% down, but the monthly average was down only 18.9% and 19.3%. So in the monthly data the trigger never fired after October 2010.
+- Measuring the drawdown on price, holding back still ends lower on average. Ignoring dividends and measuring the drop from the high on the price index alone, holding back 20% and investing after a 10% drop wins from 15% of 30-year starts and ends 1.1% lower on average. Before 1950 the dividend yield was 4%–6%, so the price index sat below its old high for long stretches. The cash set aside often went in the same month, and the two approaches differ less.
+- The Nasdaq-100 falls short by less. With QQQ, holding back 20% and investing after a 10% drop wins from 4.0% of 10-year starts, ties 20.7%, and ends 0.46% lower on average. Over 20 years it never wins. Since 2000 it has been more than 10% below its high in 59% of months, so the cash set aside went in quickly.
+
+</div>
+<div class="tt-panel">
+
+- **Data**: the S&P 500 uses Robert Shiller's public monthly series at Yale, January 1871 to October 2026. Prices are monthly averages, with dividends bought back in at that month's price (total return). IVV and QQQ use daily adjusted closes from Yahoo Finance, June 2000 to October 2026, the same data as the last post.
+- **When to buy**: the monthly data buys at the monthly average price. IVV and QQQ buy at the close on the first trading day of each month.
+- **How far below the high**: how much lower the price on the buying day is than the highest price seen before it, on a total-return basis. For IVV and QQQ the high uses daily closes, starting from the first trading day on 19 May 2000.
+- **Comparison**: both approaches start in the same month and end in the same month, with the total valued at the last month's price. The holding-back side includes the cash not yet invested.
+- **Win**: holding back for dips ends with a higher total than investing it all every month. Starts where the cash always went in the same month, so the two sides are identical, count as ties, not wins.
+- **How long it waits**: each month's cash set aside is invested in the next month that is below the trigger, and the wait is the number of months in between. Sums still waiting at the end of the data are not counted.
+- **Annualised return over the next few years**: the total-return annualised return of a dollar invested in a given month and held for N years, averaged in groups by how far below the high it was bought.
+- **Amounts**: all results are ratios and do not depend on the monthly amount. Choosing ¥ just swaps $500 a month for ¥3,000. No exchange rate is applied.
+
+</div>
+</TableTabs>

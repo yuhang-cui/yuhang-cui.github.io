@@ -1,15 +1,22 @@
 ---
 // 突破统计的可交互卡片。两篇文章共用：defaultRef 决定打开时停在哪个视图，顶部可以切换。
+// inst="gc" 是黄金的卡片：按钮换成“全天 / 只看纽约时段”，多一块“第一次突破出在哪个时段”，底下和 ES 对比。
 // 中英文共用：界面文字按页面语言取，和数据一起交给浏览器端脚本。
-import data from "@/data/breakout-by-year.json";
-import { renderBreakout, years, type ByYear, type Ref } from "@/utils/breakoutView";
+import es from "@/data/breakout-by-year.json";
+import gc from "@/data/breakout-gold.json";
+import { renderBreakout, years, type ByYear, type BreakoutOpt, type Ref } from "@/utils/breakoutView";
 import { useTranslations } from "@/i18n";
 
-type Props = { defaultRef: Ref };
-const { defaultRef } = Astro.props;
+type Props = { defaultRef: Ref; inst?: "es" | "gc" };
+const { defaultRef, inst = "es" } = Astro.props;
 
 const s = useTranslations(Astro.currentLocale).breakout;
-const d = data as ByYear;
+const gold = inst === "gc";
+const refs: Exclude<Ref, "esFull">[] = gold ? ["gcDay", "gcNy"] : ["prev", "globex"];   // 顶上的两个按钮
+// 底下对比的几行。黄金卡片把口径相同的放在一起：全天对全天，纽约时段对 ES 日盘
+const opt: BreakoutOpt = gold ? { cmp: ["gcDay", "esFull", "gcNy", "prev"], first: gc.first } : { cmp: refs };
+const all = { ...es, gcDay: gc.gcDay, gcNy: gc.gcNy, esFull: gc.esFull } as ByYear;
+const d = Object.fromEntries(opt.cmp!.map(r => [r, all[r]])) as ByYear;   // 只带这张卡片用得到的几组数
 const ys = years(d, defaultRef);
 const y0 = ys[0];
 const y1 = ys[ys.length - 1];
@@ -19,7 +26,7 @@ const y1 = ys[ys.length - 1];
   <div class="bx-controls">
     <div class="bx-switch" role="group" aria-label={s.refGroup}>
       {
-        (["prev", "globex"] as Ref[]).map(r => (
+        refs.map(r => (
           <button type="button" data-ref={r} aria-pressed={r === defaultRef ? "true" : "false"}>
             {s[r]}
           </button>
@@ -38,19 +45,19 @@ const y1 = ys[ys.length - 1];
     <button type="button" class="bx-reset">{s.allYears}</button>
   </div>
 
-  <div class="bx-view" set:html={renderBreakout(d, s, defaultRef, y0, y1)} />
+  <div class="bx-view" set:html={renderBreakout(d, s, defaultRef, y0, y1, opt)} />
 
-  <script type="application/json" class="bx-data" set:html={JSON.stringify({ data: d, s })} />
+  <script type="application/json" class="bx-data" set:html={JSON.stringify({ data: d, s, opt })} />
 </section>
 
 <script>
-  import { renderBreakout, type ByYear, type BreakoutStrings, type Ref } from "@/utils/breakoutView";
+  import { renderBreakout, type ByYear, type BreakoutOpt, type BreakoutStrings, type Ref } from "@/utils/breakoutView";
 
   function setup() {
     document.querySelectorAll<HTMLElement>(".bx[data-ref]").forEach(root => {
       if (root.dataset.ready) return;
       root.dataset.ready = "1";
-      const { data, s }: { data: ByYear; s: BreakoutStrings } = JSON.parse(
+      const { data, s, opt }: { data: ByYear; s: BreakoutStrings; opt: BreakoutOpt } = JSON.parse(
         root.querySelector(".bx-data")!.textContent!
       );
       const view = root.querySelector<HTMLElement>(".bx-view")!;
@@ -64,7 +71,7 @@ const y1 = ys[ys.length - 1];
         let a = +s0.value;
         let b = +s1.value;
         if (a > b) [a, b] = [b, a];
-        view.innerHTML = renderBreakout(data, s, ref, a, b);
+        view.innerHTML = renderBreakout(data, s, ref, a, b, opt);
         root.querySelectorAll<HTMLButtonElement>(".bx-switch button").forEach(btn =>
           btn.setAttribute("aria-pressed", String(btn.dataset.ref === ref))
         );
