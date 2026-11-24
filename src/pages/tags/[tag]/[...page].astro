@@ -32,7 +32,17 @@ const t = useTranslations(locale);
     {
       page.data.length > 0 ? (
         <ul>
-          {page.data.map(data => <Card {...data} />)}
+          {page.data.map((data, i) => {
+            // 文章写了 section 的分类（现在只有 Reflections）：每换一组，先放一行组名，第二组起上面加一条横线
+            const s = data.data.section;
+            const head = s && s !== page.data[i - 1]?.data.section;
+            return (
+              <>
+                {head && <li class:list={["cat-section", { "cat-section-rule": i > 0 }]}>{s}</li>}
+                <Card {...data} />
+              </>
+            );
+          })}
         </ul>
       ) : (
         <p class="cat-empty">{t.categories.empty}</p>

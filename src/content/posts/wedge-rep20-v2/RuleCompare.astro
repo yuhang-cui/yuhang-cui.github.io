@@ -1,0 +1,156 @@
+---
+// 止盈和移动止损的对比卡片：左上角选样本（全部 / 实盘 / 实验03），右上角选看哪一类做法。
+// 数据是 rules.json，由 交易记录/实验03 黄金Wedge attempt/_tools/exp03_rules_table.py --json 生成。
+import sets from "./rules.json";
+
+const en = Astro.currentLocale === "en";
+const FILTERS = en
+  ? [
+      ["all", "All rules"],
+      ["fixed", "Initial stop never moved"],
+      ["be1", "BE at 1R"],
+    ]
+  : [
+      ["all", "全部做法"],
+      ["fixed", "不移动初始止损"],
+      ["be1", "到 1R 保本"],
+    ];
+// 英文页：做法名和样本名换成英文；没有对应的（以后重新生成的数据）就显示中文原名
+const NAME_EN: Record<string, string> = {
+  "实际": "Actual",
+  "1R 止盈": "1R target",
+  "1.5R 止盈": "1.5R target",
+  "1.5R 止盈，1R 保本": "1.5R target, BE at 1R",
+  "2R 止盈": "2R target",
+  "2R 止盈，1R 保本": "2R target, BE at 1R",
+  "2R 止盈，1.5R 保本": "2R target, BE at 1.5R",
+  "3R 止盈": "3R target",
+  "3R 止盈，1R 保本": "3R target, BE at 1R",
+  "3R 止盈，1.5R 保本": "3R target, BE at 1.5R",
+  "3R 止盈，2R 保本": "3R target, BE at 2R",
+  "3R 止盈，阶梯止损": "3R target, stepped stop",
+  "4R 止盈，1R 保本": "4R target, BE at 1R",
+  "不止盈，阶梯止损": "No target, stepped stop",
+  "不止盈，拿到收盘": "No target, hold to the close",
+};
+const SET_EN: Record<string, string> = { all: "All", live: "Live", exp03: "Experiment 03" };
+const setLabel = (s: { key: string; label: string }) => {
+  if (!en || !SET_EN[s.key]) return s.label;
+  const n = s.label.match(/(\d+)\s*笔$/);
+  return n ? `${SET_EN[s.key]}: ${n[1]} trades` : SET_EN[s.key];
+};
+const rowName = (name: string) => (en ? NAME_EN[name] ?? name : name);
+const L = en
+  ? { card: "Targets and trailing stops compared", sample: "Sample", rule: "Rule", wlz: "W / L / BE", wr: "Win rate", tp: "Target hit rate", aw: "Average win", al: "Average loss", pr: "Payoff ratio", exp: "Expectancy" }
+  : { card: "止盈和移动止损的对比", sample: "样本", rule: "做法", wlz: "赢 / 输 / 平", wr: "胜率", tp: "止盈率", aw: "平均盈利", al: "平均亏损", pr: "盈亏比", exp: "每笔期望" };
+// 每笔期望的颜色，和文章里别的表一致：深绿是这一组里最好的几种，浅绿是比较好的，红是最差的
+const TONE: Record<string, Record<string, string>> = {
+  all: {
+    "3R 止盈，1R 保本": "dg", "4R 止盈，1R 保本": "dg", "不止盈，阶梯止损": "dg",
+    "3R 止盈，1.5R 保本": "lg", "3R 止盈，2R 保本": "lg", "3R 止盈，阶梯止损": "lg", "不止盈，拿到收盘": "red",
+  },
+  live: {
+    "2R 止盈，1R 保本": "dg", "4R 止盈，1R 保本": "dg", "不止盈，阶梯止损": "dg",
+    "2R 止盈，1.5R 保本": "lg", "3R 止盈，1R 保本": "lg", "3R 止盈，阶梯止损": "lg", "3R 止盈": "red",
+  },
+  exp03: {
+    "3R 止盈，1R 保本": "dg",
+    "3R 止盈，1.5R 保本": "lg", "3R 止盈，2R 保本": "lg", "3R 止盈，阶梯止损": "lg", "4R 止盈，1R 保本": "lg",
+    "不止盈，阶梯止损": "lg", "不止盈，拿到收盘": "red",
+  },
+};
+const COLOR: Record<string, string> = {
+  dg: "color:#2c7350;font-weight:600",
+  lg: "color:#74b18e",
+  red: "color:#c45a4e",
+};
+const c = "text-align:center";
+---
+
+<section class="rc rcmp" aria-label={L.card}>
+  <div class="rc-head">
+    <div class="rc-tabs" role="tablist" aria-label={L.sample} data-role="set">
+      {sets.map((s, i) => (
+        <button type="button" role="tab" data-v={s.key} aria-selected={i === 0 ? "true" : "false"}>{setLabel(s)}</button>
+      ))}
+    </div>
+    <div class="rc-tabs" role="tablist" aria-label={L.rule} data-role="filter">
+      {FILTERS.map(([v, label], i) => (
+        <button type="button" role="tab" data-v={v} aria-selected={i === 0 ? "true" : "false"}>{label}</button>
+      ))}
+    </div>
+  </div>
+  <div class="rc-panel rcmp-body">
+    {sets.map((s, i) => (
+      <div class="exp-table rcmp-set" data-set={s.key} hidden={i !== 0}>
+        <table>
+          <thead>
+            <tr>
+              <th>{L.rule}</th>
+              <th style={c}>{L.wlz}</th>
+              <th style={c}>{L.wr}</th>
+              <th style={c}>{L.tp}</th>
+              <th style={c}>{L.aw}</th>
+              <th style={c}>{L.al}</th>
+              <th style={c}>{L.pr}</th>
+              <th style={c}>{L.exp}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {s.rows.map(r => (
+              <tr data-g={r.group}>
+                <td>{rowName(r.name)}</td>
+                <td style={c}>{r.wlz}</td>
+                <td style={c}>{r.wr}</td>
+                <td style={c}>{r.tp}</td>
+                <td style={c}>{r.aw}</td>
+                <td style={c}>{r.al}</td>
+                <td style={c}>{r.pr}</td>
+                <td style={c}><span style={COLOR[TONE[s.key][r.name]]}>{r.exp}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .rcmp-body {
+    padding-top: 4px;
+  }
+  .rcmp-body table {
+    margin: 0;
+  }
+  .rcmp .rc-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .rcmp .rc-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .rcmp .rc-tabs button {
+    flex: none;
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  // 点左边换样本（换一张表），点右边只留这一类做法的行；“实际”那一行一直留着做对照
+  document.addEventListener("click", e => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".rcmp [role=tab]");
+    if (!btn) return;
+    const card = btn.closest<HTMLElement>(".rcmp")!;
+    btn.parentElement!.querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", String(b === btn)));
+    const picked = (role: string) =>
+      card.querySelector<HTMLElement>(`[data-role=${role}] [aria-selected=true]`)!.dataset.v!;
+    const set = picked("set");
+    const filter = picked("filter");
+    card.querySelectorAll<HTMLElement>(".rcmp-set").forEach(t => (t.hidden = t.dataset.set !== set));
+    card.querySelectorAll<HTMLElement>("tbody tr").forEach(r => {
+      r.hidden = filter !== "all" && r.dataset.g !== filter && r.dataset.g !== "actual";
+    });
+  });
+</script>

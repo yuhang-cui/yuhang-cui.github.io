@@ -111,6 +111,7 @@ export default {
       tools: "数据、脚本和指标",
       thinking: "学习路线，以及对市场和交易的思考",
       invest: "定投和长期持有：买什么，怎么买",
+      reflections: "反思：个人的实盘复盘，写给自己看的",
     },
   },
   research: {

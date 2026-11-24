@@ -15,10 +15,14 @@ const locale = Astro.currentLocale ?? config.site.lang;
 const posts = getSortedPosts(await getPostsByLocale(locale));
 const t = useTranslations(locale);
 
+// 文章多的分类排在前面
 const categories = CATEGORIES.map(c => ({
   ...c,
   count: posts.filter(({ data }) => slugifyAll(data.tags).includes(c.slug)).length,
-}));
+}))
+  // Reflections 里如果只剩 private 文章，线上一篇都没有，这时不显示这张卡片
+  .filter(c => c.slug !== "reflections" || c.count > 0)
+  .sort((a, b) => b.count - a.count);
 ---
 
 <Layout title={`${t.pages.tagsTitle} | ${t.site.title}`}>

@@ -35,3 +35,6 @@ compose.override.yaml
 # iCloud 不同步的文件夹
 deps.nosync/
 dist.nosync/
+
+# 私人文章（tags 里带 private）：只在本地看，不上传到 GitHub，所以不会上线
+src/content/posts/_private/

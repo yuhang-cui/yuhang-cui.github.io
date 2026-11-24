@@ -111,6 +111,7 @@ export default {
       tools: "Data, scripts and indicators",
       thinking: "Learning paths, and thoughts on markets and trading",
       invest: "Dollar-cost averaging and long-term holding: what to buy and how",
+      reflections: "Personal reviews of my own live trading, written for myself",
     },
   },
   research: {

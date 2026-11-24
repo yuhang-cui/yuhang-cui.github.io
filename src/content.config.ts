@@ -22,6 +22,8 @@ const posts = defineCollection({
       draft: z.boolean().optional(),
       // 系列文章的序号，例如 series: 1。分类页里有序号的文章按序号从小到大排在最前面，其余的照旧按时间排
       series: z.number().optional(),
+      // 分类页里的分组名，例如 section: "实盘"。同一组的文章用 series 排在一起，组和组之间画一条横线、写上组名
+      section: z.string().optional(),
       tags: z.array(z.string()).default(["others"]),
       ogImage: image().or(z.string()).optional(),
       description: z.string(),

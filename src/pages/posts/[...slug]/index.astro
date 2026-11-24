@@ -101,7 +101,14 @@ const ogImage = ogImageUrl
     </h1>
 
     <ul class="mt-4 flex flex-wrap gap-2">
-      {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />)}
+      {/* private 只是“不上线”的标记，没有对应的分类页，所以不做成链接 */}
+      {tags.map(tag =>
+        tag === "private" ? (
+          <li><span class="tag-pill cat-gray">private</span></li>
+        ) : (
+          <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />
+        )
+      )}
     </ul>
 
     <div class="my-2 flex items-center gap-2">

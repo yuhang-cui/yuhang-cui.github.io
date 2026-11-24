@@ -1,0 +1,187 @@
+---
+title: "Wedge Experiment 03: Moving to Gold, and Finding Out Whether to Move to Breakeven at 1R"
+description: "The first two experiments were both on MES. This one moves to gold (MGC 5-minute). I plan to replay 60 trades and look at three things: how often trades reach 1R and 1.5R compared with ES, which session trades best, and whether to move the stop to the entry price after 1R. This post only covers the design. The focus is how to record the third question: one extra column per trade, and the result with and without the breakeven move can both be calculated."
+stat: "60 trades"
+statLabel: "Planned sample"
+pubDatetime: 2026-11-14T02:00:00+08:00
+series: 4
+section: "Replay training"
+tags: [Reflections]
+lang: en
+---
+
+> **Sample**: 60 trades planned, MGC 5-minute chart. Only 6 are done so far, so this post has no conclusions. It only covers how the experiment is designed.
+>
+> **Questions**: How often does a Wedge on gold reach 1R and 1.5R, compared with ES? Which session trades best? After 1R, should the stop move to the entry price?
+>
+> <span class="takeaway">This post is mainly about how to record the third question: one extra column per trade, and the result with and without the breakeven move can both be worked out.</span>
+
+## Why gold
+
+The first two experiments replayed 63 trades in total, all on MES. [Experiment 01](/en/posts/fixed-2r/) used a fixed 2R target. Experiment 02 picks the target from structure at entry and isn't finished yet.
+
+Gold trades 23 hours a day, and [the movement is concentrated in the US session](/en/posts/gold-sessions/). I don't know whether the same Wedge approach still works there, so I'm running this experiment.
+
+The comparison is the 33 trades from Experiment 02: 61% reached 1R, 39% reached 1.5R and 27% reached 2R.
+
+## Rules
+
+<div class="exp-table">
+
+| Item | Approach |
+|:---|:---|
+| Method | TradingView Replay, MGC 5-minute chart |
+| Entry | Strong signal bars only, stop beyond the signal bar (= 1R) |
+| Exit | Whether to move to breakeven after 1R is a judgment call at the time. I record the exit as it actually happened |
+| Replay | Consecutive trading days, each played through in order from 18:00 ET, no sessions skipped |
+| Close | No new trades after 16:00 New York time, flat before 17:00 |
+| Sample | 60 trades, mainly comparing the Shanghai, Europe and New York sessions |
+
+</div>
+
+Why no skipping: if I only replay the New York session, I can't compare how many Wedges show up in each session.
+
+## Five sessions in a day
+
+Gold has no single open. I split the day into five sessions by each market's open, and count bars from 1 in each session.
+
+<div class="exp-table">
+
+| Session | Starts at |
+|:---|:---|
+| Early Asia | 18:00 New York |
+| Shanghai | 09:00 Beijing |
+| Europe | 08:00 London |
+| New York | 09:30 New York |
+| New York after hours | 16:00 New York |
+
+</div>
+
+<p class="table-note">Each session starts on local time, so daylight saving is handled automatically.</p>
+
+Each trade records two things: which session the signal bar is in, and which bar of that session it is. Both columns are calculated from the entry time, not filled in by hand.
+
+## What I fill in by hand for each trade
+
+<div class="exp-table">
+
+| Column | What goes in |
+|:---|:---|
+| Setup | wedge reversal or wedge flag in trend, 1st or 2nd entry |
+| Signal bar | strong or weak, trend bar or pin bar |
+| Exit | 1R, 1.5R, 2R or 3R target, breakeven exit, initial stop, trailing stop, closed at end of day |
+| Furthest reached | See the next section |
+| Reached before back to entry | See the next section |
+| Initial Risk | Points from entry to stop |
+| Review notes | Context, pattern, signal |
+
+</div>
+
+This time I don't record the entry bar or the Actual Risk. I want fewer judgments per trade.
+
+## Move to breakeven after 1R or not
+
+After 1R, I sometimes move the stop to breakeven and sometimes don't. It's a judgment call at the time. I've never counted which works better.
+
+When price reaches 1R and then comes back to the entry price, there are two ways it can go next:
+
+<div class="exp-table">
+
+| After coming back to entry | Moved to breakeven | Not moved |
+|:---|:---:|:---:|
+| Goes on to the target | 0 | Makes the target |
+| Goes all the way to the initial stop | 0 | −1R |
+
+</div>
+
+To decide whether to move, I need to count how many trades go each way, and how many R the two choices differ by in total.
+
+### Recording just "yes / no" isn't enough
+
+In Experiment 01 I recorded "did it come back to entry after 1R", just yes or no. Of 30 trades, 20 reached 1R, and 9 of those came back to the entry price. That time there was only one target, 2R, so yes or no was enough.
+
+This time I want to compare three targets at once, 1.5R, 2R and 3R, and that's not enough. Take two trades, both reaching 3R at most, both coming back to entry at some point:
+
+<div class="exp-table">
+
+| Path | Breakeven, target 1.5R | Breakeven, target 2R |
+|:---|:---:|:---:|
+| Reaches 1R, back to entry, then 3R | 0 | 0 |
+| Reaches 2R, back to entry, then 3R | +1.5R | +2R |
+
+</div>
+
+The second trade had already hit the target before it came back. The two look the same in the sheet, but the results differ by 1.5R to 2R.
+
+### Two columns per trade now
+
+<div class="exp-table">
+
+| Column | Definition |
+|:---|:---|
+| Furthest reached | With the stop left at its initial level, how many R price reaches at most before the initial stop is hit or the day closes |
+| Reached before back to entry | After 1R, the most R price reaches before it first comes back to the entry price. If it never comes back before 3R, fill in 3R |
+
+</div>
+
+For the two trades above, furthest reached is 3R for both. The second column is 1R for one and 2R for the other, so they are told apart.
+
+With these two columns, for any target, both choices can be calculated:
+
+<div class="exp-table">
+
+| Choice | How it's calculated |
+|:---|:---|
+| Not moved | If furthest reached is at least the target, it makes the target. If not, it loses 1R |
+| Breakeven | If it reached the target before coming back to entry, it makes the target. If it reached 1R but not the target, 0. If it never reached 1R, it loses 1R |
+
+</div>
+
+### Checking seven paths
+
+To check the method, I listed every path I could think of and worked each one out.
+
+<div class="exp-table">
+
+| Path | Furthest reached | Before back to entry | Breakeven<br/>1.5R / 2R / 3R | Not moved<br/>1.5R / 2R / 3R |
+|:---|:---:|:---:|:---:|:---:|
+| Straight to 3R | 3R | 3R | +1.5 / +2 / +3 | +1.5 / +2 / +3 |
+| Reaches 1R, back to entry, then 3R | 3R | 1R | 0 / 0 / 0 | +1.5 / +2 / +3 |
+| Reaches 2R, back to entry, then 3R | 3R | 2R | +1.5 / +2 / 0 | +1.5 / +2 / +3 |
+| Reaches 1.5R, back to entry, reaches 2R, stopped out | 2R | 1.5R | +1.5 / 0 / 0 | +1.5 / +2 / −1 |
+| Reaches 1R, back to entry, reaches 1.5R, stopped out | 1.5R | 1R | 0 / 0 / 0 | +1.5 / −1 / −1 |
+| Reaches 1R, back to entry, stopped out | 1R | 1R | 0 / 0 / 0 | −1 / −1 / −1 |
+| Stopped out directly | Below 1R | Below 1R (automatic) | −1 / −1 / −1 | −1 / −1 / −1 |
+
+</div>
+
+<p class="table-note">Units are R. With a 1R target both choices give the same result, so it isn't listed.</p>
+
+All seven check out.
+
+### The easiest place to get it wrong
+
+Furthest reached has to be followed until the initial stop is hit or the day closes. After I exit, I still have to keep playing the chart forward.
+
+If I only fill it in up to where I exited, every comparison afterwards is wrong. I expect I'll be tempted to cut this corner, so I'm writing it down here first.
+
+## What I'll look at when it's done
+
+<div class="exp-table">
+
+| Question | What to look at |
+|:---|:---|
+| Does it hold up on gold | The share reaching 1R, 1.5R, 2R and 3R, side by side with Experiment 02 |
+| Which session trades best | Hit rates and R per trade by session |
+| Where to set the target | Results of the actual exits, against fixed 1R, 1.5R, 2R and 3R |
+| Whether to move to breakeven | Same set of trades, breakeven against not moved, compared once each at 1.5R, 2R and 3R |
+
+</div>
+
+## Problems I already know about
+
+The sample will be thin. Moving or not only makes a difference on trades that "reached 1R and then came back to the entry price". Only part of the 60 trades will be like that, and split by session there will be even fewer.
+
+So the breakeven question will only be looked at overall, not by session.
+
+I'll come back with the results once the 60 trades are done.

@@ -1,0 +1,247 @@
+---
+title: "Wedge Experiment 03 Review"
+description: "43 replayed trades on gold, 7/1 to 7/10. +11.5R in total, 43% win rate, payoff ratio 2.0. I go through the variables one at a time, with a one-line conclusion for each."
+stat: "+11.5R"
+statLabel: "43 replayed trades"
+pubDatetime: 2026-11-23T13:00:00+00:00
+series: 5
+section: "Replay training"
+tags: [Reflections]
+lang: en
+---
+
+> **Sample**: replays from 2026-07-01 to 07-10, 8 trading days, 43 trades, all on the gold 5-minute chart. The plan was 60 trades. I'm at 43 so far.
+>
+> **Result**: +11.5R in total. 16 won, 21 lost, 6 at breakeven.
+>
+> <span class="takeaway">Win rate 43%, average win +2.03R, average loss −1.00R, payoff ratio 2.0, expectancy +0.27R per trade.</span>
+
+The experiment design is in [this post](/en/posts/wedge-gold-exp03/). The live trading review is in [this post](/en/posts/wedge-rep20-v2/), in the same format.
+
+## Variable 1: Signal Bar
+
+### A. Four signal bars
+
+<div class="exp-table">
+
+| Signal bar | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| strong pin bar | 35 | 16 / 14 / 5 | 53% | +2.03R | −1.00R | 2.0 | <span style="color:#4f9a72">+0.53R</span> |
+| strong trend bar | 1 | 0 / 1 / 0 | 0% | n/a | −1.00R | n/a | <span style="color:#c45a4e">−1.00R</span> |
+| weak pin bar | 3 | 0 / 3 / 0 | 0% | n/a | −1.00R | n/a | <span style="color:#c45a4e">−1.00R</span> |
+| weak trend bar | 4 | 0 / 3 / 1 | 0% | n/a | −1.00R | n/a | <span style="color:#c45a4e">−0.75R</span> |
+
+</div>
+
+### B. strong vs weak
+
+<div class="exp-table">
+
+| Signal bar | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| strong | 36 | 16 / 15 / 5 | 52% | +2.03R | −1.00R | 2.0 | <span style="color:#4f9a72">+0.49R</span> |
+| weak | 7 | 0 / 6 / 1 | 0% | n/a | −1.00R | n/a | <span style="color:#c45a4e">−0.86R</span> |
+
+</div>
+
+### C. pin bar vs trend bar
+
+<div class="exp-table">
+
+| Signal bar | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| pin bar | 38 | 16 / 17 / 5 | 48% | +2.03R | −1.00R | 2.0 | <span style="color:#4f9a72">+0.41R</span> |
+| trend bar | 5 | 0 / 4 / 1 | 0% | n/a | −1.00R | n/a | <span style="color:#c45a4e">−0.80R</span> |
+
+</div>
+
+Conclusion: all 16 winners were strong pin bars. I took 7 weak signal bars: 6 were stopped out and 1 ended at breakeven. There are only 5 trend bars, and 4 of them are weak, so this sample can't say whether pin bars or trend bars are better.
+
+## Variable 2: Setup
+
+### A. Four setups
+
+<div class="exp-table">
+
+| Setup | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| wedge flag in trend 1st entry | 4 | 2 / 2 / 0 | 50% | +2.21R | −1.00R | 2.2 | <span style="color:#4f9a72">+0.61R</span> |
+| wedge flag in trend 2nd entry | 1 | 0 / 1 / 0 | 0% | n/a | −1.00R | n/a | <span style="color:#c45a4e">−1.00R</span> |
+| wedge reversal 1st entry | 23 | 7 / 14 / 2 | 33% | +1.77R | −1.00R | 1.8 | <span style="color:#c45a4e">−0.07R</span> |
+| wedge reversal 2nd entry | 15 | 7 / 4 / 4 | 64% | +2.24R | −1.00R | 2.2 | <span style="color:#4f9a72">+0.78R</span> |
+
+</div>
+
+### B. flag in trend vs reversal
+
+<div class="exp-table">
+
+| Setup | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| wedge flag in trend | 5 | 2 / 3 / 0 | 40% | +2.21R | −1.00R | 2.2 | <span style="color:#4f9a72">+0.28R</span> |
+| wedge reversal | 38 | 14 / 18 / 6 | 44% | +2.00R | −1.00R | 2.0 | <span style="color:#4f9a72">+0.27R</span> |
+
+</div>
+
+### C. 1st entry vs 2nd entry
+
+<div class="exp-table">
+
+| Setup | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1st entry | 27 | 9 / 16 / 2 | 36% | +1.87R | −1.00R | 1.9 | +0.03R |
+| 2nd entry | 16 | 7 / 5 / 4 | 58% | +2.24R | −1.00R | 2.2 | <span style="color:#4f9a72">+0.67R</span> |
+
+</div>
+
+Conclusion: 2nd entries are much better than 1st entries, +0.67R against +0.03R. The gap is mostly inside reversals: reversal 2nd entries are +0.78R, 1st entries −0.07R. flag in trend has only 5 trades, so I'm leaving it aside for now.
+
+## Variable 3: Direction
+
+<div class="exp-table">
+
+| Direction | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Long | 10 | 3 / 6 / 1 | 33% | +1.64R | −1.00R | 1.6 | <span style="color:#c45a4e">−0.11R</span> |
+| Short | 33 | 13 / 15 / 5 | 46% | +2.12R | −1.00R | 2.1 | <span style="color:#4f9a72">+0.38R</span> |
+
+</div>
+
+Conclusion: shorts +0.38R, longs −0.11R. Only 10 longs.
+
+## Variable 4: Session
+
+### A. Four sessions
+
+<div class="exp-table">
+
+| Session | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Early Asia | 9 | 5 / 3 / 1 | 62% | +2.59R | −1.00R | 2.6 | <span style="color:#4f9a72">+1.11R</span> |
+| Shanghai | 16 | 5 / 9 / 2 | 36% | +1.82R | −1.00R | 1.8 | +0.01R |
+| Europe | 11 | 4 / 7 / 0 | 36% | +1.49R | −1.00R | 1.5 | <span style="color:#c45a4e">−0.10R</span> |
+| New York | 7 | 2 / 2 / 3 | 50% | +2.24R | −1.00R | 2.2 | <span style="color:#4f9a72">+0.35R</span> |
+
+</div>
+
+### B. Which bar of the session the signal bar is
+
+<div class="exp-table">
+
+| Signal bar number | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Bars 1 – 12 | 14 | 5 / 6 / 3 | 45% | +1.71R | −1.00R | 1.7 | +0.18R |
+| Bars 13 – 36 | 15 | 7 / 6 / 2 | 54% | +2.12R | −1.00R | 2.1 | <span style="color:#4f9a72">+0.59R</span> |
+| Bar 37 onwards | 14 | 4 / 9 / 1 | 31% | +2.27R | −1.00R | 2.3 | +0.01R |
+
+</div>
+
+Conclusion: Early Asia is best, 9 trades at +1.11R. New York, 7 trades at +0.35R. Shanghai and Europe together, 27 trades, roughly break even. Within each session, bars 13 to 36 are best, that is 1 to 3 hours after the open. From bar 37 on it's close to 0.
+
+## Variable 5: Trade Order
+
+<div class="exp-table">
+
+| Trade of the day | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Trades 1 – 2 | 16 | 7 / 6 / 3 | 54% | +2.28R | −1.00R | 2.3 | <span style="color:#4f9a72">+0.63R</span> |
+| Trades 3 – 4 | 11 | 5 / 6 / 0 | 45% | +1.48R | −1.00R | 1.5 | +0.13R |
+| Trade 5 onwards | 16 | 4 / 9 / 3 | 31% | +2.27R | −1.00R | 2.3 | +0.01R |
+
+</div>
+
+Conclusion: the first two trades of each day are best, +0.63R. The 16 trades from the 5th on add up to about 0. But the replay starts at 18:00 ET, so the first two trades are mostly the Early Asia ones. This finding and the previous one may be the same thing.
+
+## Variable 6: Initial Risk
+
+<div class="exp-table">
+
+| Initial Risk | Trades | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Under 4 points | 13 | 5 / 6 / 2 | 45% | +2.23R | −1.00R | 2.2 | <span style="color:#4f9a72">+0.40R</span> |
+| 4 – 6 points | 17 | 7 / 9 / 1 | 44% | +1.99R | −1.00R | 2.0 | <span style="color:#4f9a72">+0.29R</span> |
+| Over 6 points | 13 | 4 / 6 / 3 | 40% | +1.85R | −1.00R | 1.9 | +0.11R |
+
+</div>
+
+Conclusion: the smaller the stop, the higher the expectancy. But the win rate in all three groups is between 40% and 45%, so the differences are small.
+
+## Variable 7: Exit
+
+### A. Exit type
+
+<div class="exp-table">
+
+| Exit | Trades | Average result | Bars held (median) |
+|:---|:---:|:---:|:---:|
+| Initial stop | 21 | −1.00R | 2 bars |
+| Breakeven exit | 6 | +0.01R | 10 bars |
+| 1R target | 1 | +1.00R | 5 bars |
+| 1.5R target | 9 | +1.51R | 8 bars |
+| 2R target | 2 | +1.98R | 5 bars |
+| 3R target | 3 | +3.00R | 5 bars |
+| Target above 3R | 1 | +4.96R | 3 bars |
+
+</div>
+
+### B. With the stop left in place, how far price got
+
+<div class="exp-table">
+
+| Furthest reached | Trades | Share of 43 |
+|:---|:---:|:---:|
+| 1R | 21 | 49% |
+| 1.5R | 16 | 37% |
+| 2R | 15 | 35% |
+| 3R | 13 | 30% |
+| 4R | 4 | 9% |
+| 5R | 2 | 5% |
+
+</div>
+
+<p class="table-note">Counted from what was recorded in the sheet. For the earliest trades the options only went up to 3R, so the 4R and 5R counts are on the low side.</p>
+
+Conclusion: the losing trades fail fast. The 21 initial-stop trades were held for a median of 2 bars. Of the 21 trades that reached 1R, 15 reached 2R and 13 reached 3R, so most trades that get past 1R go a long way. Compared with Experiment 02 on MES, fewer reach 1R (49% against 61%) and more reach 2R (35% against 27%).
+
+## Targets and trailing stops
+
+Ignoring how each trade was actually exited, I only look at how price moved after entry. I replayed every trade again on the 1-minute chart and applied 13 exit rules.
+
+<div class="exp-table">
+
+| Rule | W / L / BE | Win rate | Average win | Average loss | Payoff ratio | Expectancy |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| Actual | 16 / 21 / 6 | 43% | +2.03R | −1.00R | 2.0 | +0.27R |
+| 1R target | 22 / 21 / 0 | 51% | +1.00R | −1.00R | 1.0 | +0.02R |
+| 1.5R target | 18 / 25 / 0 | 42% | +1.50R | −1.00R | 1.5 | +0.05R |
+| 1.5R target, BE at 1R | 17 / 21 / 5 | 45% | +1.50R | −1.00R | 1.5 | +0.10R |
+| 2R target | 16 / 27 / 0 | 37% | +2.00R | −1.00R | 2.0 | +0.12R |
+| 2R target, BE at 1R | 14 / 21 / 8 | 40% | +2.00R | −1.00R | 2.0 | +0.16R |
+| 2R target, BE at 1.5R | 15 / 25 / 3 | 38% | +2.00R | −1.00R | 2.0 | +0.12R |
+| 3R target | 14 / 29 / 0 | 33% | +3.00R | −1.00R | 3.0 | +0.30R |
+| 3R target, BE at 1R | 13 / 21 / 9 | 38% | +3.00R | −1.00R | 3.0 | <span style="color:#2c7350;font-weight:600">+0.42R</span> |
+| 3R target, BE at 1.5R | 13 / 25 / 5 | 34% | +3.00R | −1.00R | 3.0 | <span style="color:#74b18e">+0.33R</span> |
+| 3R target, BE at 2R | 14 / 27 / 2 | 34% | +3.00R | −1.00R | 3.0 | <span style="color:#74b18e">+0.35R</span> |
+| 3R target, stepped stop | 14 / 21 / 8 | 40% | +2.57R | −1.00R | 2.6 | <span style="color:#74b18e">+0.35R</span> |
+| No target, stepped stop | 14 / 21 / 8 | 40% | +2.50R | −1.00R | 2.5 | <span style="color:#74b18e">+0.33R</span> |
+| No target, hold to the close | 4 / 39 / 0 | 9% | +7.33R | −1.00R | 7.3 | <span style="color:#c45a4e">−0.22R</span> |
+
+</div>
+
+<p class="table-note">BE: once price reaches this level, the stop moves to the entry price. Stepped stop: at 1R the stop moves to the entry price, at 2R to +1R, at 3R to +2R, and so on. Rules without a breakeven level keep the stop where it started.</p>
+
+<p class="table-note">33 of the 43 trades have no fill record. Their entry price is reconstructed as one tick beyond the signal bar. The two trades on 7/3 have no bar data, and one trade on 7/1 has a reconstructed entry that doesn't match the sheet. These three are counted at −1R, using the initial stop recorded in the sheet. Trades still open at 16:59 are counted at the close. Commissions and slippage are not included.</p>
+
+Conclusion: a 3R target with BE at 1R is the highest, +0.42R. 2R with BE at 1R is +0.16R, and 1.5R with BE at 1R is +0.10R. What I actually did came to +0.27R, in the middle. At every target, moving to BE at 1R beats leaving the stop in place. The table comparing this with live trading is in the [live trading review](/en/posts/wedge-rep20-v2/).
+
+## Summary
+
+The experiment set out to answer three questions.
+
+1. How often gold reaches 1R and 2R compared with ES. It reaches 1R less often than ES, but once past 1R it goes further: 13 of the 43 trades reached 3R.
+2. Which session trades best. Early Asia is best. Shanghai and Europe roughly break even. Early Asia has only 9 trades, so I need more.
+3. Whether to move to BE at 1R. Yes. Across the 13 rules, for the same target, adding BE at 1R always scores higher.
+
+Two more things came up along the way. None of the 7 weak signal bars made money. Reversal 2nd entries are much better than 1st entries. Live trading, split by setup, points the same way: for reversals the 2nd entry is slightly higher (+0.19R against +0.09R), and for flag in trend the 1st entry is better (+0.55R against −0.24R).
+
+Split up like this, each group of the 43 trades has only a few to a dozen or so trades, so for now I treat all of this as leads.

@@ -5,7 +5,7 @@
 export type Category = {
   slug: string;
   name: string;
-  color: "blue" | "purple" | "orange" | "yellow" | "teal" | "pink" | "brown";
+  color: "blue" | "purple" | "orange" | "yellow" | "teal" | "pink" | "gray" | "brown";
 };
 
 export const CATEGORIES: Category[] = [
@@ -14,6 +14,9 @@ export const CATEGORIES: Category[] = [
   { slug: "tools", name: "Tools", color: "teal" },
   { slug: "thinking", name: "Thinking", color: "pink" },
   { slug: "invest", name: "Invest", color: "brown" },
+  // Reflections 里有一部分文章是私人的，不上线：这类文章在 tags 里加 private，
+  // 并且放在 src/content/posts/_private/（这个文件夹不上传到 GitHub）。没有 private 的照常上线。
+  { slug: "reflections", name: "Reflections", color: "gray" },
 ];
 
 export function getCategory(slug: string): Category | undefined {
